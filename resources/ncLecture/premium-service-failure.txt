@@ -1,0 +1,525 @@
+DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT DRAFT
+DRAFT
+
+Why Premium IP Service Has Not Deployed (and Probably Never Will)
+Internet2 QoS Working Group Informational Document May 3, 2002
+Benjamin Teitelbaum, Stanislav Shalunov
+----------------------------------------------------------------------
+
+* Abstract
+
+Between May 1998 and October 2001, Internet2 worked to specify and
+deploy the QBone Premium Service (QPS) [QBone], an interdomain
+virtual leased-line IP service built on diff-serv [RFC2475]
+forwarding primitives and hereafter referred to simply as
+"Premium". Despite considerable effort and success with
+proof-of-concept demonstrations, this effort yielded no operational
+deployments and has been suspended indefinitely.
+
+In this document, we attempt to explain the reasons for this
+failure. The focus is on non-architectural, and largely
+non-technical, obstacles to deployment, foremost among them:
+Premium's poor incremental deployment properties, intimidating new
+complexity for network operators, missing functionality on routers,
+and serious economic challenges.
+
+The costs of Premium are too high relative to the perceived
+benefits. Moreover, even if successfully deployed, Premium
+fundamentally changes the Internet architecture, running contrary
+to the end-to-end design principle, and threatening the future
+scalability and flexibility of the Internet. The conclusions
+reached herein apply not just to Premium, but to any IP quality of
+service (QoS) architecture offering a service guarantee.
+
+
+* Premium Service
+
+  The Holy Grail of computer networking is to design a network that
+  has the flexibility and low cost of the Internet, yet offers the
+  end-to-end quality-of-service guarantees of the telephone network.
+
+  --S. Keshav [Keshav]
+
+Premium service on a well-provisioned network would do little to
+change packet forwarding under normal conditions. Internet2
+networks are generally well-provisioned and almost always lightly
+loaded. Packet loss and jitter experienced by best-effort traffic
+on Internet2 paths is almost always zero or is due to
+non-congestive causes.
+
+Nevertheless, the ideal articulated by Keshav is attractive.
+Premium service is about *guaranteeing* service quality. In
+essence, it is about removing a component of unreliability from the
+system--the probability that a network transaction fails because of
+network congestion. Although typical performance may be perfect,
+there would be considerable value in being able to assure that
+important sessions receive perfect network performance. Who wants
+the possibility that their important conference calls are
+disconnected or suddenly deteriorate in quality? Who wants a
+surgeon operating through robotic means on a different continent to
+experience IP packet loss artifacts?
+
+The "virtual leased line", or "virtual wire", service model
+provided by Premium may be unnecessarily strong for most
+applications, but it is strongly appealing in its simplicity.
+Everyone knows how a wire behaves. It is easy to explain. It is
+easy to sell. And conceptually, it is easy to engineer.
+
+Furthermore, many application developers remain naive about writing
+jitter-adaptive and loss-tolerant applications. Having an
+end-to-end Premium service available, would allow naive or legacy
+applications expecting an underlying circuit switched network to
+function in the Internet.
+
+
+* QoS and DoS
+
+The best-effort packet delivery service provided today by the
+Internet (and by Internet2) is susceptible to network denial of
+service (DoS) attacks. Although well-provisioned networks deliver
+very good typical performance, they will, in general, deliver
+unpredictable service and, in the worst case, no service.
+
+Traffic forecasting and statistical provisioning work well for
+circuit-switched networks (notably, with the exception of periods
+of panic dialing, as on and after 2001-09-11). Data networks are,
+however, harder to predict. This is especially true when there is
+no per-bit charge for Internet traffic, as is the case within
+Internet2. Without pricing disincentives, individual users can very
+significantly and very suddenly affect network utilization.
+Statistical provisioning only works if the impact of individuals is
+small. You can't predict when Joe High-Energy Physicist will begin
+a new experiment with his peers at CERN, fire up his
+gigabit-Ethernet attached workstation, and start moving a lot of
+bits.
+
+It is important to note that the line between network DoS attacks
+and legitimate traffic is blurred, which is one reason why fighting
+DoS attacks is so hard. If a user automatically tests connectivity
+to some site every hour, is it DoS? What if someone runs some
+aggressive throughput tests? What if the tests generate so many
+small packets that a router becomes overloaded? Is intent what
+defines a DoS attack? If so, then it is impossible to recognize a
+DoS attack by inspecting traffic. Intent is in a user's mind, not
+in the network.
+
+Protection, at least of important traffic, from sudden changes in
+network utilization (which might be due to deliberate malice or to
+natural usage pattern changes) is highly desirable. It is also the
+acid test of whether Premium (or indeed any guaranteed service) is
+functioning correctly.
+
+
+* Overview of Deployment Problems
+
+The remainder of this document reads a bit like a list of
+grievances. Each "problem" discussed below can be overcome. The
+important question is: "at what cost?". Costs should be construed
+to include direct financial costs, business disruptions, and
+opportunity costs (e.g., a less scalable and flexible future
+internet architecture). Many of the problems itemized below could
+be overcome by incurring up-front costs, the sum of which can be
+thought of as a kind of "activation energy" that would be required
+to realize an interdomain Premium service. Overcoming other
+problems, however, would require recurring costs. Still other
+problems, would require both up-front and recurring costs to
+overcome. At the highest level, Premium has failed to deploy
+because the cost is too high relative to the perceived benefits.
+
+
+* Poor Incremental Deployment Properties
+
+To support Premium service, a network must provide expedited
+forwarding (EF) [RFC3246] treatment for Premium traffic on all of
+its interfaces. Since EF must be implemented by a priority queue
+(or something morally equivalent to one), the network must be
+prepared to "crisp its edge"--to police on *all* ingress
+interfaces--to avoid a catastrophic EF DoS attack. Consequently, it
+is impossible to deploy Premium incrementally only when and where
+there is congestion; it must necessarily be deployed at the
+granularity of an entire network.
+
+Many currently deployed router interfaces are not able to police on
+the basis of the diff-serv codepoint (DSCP), or can only do so with
+a non-trivial degradation of performance. One might be inclined to
+zero the DSCP of all traffic ingressing on an interface through
+which no Premium reservations have been made. Although this
+capability is supported at line-rate by a broader range of
+interfaces, it would destroy DSCP transparency--an important
+property for incrementally deployable diff-serv services [QBSS,
+ABE].
+
+
+* Missing Diff-Serv Functionality
+
+Today's high-speed routers usually have some QoS functionality, but
+it is often insufficient for implementing Premium service. Simple
+DSCP-based traffic classification, leaky-bucket policing, and
+priority queuing are not sufficient. Below we survey some of the
+additional diff-serv router functionality that is required to
+implement Premium.
+
+** Route-Based Classification
+
+Premium-enabled network service providers will want to classify and
+police ingressing EF traffic based on routing aggregates. To see
+this, observe that "firehose" policing (a single EF leaky bucket
+per ingress interface) results in hopelessly inefficient network
+use, since a provider must assume that the EF traffic from all
+interfaces could, in the worst case, converge on a single interior
+or egress interface. Also observe that micro-flow policing (one EF
+leaky bucket per micro-flow reservation traversing an ingress
+interface), unravels most of diff-serv's aggregation properties at
+interdomain boundaries and would not scale in the core. Our
+conclusion is that Premium-enabled network service providers would
+want to sell "virtual trunks" between pair of ingress and egress
+interfaces. Such a virtual trunk must be policed at ingress on the
+basis of an egress-dependent profile. For example, one would like
+to be able to configure an interface like this:
+
+  rate-limit DSCP 46 traffic with next-hop AS of A to X bits/second
+  rate-limit DSCP 46 traffic with next-hop AS of B to Y bits/second
+
+Without such hooks, maintenance and operation of Premium becomes
+very hard. We have inter-domain routing algorithms for very good
+reasons. Not having them for the purposes of policing and shaping
+is not much better for Premium service than having to do static
+routing would be for best-effort service. A forthcoming companion
+document will discuss in more depth why the shaping and policing
+functionality described above is needed.
+
+Unfortunately, no high-speed router today provides these hooks. The
+reason is simple: forwarding, as done by line cards, doesn't
+require full routing information. To reduce the price of line
+cards, forwarding tables provide a highly-localized view of routing
+that usually only contain next-interface data. Caching the AS path
+(or a portion of it), in the forwarding tables would make routers
+significantly more expensive, while going to the route-processor
+for the AS path would make routers significantly slower.
+
+** Shallow Token Buckets
+
+Premium aggregates must be smoothed to be nearly jitter-free as
+they traverse interdomain boundaries. Policing such an aggregate
+effectively requires a classical token bucket policer that is only
+one or two packets deep. Few routers support token bucket policers
+this shallow at high line rates due to the fine-grained timing
+required.
+
+** Shaping Multiple Aggregates Within a PQ Class
+
+Because the downstream interface across an interdomain boundary may
+be policing multiple EF aggregates, an egress interface must be
+able to accurately shape several aggregates *within* a priority
+queue (PQ) class. That is to say, on the egress line card, shape
+several aggregates and then give them EF treatment across the link.
+Too often shapers are matched one-to-one with forwarding classes
+(e.g., there is only one PQ class and it can be shaped or not).
+
+** Translation to Switched Ethernet QoS
+
+Wider support for IEEE 802.1p is needed, especially on LAN edge
+devices that must translate between DSCP markings and 802.1p
+markings.
+
+** The Cost of Complex Forwarding
+
+Some router vendors have elected to include complex QoS
+functionality in microcode running on their interface cards, rather
+than in custom ASICs that add to the power consumption and cost of
+a card. This is a non-starter. Our experience has been that this
+approach can result in a drop of maximum packet-per-second
+forwarding rates by 50% or more. Such a CPU cycle shortage hurts
+all traffic, including Premium, making deployment very hard to
+justify.
+
+The trend among newer, higher-speed routers seems to be towards
+less QoS functionality, not more. As circuit costs are responsible
+for an ever decreasing portion of network capital expenditures, and
+interface costs are responsible for an ever increasing share of
+network capital expenditures, the market pressure for dumb, fast,
+and cheap router interfaces is ever greater.
+
+Are we prepared to pay the price difference for extra QoS features?
+If so, is there enough of a customer base for feature-rich routers
+to make their development worthwhile for router vendors?
+
+
+* Dramatic Operational and Economic Paradigm Shifts for Operators
+
+Because deployment of Premium is an all-or-nothing proposition, it
+requires fairly sudden and significant changes to network
+operations and peering agreements. On the operations side,
+operators must configure a lot of router features they usually
+ignore, must respond to admissions requests, and must provision
+carefully to honor the service assurances of admitted requests.
+Migrations to new routers or circuits must be performed with the
+utmost care. Finally, very rapid IGP convergence becomes essential
+and admissions decisions must be made with careful attention to
+routing (or be made so conservatively as to allow routing to be
+ignored).
+
+Peering arrangements also would experience a dramatic paradigm
+shift. Today, an ISP's technical interface to the outside world is
+unicast IPv4, BGP, and possibly a simple service-level assurance
+(SLA), while its economic interface is some combination of per-line
+and per-bit charges. Premium service would complicate this with a
+series of additional external interfaces including: shaping,
+policing, reservation signaling, and per-reservation billing and
+settlement. Not only does Premium change the interface between an
+ISP and its neighbors, but it also adds whole new complexities for
+customer support personnel, creates the need for accurate
+third-party service auditing, and greatly increases the risk of
+litigation.
+
+
+* The Threat to Best-Effort
+
+Why would a network provide high-quality best-effort service to the
+transit traffic of non-customers in a Premium-enabled world? To
+answer this question, consider why transit traffic is treated well
+today: (1) It is technically hard for a provider to differentiate
+between traffic from direct customers and traffic from its peers;
+(2) providing poor quality best-effort service for transit traffic
+today can help conserve resources, but would not translate into
+immediate monetary revenues--nor would it improve the long-term
+reputation of a provider.
+
+If QoS mechanisms become available in the routers to allow
+classification on the basis of AS path, reason (1) goes away.
+Further, in a Premium service world, making a customer that
+otherwise doesn't pay you directly switch from "free" (for transit
+customers) best-effort service to paid Premium service and have
+some money dribble through the payment system into your coffers
+seems too obvious a trick not to play; therefore, reason (2) would
+become increasingly irrelevant. We expect that if Premium were
+deployed, providers would begin to treat the best-effort traffic of
+non-customers worse than the best-effort traffic of their
+customers.
+
+The erosion of best-effort service would lead to a completely
+different world where all serious work gets done over Premium
+service and users are generally expected to make virtual circuit
+reservations for most of what they do. By deploying Premium
+service, do we want to supplement the Internet best-effort service
+or to replace it?
+
+
+* Lack of Flexible Business Model
+
+Although Premium is specified with some flexibility about what "low
+loss" and "bounded delay" really mean, there has been inadequate
+thinking about how statistics can be brought to bear on either the
+engineered service assurance or the provisioning techniques. In
+practice, the service that is advertised and sold to the customer
+("Premium service with zero loss and jitter!") can not be identical
+to the service that is actually engineered by the provider.
+Businesses built around service assurances (e.g., FedEx, business
+class air travel, frame relay) do not strive for 100% service
+reliability. By separating the advertised service from the
+engineered service, these businesses have the flexibility to trade
+off statistical over-booking and operational corner-cutting against
+the probability that customer assurances will not be met and that
+money will have to be refunded.
+
+To maximize profit, Premium must ultimately be explained to the
+customer in simple terms, but engineered carefully by the provider
+with a strong understanding of the statistical nature of traffic
+and of the network's performance. Of course, the statistical nature
+of traffic is always be changing as new applications emerge and
+older ones fade away; so, this effort would have to be ongoing.
+There is insufficient theoretical understanding of how to do this
+kind of traffic modeling well for IP networks.
+
+
+* Service Verification
+
+As discussed above, Premium service is not really about the network
+performance that *is* experienced by a reservation holder, but is
+rather about the performance that *would be* experienced by the
+reservation holder in the event of a network DoS attack. That is,
+it's about the assurance. Consequently, an observation of zero loss
+and jitter on a Premium reservation over an extended period of time
+does not confirm that the Premium assurance is functioning
+correctly.
+
+This is not merely a theoretic concern. It is natural for customers
+to want to verify their service assurance and it is natural for
+providers (who fear litigation) to verify that they are providing
+the assurance they think they are. Consider the person who lives in
+a high-crime neighborhood. He purchases a lock for his front door,
+installs it, and verifies that it works correctly. But verification
+does not stop there. When the person leaves his home in the morning
+it is natural for him to lock the door and then jiggle it to verify
+that it is indeed locked.
+
+After a provider has changed the configuration of one or more
+ingress policers, how does he "jiggle the door" to confirm that the
+policers are functioning correctly? Likewise, how does a customer
+confirm her service assurance? In either case, "jiggling the door"
+is analogous to launching a short, distributed, interdomain denial
+of service attack against the provider. Credible service
+verification would seem to require an industry of third-party
+service auditors with access to peerings (including private
+peerings).
+
+Finally, for the user it is particularly difficult to determine
+whether the network operator is indeed providing guarantees or
+merely has a well-provisioned network, high-performance network
+that could at any time be brought down by a denial of service
+attack. Savvy customers will recognize the service providers'
+incentives to over-book capacity and cheat on the assurance. These
+customers will demand accurate assurance outage reports or strong
+recourse for service failures (penalties to the providers that are
+more severe than "your money back"). This is generally not
+something that service providers have accepted in other businesses;
+physical package delivery companies and PSTN service providers
+usually limit the remedies available to their customers to the
+amount paid.
+
+
+* Inadequate Standardization and Architectural Gaps
+
+A factor contributing to the reluctance of ISPs to deploy Premium
+has certainly been the confusion in the IETF Differentiated
+Services Working Group over several key areas of standardization.
+Chief among these is the EF per-hop behavior itself. The original
+EF PHB draft [RFC2598] published in June 1999 by Van Jacobson et
+al. was shown to be unimplementable. Over more than a year, debate
+raged on within the working group about how to fix it. The result
+was the formation of a design team to author a new EF specification
+[RFC3248]. This specification was ultimately rejected in favor of a
+competing alternative [RFC3246], which was not published as a
+standards track RFC until March 2002.
+
+A second factor was the decision that DSCP values would have local
+significance only. We regard this as a colossal mistake, burdening
+all edge routers with the need to re-mark traffic and creating a
+frivolous (but nevertheless confusing) choice for engineers.
+Although the choice not to have DSCPs with global significance
+hurts Premium deployment, it hurts services with nice incremental
+deployment properties even more [QBSS, ABE].
+
+Finally, although some architectural gaps and ambiguities remain in
+the Premium design, we believe that these gaps do not constitute a
+leading reason for Premium's failure to deploy. A forthcoming
+companion document will discuss holes in the design of Premium and
+the tradeoffs of various technical alternatives for closing them.
+These "holes" include: the provisioning and matching of policers
+and shapers across interdomain boundaries to support micro-flow
+aggregation, the calculation of worst-case jitter bounds, and the
+need for scalable, automated signaling.
+
+
+* Conclusion
+
+In the U.S. today, the price of network capacity is low and falling
+(with the notable exception of residential and rural access) and
+the apparent one-time and recurring costs of Premium are high and
+rising (with interface speeds). In most bandwidth markets important
+to network-based research, it is cheaper to buy more capacity and
+to provide everybody with excellent service than it is to mess with
+QoS.
+
+In those few places where network upgrades are not practical, QoS
+deployment is usually even harder (due to the high cost of
+QoS-capable routers and clueful network engineers). In the very few
+cases where the demand, the money, and the clue are present, but
+the bandwidth is lacking, ad hoc approaches that prioritize one or
+two important applications over a single congested link often work
+well. In this climate, the case for a global, interdomain Premium
+service is dubious.
+
+A comparison of the costs of QoS versus capacity is only one way to
+evaluate the business case for deployment. Another important factor
+is the lack of demand from end-users. Mass use of the Internet for
+real-time communications remains elusive. There are many reasons
+for this, including: slow residential broadband deployment, low
+user expectations, and the insufficient sophistication of
+commercial VoIP and video conferencing products (e.g., poor
+jitter-adaptation and loss tolerance). This lack of demand from
+end-users contributes to the lack of incentive for providers to
+deploy Premium; and the lack of Premium deployment conditions users
+not to demand it. Ad infinitum.
+
+Internet applications are designed to degrade gracefully. TCP is a
+perfect example of this; audio and video codecs with ECCs are
+another. The upside is that if something in the network is not
+working quite correctly, the user either does not notice or does
+not care. The downside is that users often don't notice failures
+until they are catastrophic.
+
+In a world of guaranteed services, applications will either rely on
+the guarantees provided by the network or they will continue to
+include code to adapt. In the latter case, non-catastrophic
+failures of Premium service would remain hidden and accumulate. In
+the former case, adaptation would atrophy and applications would
+lose their ability to work over "normal" best-effort networks. But,
+if this were to happen, adaptive applications would once again have
+a competitive advantage, offering users comparable functionality
+without the need to purchase Premium reservations. A world where
+Premium and best-effort services co-exist would seem to be
+unstable.
+
+Finally, one has to ask: "even if there were high demand and a
+compelling and stable business case for Premium, is this what we
+want the Internet to become?". The Internet's best-effort service
+model and the end-to-end principle [E2E] have allowed the Internet
+to become the fast, dumb, cheap, and global infrastructure that we
+all know and love. One has to wonder whether such a fundamental
+change to the Internet architecture, while enabling an undeniably
+useful and probably lucrative service, would conceal a huge
+opportunity cost: an increase in complexity that would inhibit the
+scalability and growth of the Internet in years to come.
+
+
+* References
+
+[ABE] P. Hurley, Mourad Kara, J. Y. Le Boudec, P. Thiran, "ABE:
+    Providing a Low-Delay Service within Best Effort", IEEE Network
+    Magazine, Vol. 15 No. 3, May 2001.
+
+[E2E] Saltzer, J., Reed, D. and Clark, D., "End-to-End Arguments In
+    System Design", ACM Transactions in Computer Systems, November,
+    1984.
+
+[Keshav] "An Engineering Approach to Computer Networking", S.
+Keshav,
+    Addison-Wesley, 1997.
+
+[QBone] Teitelbaum, B, Hares, S., Dunn, L., Narayan, V., Neilson,
+R.,
+    Reichmeyer, F., "Internet2 QBone: Building a Testbed for
+    Differentiated Services", IEEE Network Magazine, Special Issue on
+    Integrated and Differentiated Services for the Internet, September
+    1999.
+
+[QBSS] Shalunov, S., Teitelbaum, B., "QBone Scavenger Service
+(QBSS)
+    Definition", Internet2 Technical Report, Proposed Service
+    Definition, Internet2 QoS Working Group Document, March, 2001.
+
+[RFC2598] Jacobson, V., Nichols, K. and K. Poduri, "An Expedited
+Forwarding
+    PHB", RFC 2598, June 1999.
+
+[RFC3246] Davie, B., Charny, A., Baker, F., Bennett, J.C.R.,
+Benson, K., Le
+    Boudec, J.Y., Chiu, A., Courtney, W., Davari, S., Firoiu, V.,
+    Kalmanek, C., Ramakrishnan, K. and D. Stiliadis, "An Expedited
+    Forwarding PHB (Per-Hop Behavior)", RFC 3246, March 2002.
+
+[RFC2474] Nichols, K., Blake, S., Baker, F. and D. Black,
+"Definition of
+    the Differentiated Services Field (DS Field) in the IPv4 and IPv6
+    Headers", RFC 2474, December 1998.
+
+[RFC2475] Black, D., Blake, S., Carlson, M., Davies, E., Wang, Z.
+and W.
+    Weiss, "An Architecture for Differentiated Services", RFC 2475,
+    December 1998.
+
+[RFC3248] Armitage, G., Carpenter, B., Casati, A., Crowcroft, J.,
+Halpern,
+    J., Kumar, B., Schnizlein, J., "A Delay Bound alternative revision
+    of RFC 2598", RFC 3248, March 2002.
