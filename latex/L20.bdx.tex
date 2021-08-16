@@ -1,0 +1,1050 @@
+\problemfile{L20-1}
+\begin{problem}
+Compute the maximum buffer size $X$ for a system that is initially
+empty, and where the input function is $R(t)=\int_0^t r(s)ds$, for
+the following cases.
+ \begin{enumerate}
+        \item  if $r(t) = a$ (constant)
+        \item  one on-off connection with peak rate 1 Mb/s, on period 1 sec,
+        off period $\tau$ seconds, and trunk bit rate $c=0.5$ Mb/s.
+        \item  if $r(t) = c + c \sin \omega t$, with trunk bit rate $c >0$.
+ \end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-2}
+\begin{problem}
+You have a fixed buffer of size $X$, that receives a data input
+$r(t)$. Determine the output rate $c$ that is required to avoid
+buffer overflow given that the buffer is initially empty.
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-3}
+\begin{problem}
+\begin{enumerate}
+        \item  For a flow with constant bit rate $c$, give some
+        possible arrival curves.
+        \item  Consider a flow with an arrival curve given by: $\alpha(t)=B$,
+        where $B$ is constant. What does this mean for the flow ?
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\problemfile{ex-flui-pb1}
+%\begin{problem}
+%\begin{enumerate}
+%        \item  Draw the arrival curve for a linearly constrained flow with
+%parameters $(m,b)$ that also has a
+%limit on the peak rate. What is the arrival curve ?
+%
+%        \item  Show that a flow is $(P,B)$ constrained iff $W_{P}(t) \leq B$
+%        for all $t$.
+%\end{enumerate}
+%\end{problem}
+%\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-4}
+\begin{problem}
+\begin{enumerate}
+We say that a flow is $(P, B)$ constrained if it has
+$\gamma_{P,B}$ as an arrival curve.
+        \item  A trunk system has a buffer size of $B$ and a trunk bitrate of $P$.
+Fill in the dots: (1) there is no loss if the input is $(., .)$
+constrained (2) the output is $(.,.)$ constrained.
+
+        \item  A $(P, B)$ constrained flow is fed into an infinite buffer served at a
+        rate of $c$. What is the maximum delay~?
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-5}
+\begin{problem}
+[On-Off flows]
+\begin{enumerate}
+\item Assume a data flow is periodical, with period $T$, and satisfies the
+following: $r(t) = p$ for $0 \leq t < T_{0}$, and
+$r(t) = 0$ for $T_{0}\leq t <  T$.
+\begin{enumerate}
+\item Draw $R(t) = \int_{0}^{t} r(s) ds$
+
+\item Find an arrival curve for the flow. Find the minimum arrival
+curve for the flow.
+\item Find the minimum $(r, b)$ such that
+the flow is $(r, b)$ constrained.
+
+\sol{An arrival curve could be $\alpha(t)=pt$\\
+The minimal arrival curve is: \[ \alpha (t) = \left\{ \begin{array}{ll}
+                R(t) & \mbox{if R(t) is sub-additive}\\
+                inf\{\delta (t),\alpha (t),\alpha (t)\mpc\alpha (t),..\} & \mbox{otherwise}
+                \end{array}
+                \right. \]
+When the flow is (r,b) contrained, the minimum (r,b) values are $r = \frac{p
+T_{0}}{T}$, $b=T_{0} (p-r)$}
+
+\end{enumerate}
+
+\item A traffic flow uses a link with bitrate $P$ (bits/s). Data is
+sent as packets of variable length. The flow is controlled by a leaky
+bucket $(r, b)$. What is the maximum packet size ? What is the minimum
+time interval between packets of maximum size ?
+
+Application: P = 2 Mb/s, r = 0.2 Mb/s; what is the required burst
+tolerance $b$
+if the packet length is 2 Kbytes ? What is then the minimum
+spacing between packets ?
+
+\sol{
+maximum packet size $L = p \frac{b}{p-r}$ \\
+minimum time between packets $T_{m}=\frac{b}{r}$ \\
+application: $b=L \frac{p-r}{p} = 1.8$Kbytes, $T_{m}=72$ ms.
+}
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-6}
+\begin{problem}
+\nfs{Alternative definition of GCRA} Consider the following
+alternative definition of the GCRA:
+\begin{definition}
+The GCRA ($T,\tau$) is a controller that takes as input a cell
+arrival time {\tt t} and returns {\tt result}. It has internal
+(static) variables {\tt X} (bucket level) and {\tt LCT} (last
+conformance time).
+
+\begin{itemize}
+        \item  initially, {\tt X = 0} and {\tt LCT = 0}
+        \item  when a cell arrives at time {\tt t}, then
+        \begin{verbatim}
+                if (X - t + LCT > tau)
+                   result = NON-CONFORMANT;
+                else {
+                     X = max (X - t + LCT, 0) + T;
+                     LCT = t;
+                     result = CONFORMANT;
+                     }
+        \end{verbatim}
+\end{itemize}
+\end{definition}
+Show that the two definitions of GCRA are equivalent.\\
+\sol{
+Comparing the two algorithms we see that, if equivalence holds, we
+should have \texttt{tat = X + LCT}.\\ The proof is now as follows.
+We show by recurrence that for every input sequence, the output of
+both algorithms is the same and that \texttt{tat = X + LCT} at the
+end of the processing for the last input.  This is true for the
+first input, at $t=0$. Now let us assume that this is true for all
+inputs up to time $t$. The test done by both algorithms is the
+same since \texttt{tat = X + LCT} so the output is the same. Then
+\texttt{max(t, tat) + T = t + max(X- t + LCT, 0) + T} thus the
+relation \texttt{tat = X + LCT} still holds after the processing
+of this input. }
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+\problemfile{L20-7}
+\begin{problem}
+\begin{enumerate}
+\item For the following flows and a GCRA(10, 2), give the conformant and
+non-conformant cells. Times are in cell slots at the link rate. Draw
+the leaky bucket behaviour assuming instantaneous cell arrivals.
+ \begin{enumerate}
+        \item  0, 10, 18, 28, 38
+
+        \item  0, 10, 15, 25, 35
+
+        \item  0, 10, 18, 26, 36
+
+        \item  0, 10, 11, 18, 28
+\end{enumerate}
+\ifsol
+\begin{enumerate}
+        \item  \texttt{+ + + + +}
+        \item  \texttt{+ + - + +}
+        \item  \texttt{+ + + - +}
+        \item  \texttt{+ + - + +}
+\end{enumerate}
+\fi
+\item What is the maximum number of cells that can flow back to back
+with GCRA(T, CDVT) (maximum ``clump'' size) ?
+\sol{maximum clump size = floor$(\frac{CDVT}{T-1} + 1)$}
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-8}
+\begin{problem}
+\begin{enumerate}
+        \item For the following flows and a GCRA(100, 500), give the conformant and
+  non-conformant cells. Times are in cell slots at the link rate.
+  \begin{enumerate}
+        \item  0, 100, 110, 12, 130, 140, 150, 160, 170, 180, 1000, 1010
+        \item  0, 100, 130, 160, 190, 220, 250, 280, 310, 1000, 1030
+        \item  0, 10, 20, 300, 310, 320, 600, 610, 620, 800, 810, 820, 1000,
+        1010, 1020, 1200, 1210, 1220, 1400, 1410, 1420, 1600, 1610, 1620
+    \end{enumerate}
+
+   \ifsol
+        \begin{enumerate}
+        \item  \texttt{+ + + + + + + - - - + +}
+        \item  \texttt{+ + + + + + + + + + + +}
+        \item  \texttt{20(+) - + + -}
+        \end{enumerate}
+\fi
+
+        \item Assume that a cell flow has a minimum spacing of $\gamma$
+        time units between cell emission times ($\gamma$ is the minimum
+        time between the beginnings of two cell transmissions).  What is
+        the maximum burst size for GCRA($T, \tau)$ ?  What is the minimum
+        time between bursts of maximum size ?
+\sol{
+Considering $\gamma$ as the cell separation between cell beginnings,\\
+Maximum burst size(MBS) = floor$\lfloor \frac{\tau}{T - \gamma}+1 \rfloor$\\
+Minimum time between bursts = MBS$(T-\gamma)+\gamma$
+}
+
+        \item Assume that a cell flow has a minimum spacing between cells of
+        $\gamma$ time units, and a minimum spacing between bursts of
+        $T_{I}$. What is the maximum burst size ?
+        \sol{Maximum burst size = floor$ \lfloor \frac{\min(T_{i}-T,\tau)}{T
+-\gamma}+1 \rfloor $}
+
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-9}
+\begin{problem}
+For a CBR connection, here are some values from an ATM operator:
+        \begin{verbatim}
+ peak cell rate (cells/s)     100   1000  10000 100000
+ CDVT     (microseconds)     2900   1200    400    135
+        \end{verbatim}
+        \begin{enumerate}
+                \item What are the $(P, B)$ parameters in b/s and bits for
+                each case ?  How does $T$ compare to $\tau$ ?
+\ifsol
+
+\begin{verbatim}
+P          (b/s)  42400  424000   4240000   42400000
+B            (b)    547     933      2120       6148
+T    (microsecs)  10000    1000       100         10
+CDVT (microsecs)   2900    1200       400        135
+\end{verbatim}
+\fi
+                \item If a connection requires a peak cell rate of 1000 cells
+                per second and a cell delay variation of 1400 microseconds,
+                what can be done ?
+\sol{
+We need to find an arrival curve in the family given by Swiss Telecom
+that can bound from above your arrival curve. In the  absence of information
+about the link rate, this  means choosing a peak rate $P'$ larger  than 1000,
+such that the  tolerance in cells, $B'_{p}= \delta + CDVT' \times P'$ is as
+large as the requested tolerance  $B_{p}= \delta + CDVT \times P$. In other
+words, call $f$ the function mapping the peak rate to the tolerance, we need
+to find the minimum $P'$ such that $P' f(P') \geq Pf(P)$. A plot shows that
+$\log f$ is linear in $\log P$. This gives $P' =$ 1738 cells/sec.
+\begin{figure}[ht]
+\begin{center}
+%\includegraphics[angle=-0,scale=.4]{cdvtswisscom.eps}
+\insfig{cdvtswisscom}{0.4} \caption{relationship between tolerance
+and peak rate} \label{first}
+\end{center}
+\end{figure}
+}
+                \item Assume the operator allocates the peak rate to every
+                connection at one buffer.  What is the amount of buffer
+                required to assure absence of loss ?  Numerical Application
+                for each of the following cases, where a number $N$ of
+                identical connections with peak cell rate $P$ is multiplexed.
+                \begin{verbatim}
+ case                       1      2      3      4
+ nb of connnections      3000    300     30      3
+ peak cell rate (c/s)     100   1000  10000 100000
+            \end{verbatim}
+\ifsol
+From proposition 1.3.2, it is sufficient to allocate a buffer equal to
+$B_{p}$. This gives:
+\begin{verbatim}
+case                           1      2      3      4
+number of connnections      3000    300     30      3
+peak cell rate (cells/s)     100   1000  10000 100000
+required buffer (cells)     3870    660    150     44
+\end{verbatim}
+It is possible to reduce the buffer size if we can exploit some constraints on
+the peak rate.
+\fi
+        \end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\problemfile{L20ex-fluid-gal0}
+%\begin{problem}
+%Define in at most four lines each of the concepts given in the
+%Introduction
+%\end{problem}
+%\end{filecontents}
+%
+%\problemfile{L20ex-fluid-delay}
+%\begin{problem}
+%\begin{enumerate}
+%        \item Is is true that the virtual delay defined in Section
+%        \ref{d4-fluid-def} satisfies the following equation~?
+%        (Justify your answer)
+%        $$
+%        d(t) = \max \left\{
+%               T: T\geq 0 \mand R(t) \geq R^*(t + T)
+%              \right\}
+%        $$
+%
+%        \item  Show that if $R^{*}$ is continuous, then
+%        $R^{*}\left(t +d(t)\right) = R(t)$. How can you interprete the
+%        assumption on continuity ?
+%\end{enumerate}
+%\end{problem}
+%\end{filecontents}
+%
+%\problemfile{L20ex-buflb2}
+%\begin{problem}
+%\begin{enumerate}
+%        \item  Consider again Proposition \ref{prop-lb1} but assume that the trunk
+%system is not first-in first-out, but only work conserving. What is
+%now the bound on the delay ?
+%        \item  Same question if we assume in addition that the trunk system
+%        is first-in first-out {\em per flow}.
+%\end{enumerate}
+%\end{problem}
+%\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Sept 98
+%% PROBLEM FILES: Module D21 = LB and GCRA
+%% supp problems to be merged with the new file
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% EXAM ED 97 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-10}
+\begin{problem}
+\nfs{September 1998}
+
+The two questions in this problem are independent.
+\begin{enumerate}
+        \item  An ATM source is constrained by GCRA($T=30$ slots, $\tau=60$ slots),
+where time is counted in slots. One slot is the time it takes to
+transmit one cell on the link. The source sends cells according to
+the following algorithm.
+\begin{itemize}
+        \item In a first phase, cells are sent at times $t(1)=0$,
+        $t(2)=15$, $t(3)=30, \ldots,t(n)= 15(n-1)$ as long as all cells
+        are conformant.  In other words, the number $n$ is the largest
+        integer such that all cells sent at times $t(i)=15(i-1)$, $i\leq
+        n$ are conformant. The sending of  cell $n$ at time $t(n)$ ends
+        the first phase.
+
+        \item  Then the source enters the second phase. The subsequent cell
+        $n+1$ is sent at the earliest time after
+        $t(n)$ at which a conformant cell can be sent, and the same is
+        repeated for ever. In other words, call $t(k)$ the sending time for
+        cell $k$, with $k>n$; we have then: $t(k)$ is the earliest time after
+        $t(k-1)$ at which a conformant cell can be sent.
+\end{itemize}
+
+How many cells were sent by the source in time interval $[0, 151]$~?
+
+
+        \item A network node can be modeled as a single buffer with a
+        constant output rate $c$ (in cells per second).  It receives $I$
+        ATM connections labeled $1, \ldots, I$.  Each ATM connection has a
+        peak cell rate $p_{i}$ (in cells per second) and a cell delay
+        variation tolerance $\tau_{i}$ (in seconds) for $1 \leq i \leq I$.
+        The total input rate into the buffer is at least as large as
+        $\sum_{i=1}^I p_{i}$ (which is equivalent to saying that it is
+        unlimited). What is the buffer size (in cells) required for a
+        loss-free operation~?
+
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%% ED Exam 98%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-11}
+\begin{problem}
+In this problem, time is counted in slots. One slot is the duration to transmit
+one ATM cell on the link.
+
+\begin{enumerate}
+        \item An ATM source $S_{1}$ is constrained by GCRA($T=50$ slots,
+        $\tau=500$ slots), The source sends cells according to the
+        following algorithm.
+\begin{itemize}
+        \item In a first phase, cells are sent at times $t(1)=0$,
+        $t(2)=10$, $t(3)=20, \ldots,t(n)= 10(n-1)$ as long as all cells
+        are conformant.  In other words, the number $n$ is the largest
+        integer such that all cells sent at times $t(i)=10(i-1)$, $i\leq
+        n$ are conformant. The sending of  cell $n$ at time $t(n)$ ends
+        the first phase.
+
+        \item  Then the source enters the second phase. The subsequent cell
+        $n+1$ is sent at the earliest time after
+        $t(n)$ at which a conformant cell can be sent, and the same is
+        repeated for ever. In other words, call $t(k)$ the sending time for
+        cell $k$, with $k>n$; we have then: $t(k)$ is the earliest time after
+        $t(k-1)$ at which a conformant cell can be sent.
+\end{itemize}
+
+How many cells were sent by the source in time interval $[0, 401]$~?
+
+
+        \item An ATM source $S_{2}$ is constrained by \emph{both}
+        GCRA($T=10$ slots, $\tau=2$ slots) and GCRA($T=50$ slots,
+        $\tau=500$ slots).  The source starts at time $0$, and has an
+        infinite supply of cells to send.  The source sends its cells as
+        soon as it is permitted by the combination of the GCRAs.  We call
+        $t(n)$ the time at which the source sends the $n$th cell, with
+        $t(1)=0$. What is the value of $t(15)$~?
+
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-11a}
+ \begin{problem}
+ Consider a flow $R(t)$ receiving a minimum service curve
+ guarantee $\beta$. Assume that
+\begin{itemize}
+  \item $\beta$ is concave and wide-sense increasing
+  \item the $\inf$ in $R \mpc \beta$ is a $\min$
+ \end{itemize}
+For all $t$, call $\tau(t)$ a number such that
+$$
+(R \mpc \beta)(t)= R(\tau(t)) + \beta(t-\tau(t))
+$$
+Show that it is possible to choose $\tau$ such that if $t_1 \leq
+t_2$ then  $\tau(t_1) \leq \tau(t_2)$.
+ \sol{~\\Call $\tau_1=\tau(t_1)$ and
+consider any $t' \leq \tau_1$. From the definition of $\tau_1$, we
+have
+$$
+S(t') + \beta(t_1 - t' ) \geq S(\tau_1) + \beta(t_1 - \tau_1 )
+$$
+and thus
+$$
+S(t') + \beta(t_2 - t' ) \geq S(\tau_1) + \beta(t_1 - \tau_1 ) -
+\beta(t_1 - t' ) + \beta(t_2 - t' )
+$$
+Now $\beta$ is convex, thus for any four numbers $a, b, c, d$ such
+that $a \leq c  \leq b$,  $a \leq d  \leq b$ and $a+b=c+d$, we
+have
+$$\beta(a) + \beta(b) \geq \beta(c) + \beta(d)$$
+(the interested reader will be convinced by drawing a small
+figure). Applying this to $a=t_1- \tau_1, b=t_2 - t', c=t_1-t',
+d=t_2-\tau_1$ gives
+$$
+S(t')+ \beta(t_2-t') \geq S(\tau_1)+\beta(t_2 - \tau_1)
+$$
+and the above equation holds for all $t'\leq \tau_1$. Consider now
+the minimum, for a fixed $t_2$, of $S(t') +\beta(t_2-t')$ over all
+$t' \leq t_2$. The above equation shows that the minimum is
+reached for some $t' \geq \tau_1$.}
+ \end{problem}
+ \end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-12}
+\begin{problem}
+        \begin{enumerate}
+                        \item Find the maximum backlog and maximum delay for an ATM
+                CBR connection with peak rate $P$ and cell delay variation
+                $\tau$, assuming the service curve is $c(t) = r(t-T_{0})^{+}$
+\sol{The CBR connection is defined by
+        GCRA($\frac{\delta}{P}$, $\tau$)\\
+        if p<r then,
+        BackLog = \(B+PT_0\)\\
+        Maximum Delay = \( \frac{B}{r}+T_0 \)\\
+        otherwise,  backlog and max, delay are infinity.}
+
+                \item Find the maximum backlog and maximum delay for an ATM
+                VBR connection with peak rate $P$, cell delay variation
+                $\tau$, sustainable cell rate $M$ and burst tolerance
+$\tau_{B}$ (in
+                seconds), assuming the service curve is $c(t) = r(t-T_{0})^{+}$
+\sol{ }
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-13}
+\begin{problem}
+Show the following statements:
+\begin{enumerate}
+ \item  Consider a $(P,B)$ constrained flow, served at a rate $c\geq P$.
+       The output is also $(P,B)$ constrained.
+\sol{ We wish to compute the output $\alpha \mpd \beta$ where
+$\alpha(t)=Pt+B$ and $\beta(t)=ct$.
+$$
+\alpha \mpd \beta(t) = Pt+B + \sup_{u\geq0} (P-c)u
+$$
+Since $P\leq c$, this is largest when $u=0$. Therefore $\alpha
+\mpd \beta(t)=\alpha(t)$. }
+ \item  Assume $a()$ has a bounded right-handside derivative.
+        Then the output for a flow constrained by $a()$, served in a buffer
+at a
+        constant rate $c \geq \sup_{t \geq 0} a'(t)$, is also constrained by
+        $a()$.
+\sol{
+$$
+a \mpd \beta(t) = \sup_{u\geq0} a(t+u) -cu
+$$
+By the mean-value theorem there is a $v\in[t,t+u]$ such that
+$$a(t+u) = a(t) + u a'(v).$$
+Thus,
+$$
+a \mpd \beta(t) = a(t) + \sup_{u\geq0} (a'(v)-c)u
+$$
+Since all derivatives are smaller than $c$, this is at its
+largest when $u=0$, giving $a \mpd \beta(t) = a(t)$. }
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-14}
+\begin{problem}
+\begin{enumerate}
+                \item Find the the arrival curve constraining the output for
+                an ATM CBR connection with peak rate $P$ and cell delay
+                variation $\tau$, assuming the service curve is $c(t) =
+                r(t-T_{0})^{+}$
+
+                \item Find the arrival curve constraining the output
+                for an ATM VBR connection with peak rate $P$, cell delay
+                variation $\tau$, sustainable cell rate $M$ and burst
+                tolerance $\tau_{B}$ (in seconds), assuming the service curve
+                is $c(t) = r(t-T_{0})^{+}$
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-15}
+\begin{problem}
+Consider the figure ``Derivation of arrival curve for the output
+of a flow
+  served in a node with rate-latency service curve $\beta_{R,T}$".
+What can be said if $t_{0}$ in the Figure is infinite, namely, if
+$a'(t) > r$ for all $t$ ?
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-16}
+\begin{problem}
+
+Consider a series of guaranteed service nodes with service curves
+$c_{i}(t) = r_{i}(t-T_{i})^{+}$. What is the maximum delay through
+this system for a flow constrained by $(m,b)$ ? \sol{Defining
+\(T_0 = \sum_{\forall i} T_i \) and \(R_0 = min_{\forall i}
+\{R_i\}\)
+                \[ Max. Delay = \left\{ \begin{array}{ll}
+                \frac{b}{R_0}+T_0 & \mbox{if $R_0>m$}\\
+                \infty & \mbox{otherwise}
+                \end{array}
+                \right. \]
+}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-17}
+\begin{problem}
+
+A flow with T-SPEC $(p,M,r,b)$ traverses nodes 1 and 2.  Node $i$
+offers a service curve $c_{i}(t) = R_{i}(t-T_{i})^{+}$. What
+buffer size is required for the flow at node 2~? \sol{ Do this
+proof again using max instead.\\
+ Define $t_i=\frac{B-M}{p-r}$
+\\
+The buffer required for the flow at node 2 is:\\ if $t_i<T_1$
+BackLog = \(b+r(T_1+T_2)\)\\ if $t_i>T_1$ and $p>R_1>r$\\
+\hspace{5mm}if $T_2>t_i-T_1$ BackLog = \(b+rT_2+rT_1\)\\
+\hspace{5mm}if $T_2<t_i-T_1$ and $R_2>R_1$ BackLog =
+\(b+rt_i+(T_1-t_i)R_1+R_1T_2\)\\ \hspace{5mm}if $T_2<t_i-T_1$ and
+$R_2<R_1$ BackLog = \(b+rt_i-R_2(t_i-T_1-T_2)\)\\ if $t_i>T_1$ and
+$p<R_1$\\ \hspace{5mm}if $T_2>t_i-T_1$ BackLog =
+\(M+pt_i+r(T_2-t_i+T_1)\)\\ \hspace{5mm}if $T_2<t_i-T_1$ and
+$R_2>p$ BackLog = \(M+pT_1+pT_2\)\\ \hspace{5mm}if $T_2<t_i-T_1$
+and $R_2<p$ BackLog = \(M+pt_i-R_2(t_i-T_1-T_2)\)\\ else BackLog =
+$\infty$ }
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-18}
+\begin{problem}
+A flow with T-SPEC $(p,M,r,b)$ traverses nodes 1 and 2.  Node $i$
+offers a service curve $c_{i}(t) = R_{i}(t-T_{i})^{+}$. A shaper
+is placed between nodes 1 and 2. The shaper forces the flow to the
+arrival curve $z(t)=\min(R_{2}t, bt+m)$.
+\begin{enumerate}
+
+\item
+What buffer size is required for the flow at the shaper~? \sol{
+Let $\tau=\frac{b-M}{p-r}$. If $T_1 > \tau$ then the buffer size
+is $B=rT_1+b$. Otherwise,
+$$
+B = \bracket{ M+(P-R_1)*\tau+R_1T_1 \gap,R_1\leq P, R_1\leq R_2 \\
+M+(P-R_2)*\tau+R_2T_1 \gap,R_1\leq P, R_1>R_2 \\ M+PT_1 \gap\gap
+,R_1 > P, R_2\geq P \\ M+\tau*(P-R_2)+R_2T_1 \gap ,R_1 > P, R_2<
+P }
+$$
+}
+\item
+What buffer size is required at node 2~? What value do you find if
+$T_{1}=T_{2}$~?
+\sol{\\
+Let $\tau_{2}=\frac{m}{R_{2}-a}$. The buffer size is:
+$$
+B_{2}=\bracket{ aT_{2} + m \gap, \tau_{2}<T_{2} \\ R_{2}T_{2} \gap, otherwise}.
+$$
+$B_{2}$ does not depend on $T_{1}$.
+}
+\item Compare the sum of the preceding buffer sizes to the size
+that would be required if no re-shaping is performed.
+\item Give an arrival curve for the output of node 2.
+\sol{ Choose any arrival curve that satifies the
+conditions}
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-19}
+\begin{problem}
+        Prove the formula giving of paragraph ``Buffer Sizing at a
+        Re-shaper"
+\sol{Follows}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-20}
+\begin{problem}
+        Is Theorem ``Input-Output Characterization of Greedy Shapers" a stronger result
+        than Corollary ``Service Curve offered by a Greedy Shaper"~?
+\sol{ No, the theorem is equivalent to the corollary. Indeed, if
+corollary is true, then
+$$
+R^*\geq R \mpc \sigma
+$$
+Now by the arrival curve property
+$$
+R* \leq R^* \mpc \sigma \leq R \otimes \sigma
+$$
+since $R^*\leq R$. Thus $R*=R\otimes \sigma.$ }
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\problemfile{L20ex-fluid-gal}
+%\begin{problem}
+%
+%Define in at most ten lines each of the concepts given in the
+%Introduction
+%\end{problem}
+%\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-21}
+\begin{problem}
+
+\begin{enumerate}
+
+    \item Explain what is meant by ``we pay bursts only once''.
+
+        \item Give a summary in at most 15 lines of the main properties of
+        shapers
+
+        \item  Define the following concepts by using the $\otimes $ operator:
+        Service Curve, Arrival Curve, Shaper
+
+        \item  What is a greedy source~?
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-22}
+\begin{problem}
+
+\begin{enumerate}
+        \item  Show that for a constant bit rate trunk with rate $c$, the backlog at
+time $t$ is given by
+$$
+W(t) = \sup_{s \leq t} \left \{ R(t) - R^{*}(s) - c(t-s) \right \}
+$$
+
+        \item  What does the formula become if we assume only that,
+        instead a constant bit rate trunk, the node is a scheduler
+offering $\beta$ as a service curve~?
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-23}
+\begin{problem}
+Is it true that offering a service curve $\beta$ implies that,
+during any busy period of length $t$, the amount of service
+received rate is at least $\beta(t)$ ? \sol{No, the property means
+that $\beta$ is a strict service curve. In general, a service
+curve property is not strict. Consider for example a shaper. }
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Sept 98
+%% PROBLEM FILES: Module D22 = network calculus
+%% supp problems to be merged with the new filw
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-24}
+\begin{problem}
+A flow $S(t)$ is constrained by an arrival curve $\alpha$. The
+flow is fed into a shaper, with shaping curve $\sigma$. We assume
+that
+$$
+\alpha(s) = \min (m + ps, b +rs)
+$$
+and
+$$
+\sigma (s) = \min ( Ps, B+Rs )
+$$
+We assume that $p>r$, $m \leq b$ and $P \geq R$.
+
+The shaper has a fixed buffer size equal to $X \geq m$. We require
+that the buffer never overflows.
+
+\begin{enumerate}
+        \item Assume that $B=+\infty$.  Find the smallest
+        of $P$ which guarantees that there is no buffer overflow.
+        Let $P_{0}$ be this value.
+
+        \item We do not assume that $B=+ \infty$ any more, but we
+        assume that $P$ is set to the value $P_{0}$ computed in the
+        previous question.  Find the value $(B_{0}, R_{0})$ of $(B,R)$  which
+        guarantees that there is no buffer overflow and minimizes the cost
+        function $c(B,R)= aB + R$, where $a$ is a positive constant.
+
+        What is the
+        maximum virtual delay if $(P, B, R)=(P_{0},B_{0}, R_{0})$~?
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%  %%%%%%%%%%%%%%%%%%%
+\problemfile{L20-25}
+\begin{problem}
+\nfs{GCRA and Eff Bw, easy; GCRA and Eff Bw exam ED 99, modified
+feb 99 by leb\\}
+We consider a buffer of size $X$ cells, served at
+a constant
+        rate of $c$ cells per second.  We put $N$ identical connections into
+        the buffer; each of the $N$ connections is constrained both by
+        GCRA($T_{1}$, $\tau_{1}$) and GCRA($T_{2}$, $\tau_{2}$).  What is
+        the maximum value of $N$ which is possible if we want to guarantee
+        that there is no cell loss at all~?
+
+        Give the numerical application for $T_{1}=0.5$~ms, $\tau_{1}=4.5$~ms,
+        $T_{2}=5$~ms, $\tau_{2}=495$~ms, $c=10^6$~cells/second, $X=10^4$~cells
+        \ifsol
+
+        Call $e$ the effective bandwidth for a delay of $\frac{X}{c}$. The
+        answer is the largest integer $\leq$ $\frac{c}{e}$.
+
+        NA: $D=  \frac{X}{c} =10$ms. $e=11000/6$ cells/second. $N=6000/11 = 545$
+        \fi
+\end{problem}%
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%exam ED 99%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-26}
+\begin{problem}
+\nfs{non initial bucket level, hard\\}
+ We consider a flow defined by
+its function $R(t)$, with
+                $R(t)=$ the number of bits observed since time $t=0$.
+ \begin{enumerate}
+  \item The
+   flow is fed into a buffer, served at a rate $r$.  Call $q(t)$
+   the buffer content at time $t$.  We do the same assumptions as
+   in the lecture, namely, the buffer is large enough, and is
+   initially empty. What is the expression of $q(t)$ assuming we
+   know $R(t)$~?
+
+   We assume now that, unlike what we saw in the lecture, the initial
+   buffer content (at time $t=0$) is \emph{not} $0$, but some value $q_{0}
+   \geq 0$. What is now the expression for $q(t)$~?
+\sol{\\
+The expression of $q(t)$ when the  buffer is initially empty is:
+$$
+q(t) = \sup_{s: s \leq t} \left \{ R(t) - R(s) - r(t-s) \right \}
+$$
+If the initial buffer content is some value $q_0$ then we have:
+$$
+q(t) = \max { ( \sup_{s: s \leq t} \left \{ R(t) - R(s) - r(t-s) \right \}, R(t)- rt+q_0  ) }
+$$
+}
+ \item The flow is put into a leaky bucket policer, with rate
+ $r$ and bucket size $b$.  This is a policer, not a shaper, so
+ nonconformant bits are discarded.  We assume that the bucket
+ is large enough, and is initially empty.  What is the
+ condition on $R$ which ensures that no bit is discarded by the
+ policer (in other words, that the flow is conformant)~?
+
+ We assume now that, unlike what we saw in the lecture, the
+ initial \emph{bucket} content (at time $t=0$) is \emph{not}
+ $0$, but some value $b_{0} \geq 0$.  What is now the condition
+ on $R$ which ensures that no bit is discarded by the policer
+ (in other words, that the flow is conformant)~?
+\sol{\\
+The condition on $R$ which ensures that the flow is conformant when the bucket is initially empty is :
+$$
+\sup_{s: s \leq t} \left \{ R(t) - R(s) - r(t-s) \right \} \leq b
+$$
+If the initial bucket content is some value $b_0$ then the condition becomes:
+$$
+\max { ( \sup_{s: s \leq t} \left \{ R(t) - R(s) - r(t-s) \right \}, R(t)- rt+b_0  ) } \leq b
+$$
+}
+\end{enumerate}
+\end{problem}%
+\end{filecontents}
+%%%%%% de Thiele %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-27}
+\begin{problem}
+Consider a variable capacity network node, with capacity curve
+$M(t)$. Show that there is one maximum function $S^*(t)$ such that
+for all $0 \leq s \leq t$, we have
+$$M(t)-M(s) \geq S^*(t-s)
+$$
+Show that $S^*$ is super-additive.
+
+Conversely, if a function $\beta$ is super-additive, show that
+there is a variable capacity network node, with capacity curve
+$M(t)$, such that for all $0 \leq s \leq t$, we have $M(t)-M(s)
+\geq S^*(t-s) $.
+
+Show that, with a notable exception, a shaper cannot be modeled as
+a variable capacity node.
+\end{problem}
+\end{filecontents}
+%%%%%% packetized shaper %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-28}
+\begin{problem}
+\begin{enumerate}
+  \item Consider a packetized greedy shaper with shaping curve
+  $\sigma(t)=rt$ for $t \geq 0$. Assume that $L(k)= k M$ where $M$ is fixed.
+  Assume that the input is given by $R(t)=10 M$ for $t>0$ and $R(0)=0$. Compute
+  the sequence $R^{(i)}(t)$ used in the representation of the output of the
+  packetized greedy shaper, for $i=1,2,3,...$.
+  \sol{
+  The output $R^{(i)}(t)$ is a train of packets $m=1,...,10$, all of size $M$ at
+  times $T^{(i)}_m = (m+i-1) \frac{M}{r}$. As $i$ goes to infinity,
+  $R^{(i)}(t)$ goes to $0$, for any fixed $t$.}
+  \item Same question if $\sigma(t)=(rt+ 2M) 1_\{t>0\}$.
+  \sol{
+  $T^{(1)}_1 = T^{(1)}_2 = 0$ and otherwise $T^{(1)}_m = (m-2) \frac{M}{r}$.
+  For $i \geq 1$ we have
+  $R^{(i)}=R^{(1)}$ since \thref{theo-psps} applies.}
+\end{enumerate}
+
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%% equivalence GCRA1 et GCRA 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-gcra2}
+\begin{problem}
+\nfs{April 1999} Consider the discrete time leaky bucket
+algorithm, defined as follows. It operates like the GCRA, with the
+following code.
+\begin{itemize}
+        \item  initially, {\tt X = 0} and {\tt LCT = 0}
+        \item  when a cell arrives at time {\tt t}, then
+        \begin{verbatim}
+                if (X - t + LCT > tau)
+                   result = NON-CONFORMANT;
+                else {
+                     X = max (X - t + LCT, 0) + T;
+                     LCT = t;
+                     result = CONFORMANT;
+                     }
+        \end{verbatim}
+\end{itemize}
+Show now that for any input, both the discrete time leaky bucket
+and the GCRA produce the same output.
+
+\ifsol {\em We show by induction on time that, at every point in
+time, the following relation holds
+\begin{equation}\label{eq-gcra-33}
+  {\tt tat} = {\tt X} + {\tt LCT}
+\end{equation}
+and that they produce the same output.
+
+This  is true for $t=0$. Now assume that this is also true up to
+some time $s$ and consider the first cell arrival time $t > s$. It
+follows from the induction hypothesis that both algorithms perform
+the same test and thus produce the same output. In addition, the
+new value of ${\tt tat}$ with the GCRA is
+$${\tt tat'} = {\tt max (t, tat) + T}$$
+while the discrete time leaky bucket produces
+$${\tt X'= max (X - t + LCT, 0) + T }
+\gap \mand \gap {\tt LCT' = t }$$ from where it follows
+immediately that Equation(~\ref{eq-gcra-33}) continues to hold. }
+\fi
+
+Interpret the discrete time leaky bucket algorithm as a leaky
+bucket with appropriate units for time and data, and use this to
+show that the GCRA is equivalent to a leaky bucket. What is the
+mapping between GCRA parameters and leaky bucket parameters~?
+\ifsol {\em We map the discrete time flow to a continuous time
+flow, using Equation~(~\ref{eq-map-inter}). This is equivalent to
+assuming a continuous time model, with instantaneous cell
+arrivals. We can interprete the discrete time leaky bucket as
+follows. Upon a cell arrival, the level of fluid is updated,
+accounting for a leak rate of 1; then, if the updated level is
+less than {\tt tau}, the arriving cell pours into the bucket an
+amount of {\tt T} units of fluid. This is equivalent to requiring
+that the bucket never exceeds {\tt T + tau}. Remember that we
+think of an arriving cell stream as a fluid with an impulse at a
+cell arrival. The algorithm is thus equivalent to a leaky bucket
+controller, with bucket depth {\tt T + tau}, leak rate equal to 1
+unit of fluid per time unit, and with every cell pouring into the
+bucket an instantaneous amount of {\tt T} units of fluid.
+
+Now we change the unit of data in order to let the cell size be
+equal to $\delta$ units of data. The leak rate is now equal to $r
+= \frac{\delta}{\tt T}$, and the bucket size to $b =
+\frac{(T+\tau)\delta}{T}$. } \fi
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-29}
+\begin{problem}
+\nfs{exam ed fev 2000; `` une classe au mus\'{e}e"} Consider a
+source given by the function
+$$
+\bracket{R(t) = B \mf t > 0\\R(t)= 0 \mf t \leq 0 }
+$$
+Thus the flow consists of an instantaneous burst of $B$ bits.
+\begin{enumerate}
+\item What is the minimum arrival curve for the flow~?
+  \item Assume that the flow is served in one node that offers a
+  minimum service curve of the rate latency type, with rate $r$
+  and latency $\Delta$. What is the maximum delay for the last bit
+  of the flow~?
+  \item We assume now that the flow goes through a series of two
+  nodes, $\calN_1$ and $\calN_2$, where $\calN_i$ offers to the
+  flow a
+  minimum service curve of the rate latency type, with rate $r_i$
+  and latency $\Delta_i$, for $i=1,2$. What is the the maximum delay for the last bit
+  of the flow through the series of two nodes~?
+  \item With the same assumption as in the previous item, call $R_1(t)$ the function describing the
+  flow at the output of node $\calN_1$ (thus at the input of node $\calN_2$). What is
+  the worst case minimum arrival curve for $R_1$~?
+  \item We assume that we insert between $\calN_1$ and $\calN_2$ a
+  ``reformatter" $\calS$.
+  The input to $\calS$ is $R_1(t)$. We call $R'_1(t)$ the output of $\calS$.
+  Thus $R'_1(t)$ is now the input to $\calN_2$.
+   The function of the ``reformatter"$\calS$ is to delay the
+  flow $R_1$ in order to output a flow $R'_1$ that is a delayed version of
+  $R$. In other words, we must have $R'_1(t)=R(t-d)$ for some
+  $d$. We assume that the reformatter $\calS$ is optimal in the
+  sense that it chooses the smallest possible $d$. In the worst
+  case, what is this optimal value of $d$~?
+  \item With the same assumptions as in the previous item, what is
+  the worst case end-to-end delay through the series of nodes
+  $\calN_1, \calS, \calN_2$~? Is the reformatter transparent~?
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \problemfile{L20-31}
+ \begin{problem}
+ \nfs{another vl shaper}
+ Let $\sigma$ be a good function. Consider the concatenation of a
+ bit-by-bit greedy shaper, with curve $\sigma$, and an
+ $L$-packetizer. Assume that $\sigma(0^+)=0$.
+ Consider only inputs that are $L$-packetized
+\begin{enumerate}
+  \item Is this system a packetized shaper for $\sigma$ ?\sol{~No,
+  the condition on $\sigma$ implies that a packetized shaper for
+  $\sigma$ is a degenerate system, and this one is not.}
+  \item Is it a packetized shaper for $\sigma+l_{\max}$ ?
+  \sol{~This question is more reasonable. Indeed, since $P^L(x)
+  \geq x -l_{\max}$, the answer is yes.}
+  \item Is it a packetized greedy shaper for $\sigma+l_{\max}$ ?
+  \sol{~This question is more difficult. In general, the answer is no.
+  To see why, consider $\sigma(t)=rt$ and draw any sample path. With this
+  system, the first packet is delayed by $\frac{l_1}{r}$ whereas the
+  packetized greedy shaper for $rt + l_{\max}$ would not delay the
+  first packet.}
+\end{enumerate}
+ \end{problem}
+ \end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-32}
+\begin{problem}
+Assume that $\sigma$ is a good function and $\sigma= \sigma_0 + l
+u_0$ where $u_0$ is the step function with a step at $t=0$. Can we
+conclude that $\sigma_0$ is sub-additive ? \sol{ No, see textbook
+for a counter-example. }
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L20-33}
+\begin{problem}
+Is the operator $(P^L)$ upper-semi-continuous ? \sol{No, consider
+a sequence $x_n=l_1 + \frac{l_2}{n}$. We have $P^L(x_n)=l_1$, thus
+$\inf_n [P^L(x_n)]=l_1$. Now $\inf_n x_n = l_1$ thus $P^L[\inf_n
+(x_n)]=0$.}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \problemfile{L20-34}
+ \begin{problem}
+\begin{enumerate}
+  \item
+ Consider the concatenation of an $L$-packetizer and a network
+ element with minimum service curve $\beta$ and maximum service
+ curve $\gamma$. Can we say that the combined system offer a
+ minimum service curve $(\beta(t)-l_{\max})^+$ and a maximum service
+ curve $\gamma$, as in the case where the concatenation would be
+ in the reverse order ? \sol{ Yes, and the proof is similar}.
+  \item Consider the concatenation of a GPS node offering a guarantee
+  $\lambda_{r_1}$, an $L$-packetizer, and a second GPS node offering a guarantee
+  $\lambda_{r_2}$. Show that the combined system offers a rate-latency
+  service curve with rate $R=\min(r_1, r_2)$ and
+  latency$E=\frac{l_{\max}}{\max(r_1, r_2)}$.
+  \sol{If $r_1< r_2$, consider the combined system made of the packetizer and
+  the second node. From the previous question, it offers a rate latency
+  service curve with rate $r_2$ and latency
+  $E=\frac{l_{\max}}{r_2}=\frac{l_{\max}}{\max(r_1, r_2)}$. Thus
+  the global system offers a rate latency service curve with rate
+  $R=\min(r_1, r_2)$ and latency $E$.\\
+  Otherwise, consider first as combined system the concatenation
+  of the first GPS node and the packetizer, and apply the textbook
+  result with the same reasoning. Thus the result is true in all cases.}
+\end{enumerate}
+ \end{problem}
+ \end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \problemfile{L20-35}
+ \begin{problem}
+ Consider a node that offers to a flow $R(t)$ a rate-latency
+ service curve $\beta= S_{R,L}$. Assume that $R(t)$ is $L$-packetized, with
+ packet arrival times called $T_1, T_2,...$  (and
+ is left-continuous,
+ as usual)
+
+ Show that
+ $(R\mpc \beta)(t) = \min_{T_i \in [0, t]} [R(T_i) + \beta(t-T_i)]$
+  (and thus, the $\inf$ is attained).
+\sol{ For a fixed $t$, study the function of $s$ given by $R(s) +
+\beta(t-s)$. For $T_{i-1} < s \leq T_i$ we have $R(s)=R(T_i)$ thus
+the $\inf$ for $s \in (T_{i-1}, T_i]$ is attained at $T_i$.}
+ \end{problem}
+ \end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \problemfile{}
+% \begin{problem}
+% \end{problem}
+% \end{filecontents}

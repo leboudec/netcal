@@ -1,0 +1,119 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%             This is layout.m01
+%
+% It defines various sizes and settings for books
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \topmargin=0cm
+ \textwidth=6.5in
+ \headheight=0cm
+ \headsep=1cm
+ \textheight=22.5cm
+ \footskip=3cm
+
+ %\oddsidemargin=0.7cm
+ \oddsidemargin=0.0cm
+ \evensidemargin=0.0cm
+%\headsep=12pt modified LEB 2002.01.11
+\headsep=1cm
+
+\baselineskip=12pt
+\parindent=15pt
+\parskip=0pt plus 1pt
+\hfuzz=2pt \frenchspacing
+
+\tolerance=500
+
+\abovedisplayskip=3mm plus6pt minus 4pt \belowdisplayskip=3mm
+plus6pt minus 4pt \abovedisplayshortskip=0mm plus6pt minus 2pt
+\belowdisplayshortskip=2mm plus4pt minus 4pt
+
+\predisplaypenalty=0 \clubpenalty=10000 \widowpenalty=10000
+
+\newdimen\betweenumberspace          % dimension for space between
+\betweenumberspace=5pt               % number and text of titles.
+\newdimen\headlineindent             % dimension for space between
+\headlineindent=2.5cc                % number and text of headings.
+
+\intextsep 20pt plus 2pt minus 2pt
+
+\setcounter{topnumber}{4}
+\def\topfraction{.9}
+\setcounter{bottomnumber}{2}
+\def\bottomfraction{.5}
+\setcounter{totalnumber}{6}
+\def\textfraction{.2}
+\def\floatpagefraction{.5}%
+%
+%% Figures and tables are processed in small print
+%\def \@floatboxreset {%
+%        \reset@font
+%        \small
+%        \@setnobreak
+%        \@setminipage
+%}
+%\def\figure{\@float{figure}}
+%\@namedef{figure*}{\@dblfloat{figure}}
+%\def\table{\@float{table}}
+%\@namedef{table*}{\@dblfloat{table}}
+%\def\fps@figure{htbp}
+%\def\fps@table{htbp}
+%
+%\labelsep=5\p@                       % measures for lists
+%\leftmargini=17.777\p@
+%\labelwidth\leftmargini\advance\labelwidth-\labelsep
+%\leftmarginii=\leftmargini \leftmarginiii=\leftmargini
+%\parsep=\parskip
+%
+%\def\@listI{\leftmargin\leftmargini
+%        \parsep=\parskip
+%        \topsep=\medskipamount
+%        \itemsep=\parskip \advance\itemsep by -\parsep}
+%\let\@listi\@listI
+%\@listi
+%
+%\def\@listii{\leftmargin\leftmarginii
+%        \labelwidth\leftmarginii\advance\labelwidth by -\labelsep
+%        \parsep=\parskip
+%        \topsep=\z@
+%        \itemsep=\parskip \advance\itemsep by -\parsep}
+%\def\@listiii{\leftmargin\leftmarginiii
+%        \labelwidth\leftmarginiii\advance\labelwidth by -\labelsep
+%        \parsep=\parskip
+%        \topsep=\z@
+%        \itemsep=\parskip \advance\itemsep by -\parsep}
+%%
+%\def\@normalsize{\@setsize\normalsize{12pt}\xpt\@xpt
+%\abovedisplayskip=3mm plus6pt minus 4pt \belowdisplayskip=3mm
+%plus6pt minus 4pt \abovedisplayshortskip=0mm plus6pt minus 2pt
+%\belowdisplayshortskip=2mm plus4pt minus 4pt
+%\let\@listi\@listI}   % Setting of \@listi added 9 Jun 87
+%%
+%\def\small{\@setsize\small{10pt}\ixpt\@ixpt
+%\abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \belowdisplayskip
+%\abovedisplayskip \abovedisplayshortskip \z@ plus2\p@
+%\belowdisplayshortskip 4\p@ plus2\p@ minus2\p@
+%\def\@listi{\leftmargin\leftmargini
+%\topsep 4pt plus 2pt minus 2pt\parsep\parskip
+%\itemsep\parskip}}
+%%
+%\def\itemize{\ifnum \@itemdepth >3 \@toodeep\else \advance\@itemdepth \@ne
+%\ifnum \@itemdepth=1 \leftmargini=10\p@
+%\labelwidth\leftmargini\advance\labelwidth-\labelsep
+%\leftmarginii=\leftmargini \leftmarginiii=\leftmargini \fi
+%\edef\@itemitem{labelitem\romannumeral\the\@itemdepth}%
+%\list{\csname\@itemitem\endcsname}{\def\makelabel##1{\rlap{##1}\hss}}\fi}
+%%
+%\newdimen\verbatimindent \verbatimindent\parindent
+%\def\verbatim{\advance\@totalleftmargin by\verbatimindent
+%\@verbatim \frenchspacing\@vobeyspaces \@xverbatim}
+%%
+%\let\footnotesize=\small
+%%
+%\def\petit{\par\addvspace{6pt}\small}
+%\def\endpetit{\par\addvspace{6pt}}
+%%
+%\raggedbottom
+%\normalsize  % Choose the normalsize font.

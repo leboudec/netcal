@@ -1,0 +1,285 @@
+\chapter{Introduction}
+%\mylabel{L0}
+
+\section*{What this Book is About}
+Network Calculus is a set of recent developments that provide deep
+insights into flow problems encountered in networking. The
+foundation of network calculus lies in the mathematical theory of
+dioids, and in particular, the Min-Plus dioid (also called
+Min-Plus algebra). With network calculus, we are able to
+understand some fundamental properties of integrated services
+networks,  window flow control, scheduling and buffer or delay
+dimensioning.
+
+This book is organized in three parts. Part~I (Chapters~\ref{L20}
+and \ref{L21}) is a self contained, first course on network
+calculus. It can be used at the undergraduate level or as an entry
+course at the graduate level. The prerequisite is a first
+undergraduate course on linear algebra and one on calculus.
+Chapter~\ref{L20} provides the main set of results for a first
+course: arrival curves, service curves and the powerful
+concatenation results are introduced, explained and illustrated.
+Practical definitions such as leaky bucket and generic cell rate
+algorithms are cast in their appropriate framework, and their
+fundamental properties are derived. The physical properties of
+shapers are derived. Chapter~\ref{L21} shows how the fundamental
+results of Chapter~\ref{L20} are applied to the Internet.
+%integrated services
+%networks such as the Integrated Services Internet or Asynchronous
+%Transfer Mode (ATM) networks.
+We explain, for example, why the Internet integrated services
+internet can abstract any router by a rate-latency service curve.
+We also give a theoretical foundation to some bounds used for
+differentiated services.
+
+Part~II contains reference material that is used in various parts
+of the book. Chapter~\ref{L10} contains all first level
+mathematical background. Concepts such as min-plus convolution and
+sub-additive closure are exposed in a simple way. Part~I makes a
+number of references to \cref{L10}, but is still self-contained.
+The role of \cref{L10} is to serve as a convenient reference for
+future use. \cref{L11} gives advanced min-plus algebraic results,
+which concern fixed point equations that are not used in Part~I.
+
+Part~III contains advanced material; it is  appropriate for a
+graduate course. Chapter~\ref{L22} shows the application of
+network calculus to the determination of optimal playback delays
+in guaranteed service networks; it explains how fundamental bounds
+for multimedia streaming can be determined. Chapter~\ref{L24}
+considers systems with aggregate scheduling. While the bulk of
+network calculus in this book applies to systems where schedulers
+are used to separate flows, there are still some interesting
+results that can be derived for such systems. Chapter~\ref{L23}
+goes beyond the service curve definition of \cref{L20} and
+analyzes adaptive guarantees, as they are used by the Internet
+differentiated services. Chapter~\ref{L23b} analyzes time varying
+shapers; it is an extension of the fundamental results in
+Chapter~\ref{L20} that considers the effect of changes in system
+parameters due to adaptive methods. An application is to
+renegotiable reserved services. Lastly, Chapter~\ref{L30} tackles
+systems with losses. The fundamental result is a novel
+representation of losses in flow systems. This can be used to
+bound loss or congestion probabilities in complex systems.
+
+Network calculus belongs to what is sometimes called ``exotic
+algebras" or ``topical algebras". This is a set of mathematical
+results, often with high description complexity, that give
+insights into man-made systems such as concurrent programs,
+digital circuits and, of course, communication networks. Petri
+nets fall into this family as well. For a general discussion of
+this promising area, see the overview paper \cite{jegu99} and the
+book \cite{maxPlus}.
+
+We hope to convince many readers that there is a whole set of
+largely unexplored, fundamental relations that can be obtained
+with the methods used in this book. Results such as ``shapers keep
+arrival constraints" or ``pay bursts only once", derived in
+Chapter~\ref{L20} have physical interpretations and are of
+practical importance to network engineers.
+
+All results here are deterministic. Beyond this book, an advanced
+book on network calculus would explore the many relations between
+stochastic systems and the deterministic relations derived in this
+book. The interested reader will certainly enjoy the pioneering
+work in \cite{maxPlus} and \cite{Changbook}. The appendix contains
+an index of the terms defined in this book.
+
+\section*{Network Calculus, a System Theory for Computer
+Networks}
+
+In the rest of this introduction we highlight the analogy between
+network calculus and what is called ``system theory". You may
+safely skip it if you are not familiar with system theory.
+
+Network calculus is a theory of {\em deterministic queuing}
+systems found in computer networks. It can also be viewed as the
+{\em system theory} that applies to computer networks. The main
+difference with traditional system theory, as the one that was so
+successfully applied to design electronic circuits, is that here
+we consider another algebra, where the operations are changed as
+follows: addition becomes computation of the minimum,
+multiplication becomes addition.
+
+Before entering the subject of the book itself, let us briefly
+illustrate some of the analogies and differences between min-plus
+system theory, as applied in this book to communication networks,
+and traditional system theory, applied to electronic circuits.
+
+Let us begin with a very simple circuit, such as the RC cell represented in Figure~\ref{fig:compcircuit}.
+If the input signal is the voltage $x(t) \in \Reals$, then the output $y(t) \in \Reals$
+of this simple circuit is the convolution of $x$ by the impulse response of this circuit,
+which is here $h(t) = \exp(-t/RC)/RC$ for $t \geq 0$:
+$$ y(t) =  (h \otimes x)(t) = \int_{0}^{t} h(t-s)x(s) ds.  $$
+
+Consider now a node of a communication network, which is idealized as a (greedy) shaper. A
+(greedy) shaper is a device that forces an input flow $x(t)$ to have an output $y(t)$ that
+conforms to a given set of rates according to a traffic envelope $\sigma$ (the shaping curve),
+at the expense of possibly delaying bits in the buffer.
+Here the input and output `signals' are cumulative flow, defined as the number of bits
+seen on the data flow in time interval $[0,t]$. These functions are non-decreasing with time $t$.
+Parameter $t$ can be continuous or discrete.
+We will see in this book that $x$ and $y$ are linked by the relation
+$$ y(t) =  (\sigma \otimes x)(t) = \inf_{s \in \Reals \mst 0 \leq s \leq t} \left\{ \sigma(t-s) + x(s) \right\}. $$
+This relation defines the min-plus convolution between $\sigma$ and $x$.
+
+\begin{figure}[!h]
+\insfig{Compcircuit}{0.55} \mycaption{An RC circuit (a) and a
+greedy shaper (b), which are two elementary linear systems in
+their respective algebraic structures.} \mylabel{fig:compcircuit}
+\end{figure}
+
+
+Convolution in traditional system theory is both commutative and
+associative, and this property allows to easily extend the
+analysis from small to large scale circuits. For example, the
+impulse response of the circuit of
+Figure~\ref{fig:compositionlinear}(a) is the convolution of the
+impulse responses of each of the elementary cells:
+$$ h(t) = (h_1 \otimes h_2)(t) = \int_{0}^{t} h_1(t-s)h_2(s) ds.  $$
+
+The same property applies to greedy shapers, as we will see in
+Chapter~\ref{L20}. The output of the second shaper of
+Figure~\ref{fig:compositionlinear}(b) is indeed equal to $y(t) =
+(\sigma \otimes x)(t)$, where
+$$\sigma(t) =  (\sigma_1 \otimes \sigma_2)(t) = \inf_{s \in \Reals \mst 0 \leq s \leq t} \left\{ \sigma_1(t-s) + \sigma_2(s) \right\}. $$
+This will lead us to understand the phenomenon known as ``pay
+burst only once'' already mentioned earlier in this introduction.
+
+
+\begin{figure}[!h]
+\insfig{Compositionlinearsystems}{0.55} \mycaption{The impulse
+response of the concatenation of two linear circuit is the
+convolution of the individual impulse responses (a), the shaping
+curve of the concatenation of two shapers is the convolution of
+the individual shaping curves (b).}
+\protect\label{fig:compositionlinear}
+\end{figure}
+
+
+There are thus clear analogies between ``conventional'' circuit
+and system theory, and network calculus. There are however
+important differences too.
+
+A first one is the response of a linear system to the sum of the
+inputs. This is a very common situation, in both electronic
+circuits (take the example of a linear low-pass filter used to
+clean a signal $x(t)$ from additive noise $n(t)$, as shown in
+Figure~\ref{fig:linear-response}(a)), and in computer networks
+(take the example a link of a buffered node with output link
+capacity $C$, where one flow of interest $x(t)$ is multiplexed
+with other background traffic $n(t)$, as shown in
+Figure~\ref{fig:linear-response}(b)).
+
+\begin{figure}[!h]
+\insfig{Linearresponse}{0.55} \mycaption{The response $y_{tot}(t)$
+of a linear circuit to the sum of two inputs $x + n$ is the sum of
+the individual responses (a), but the response $y_{tot}(t)$ of a
+greedy shaper to the aggregate of two input flows $x +n$ is not
+the sum of the individual responses (b).}
+\protect\label{fig:linear-response}
+\end{figure}
+
+Since the electronic circuit of
+Figure~\ref{fig:linear-response}(a) is a linear system, the
+response to the sum of two inputs is the sum of the individual
+responses to each signal.  Call $y(t)$ the response of the system
+to the pure signal $x(t)$, $y_n(t)$ the response to the noise
+$n(t)$, and $y_{tot}(t)$ the response to the input signal
+corrupted by noise $x(t) + n(t)$. Then $ y_{tot}(t) = y(t) +
+y_n(t)$. This useful property is indeed exploited to design the
+optimal linear system that will filter out noise as much as
+possible.
+
+If traffic is served on the outgoing link as soon as possible in
+the FIFO order, the node of Figure~\ref{fig:linear-response}(b) is
+equivalent to a greedy shaper, with shaping curve $\sigma(t) = Ct$
+for $t \geq 0$. It is therefore also a linear system, but this
+time in min-plus algebra. This means that the response to the
+minimum of two inputs is the minimum of the responses of the
+system to each input taken separately. However, this also mean
+that the response to the sum of two inputs is no longer the sum of
+the responses of the system to each input taken separately,
+because now  $x(t) + n(t)$ is a nonlinear operation between the
+two inputs $x(t)$ and $n(t)$: it plays the role of a
+multiplication in conventional system theory. Therefore the
+linearity property does unfortunately not apply to the aggregate
+$x(t) + n(t)$. As a result, little is known on the aggregate of
+multiplexed flows. Chapter~\ref{L24} will learn us some new
+results and problems that appear simple but are still open today.
+
+In both electronics and computer networks, nonlinear systems are
+also frequently encountered. They are however handled quite
+differently in circuit theory and in network calculus.
+
+Consider an elementary nonlinear circuit, such as the BJT
+amplifier circuit with only one transistor, shown in
+Figure~\ref{fig:non-linear-system}(a). Electronics engineers will
+analyze this nonlinear circuit by first computing a static
+operating point $y^{\star}$ for the circuit, when the input
+$x^{\star}$ is a fixed constant voltage (this is the DC analysis).
+Next they will linearize the nonlinear element (i.e the
+transistor) around the  operating point, to obtain a so-called
+small signal model, which a linear model of impulse response
+$h(t)$ (this is the AC analysis). Now $x_{lin}(t) = x(t) -
+x^{\star}$ is a time varying function of time within a small range
+around $x^{\star}$, so that $y_{lin}(t) = y(t) - y^{\star}$ is
+indeed approximately given by $y_{lin}(t) \approx (h  \otimes
+x_{lin})(t) $. Such a model is shown on
+Figure~\ref{fig:non-linear-system}(b). The difficulty of a
+thorough nonlinear analysis is thus bypassed by restricting the
+input signal in a small range around the operating point. This
+allows to use a linearized model whose accuracy is sufficient to
+evaluate performance measures of interest, such as the gain of the
+amplifier.
+
+\begin{figure}[!h]
+\insfig{Nonlinearsystem}{0.85} \mycaption{An elementary nonlinear
+circuit (a) replaced by a (simplified) linear model for small
+signals (b), and a nonlinear network with window flow control (c)
+replaced by a (worst-case) linear system (d).}
+\protect\label{fig:non-linear-system}
+\end{figure}
+
+In network calculus, we do not decompose inputs in a small range
+time-varying part  and another large constant part. We do however
+replace nonlinear elements by linear systems, but the latter ones
+are now a lower bound of the nonlinear system. We will see such an
+example with the notion of service curve, in Chapter~\ref{L20}: a
+nonlinear system $y(t) = \Pi(x)(t) $ is replaced by a linear
+system $y_{lin}(t) = (\beta \otimes x)(t)$, where $\beta$ denotes
+this service curve. This model is such that $y_{lin}(t) \leq y(t)$
+for all $t \geq 0$, and all possible inputs $x(t)$. This will also
+allow us to compute performance measures, such as delays and
+backlogs in nonlinear systems. An example is the window flow
+controller illustrated in Figure~\ref{fig:non-linear-system}(c),
+which we will analyze in Chapter~\ref{L11}. A flow $x$ is fed via
+a window flow controller in a network that realizes some mapping
+$y = \Pi(x)$. The window flow controller limits the amount of data
+admitted in the network in such a way that the total amount of
+data in transit in the network is always less than some positive
+number (the window size). We do not know the exact mapping $\Pi$,
+we assume that we know one service curve $\beta$ for this flow, so
+that we can replace the nonlinear system of
+Figure~\ref{fig:non-linear-system}(c) by the linear system of
+Figure~\ref{fig:non-linear-system}(d), to obtain deterministic
+bounds on the end-to-end delay or the amount of data in transit.
+
+
+The reader familiar with traditional circuit and system theory
+will discover many other analogies and differences between the two
+system theories, while reading this book. We should insist however
+that no prerequisite in system theory is needed to discover
+network calculus as it is exposed in this book.
+
+
+\section*{Acknowledgement}
+We gratefully acknowledge the pioneering work of Cheng-Shang Chang
+and Ren\'{e} Cruz; our discussions with them have influenced this
+text. We thank Anna Charny, Silvia Giordano, Olivier Verscheure,
+Fr\'{e}d\'{e}ric Worm, Jon Bennett, Kent Benson, Vicente Cholvi,
+William Courtney, Juan Echagu\"{e}, Felix Farkas, G\'{e}rard
+H\'{e}buterne, Milan Vojnovi\'{c} and Zhi-Li Zhang for the
+fruitful collaboration. The interaction with Rajeev Agrawal,
+Matthew Andrews, Fran\c{c}ois Baccelli, Guillaume Urvoy and Lothar
+Thiele is acknowledged with thanks. We are grateful to Holly
+Cogliati for helping with the preparation of the manuscript.

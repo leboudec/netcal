@@ -1,0 +1,442 @@
+\chapter{Time Varying Shapers}
+\mylabel{L23b}
+
+\section{Introduction}
+Throughout the book we usually assume that systems are idle at
+time $0$. This is not a limitation for systems that have a renewal
+property, namely, which visit the idle state infinitely often --
+for such systems we choose the time origin as one such instant.
+
+There are cases however where we are interested in the effect at
+time $t$ of non zero initial conditions. This occurs for example
+for re-negotiable services, where the traffic contract is changed
+at periodic renegotiation moments.  An example for this service is
+the Integrated Service of the IETF with the Resource reSerVation
+Protocol (RSVP), where the negotiated contract may be modified
+periodically  \cite{GP98}. A similar service is the
+ATM Available Bit Rate service (ABR).%
+\index{Available Bit Rate} \index{ABR} \index{Re-negotiable
+service}
+With a renegotiable service, the shaper employed by the
+source is time-varying. With ATM, this corresponds to the concept
+of Dynamic
+Generic Cell Rate Algorithm (DGCRA).%
+\index{DGCRA}. At renegotiation moments, the system cannot
+generally be assumed to be idle. This motivates the need for
+explicit formulae that describe the transient effect of non-zero
+initial condition.
+
+In \sref{sec-tvs} we define time varying shapers. In general,
+there is not much we can say apart from a direct application of
+the fundamental min-plus theorems in
+\sref{sec:fixedpointequation}. In contrast, for shapers made of a
+conjunction of leaky buckets, we can find some explicit formulas.
+In \sref{sec-nzic} we derive the equations describing a shaper
+with non-zero initial buffer. In \sref{sec-nzib} we add the
+constraint that the shaper has some history. Lastly, in
+\sref{sec-tvlb}, we apply this to analyze the case where the
+parameters of a shaper are periodically modified.
+
+This chapter also provides an example of the use of time shifting.
+
+\section{Time Varying Shapers}
+\mylabel{sec-tvs}
+
+We define a time varying shaper as follows.
+
+\begin{definition}
+Consider a flow $R(t)$. Given a function of two time variables
+$H(t,s)$, a \emph{time varying shaper} forces the output
+$R^{*}(t)$ to satisfy the condition
+$$
+R^{*}(t) \leq H(t,s) +  R^* (s)
+$$
+for all $s \leq t$, possibly at the expense of buffering some
+data. An optimal time varying shaper, or greedy time varying
+shaper, is one that maximizes its output among all possible
+shapers. \mylabel{def-tvsh}
+\index{time varying shaper}
+\end{definition}
+The existence of a greedy time varying shaper follows from the
+following proposition.
+\begin{proposition}
+For an input flow $R(t)$ and a function of two time variables
+$H(t,s)$, among all flows $R^* \leq R$ satisfying
+$$R^{*}(t) \leq H(t,s)
++ R^* (s)$$ there is one flow that upper bounds all. It is given
+by
+\begin{equation}\mylabel{eq-vls-1}
+  R^*(t)= \inf_{s \geq 0} \left[\overline{H}(t,s) + R(s)\right]
+\end{equation}
+where $\overline{H}$ is the min-plus closure of $H$, defined in
+\eref{eq:closurelinearoperator} on
+\pgref{eq:closurelinearoperator}.
+\mylabel{prop-tvs}
+\end{proposition}
+\pr
+The condition defining a shaper can be expressed as
+ $$
+ \bracket{R^* \leq \calL_H ( R^* )\\
+ R^* \leq R
+ }
+  $$
+where $\calL_H$ is the min-plus linear operator whose impulse
+response is $H$ (\thref{thm:impulseresponse}). The existence of a
+maximum solution follows from \thref{thm:spacemethod} and from the
+fact that, being min-plus linear, $\calL_H$ is
+upper-semi-continuous. The rest of the proposition follows from
+\thref{thm:linearoperatorclosure} and \thref{thm:spacemethod}.
+\qed
+
+The output of the greedy shaper is given by \eref{eq-vls-1}. A
+time invariant shaper is a special case; it corresponds to $H(s,t)
+= \sigma(t-s)$, where $\sigma$ is the shaping curve. In that case
+we find the well-known result in \thref{theo-gen-shaper}.
+
+In general, \pref{prop-tvs} does not help much. In the rest of
+this chapter, we specialize to the class of concave piecewise
+linear time varying shapers.
+\begin{proposition}
+Consider a set of $J$ leaky buckets with time varying rates
+$r_j(t)$ and  bucket sizes $b_j(t)$. At time $0$, all buckets are
+empty. A flow $R(t)$ satisfies the conjunction of the $J$ leaky
+bucket constraints if and only if for all $0\leq s \leq t$:
+$$R(t) \leq H(t,s) + R(s)$$
+with
+\begin{equation}\mylabel{eq-1sdoasj}
+  H(t,s)= \min_{1 \leq j \leq J} \{ b_{j}(t)+ \int_{s}^t r_{j}(u) du \}
+\end{equation}
+\mylabel{prop-tv-plc}
+\end{proposition}
+\pr
+Consider the level of the $j$th bucket. It is the backlog of the
+variable capacity node (\sref{sec-clasc}) with cumulative function
+$$M_j(t) = \int_{0}^t r_{j}(u) du $$
+We know from \cref{L11} that the output of the variable capacity
+node is given by
+ $$
+ R'_j(t)=\inf_{0 \leq s \leq t} \{ M_j(t) -M_j(s) + R(s) \}
+ $$
+The $j$th leaky bucket constraint is
+ $$R(t)-R'_j(t) \leq b_j(t)$$
+Combining the two expresses the $j$th constraint as
+$$
+R(t)-R(s) \leq M_j(t) -M_j(s) + b_j(t)
+$$
+for all $0\leq s \leq t$. The conjunction of all these constraints
+gives \eref{eq-1sdoasj}.
+
+In the rest of this chapter, we give a practical and explicit
+computation of $\overline{H} $ for $H$ given in \eref{eq-1sdoasj},
+when the functions $r_j(t)$ and $b_j(t)$ are piecewise constant.
+
+\section[Time Invariant Shaper with Initial Conditions]{Time Invariant Shaper with Non-zero Initial Conditions}
+We consider in this section some time invariant shapers. We start
+with a general shaper with shaping curve $\sigma$, whose buffer is
+not assumed to be initially empty. Then we will apply this to
+analyze leaky bucket shapers with non-empty initial buckets.
+
+\subsection{Shaper with Non-empty Initial Buffer}
+\mylabel{sec-nzic}
+
+\begin{proposition}[Shaper with non-zero initial buffer]
+\mylabel{prop-proNZB} Consider a shaper system with shaping curve
+$\sigma$. Assume that $\sigma$ is a good function.  Assume that
+the initial buffer content is $w_0$. Then the output $R^*$ for a
+given input $R$ is
+\begin{equation}
+\mylabel{l23b-enzb}
+\begin{array}{lr}
+R^*(t)= \sigma(t) \wedge \displaystyle\inf_{0 \leq s \leq t} \{
+R(s) + w_0 + \sigma(t-s) \}& \mfa t \geq 0
+\end{array}
+\end{equation}
+\end{proposition}
+\pr First we derive the constraints on the output of the shaper.
+$\sigma$ is the shaping function thus, for all $t \geq s \geq 0$
+\[
+R^*(t) \leq R^*(s) + \sigma(t-s)
+\]
+and given that the bucket at time zero is not empty, for any $t
+\geq 0$, we have that
+\[
+R^*(t) \leq R(t) +  w_0
+\]
+At time $s=0$, no data has left the system; this is expressed with
+\[
+R^*(t) \leq \delta_0(t)
+\]
+The output is thus constrained by
+$$
+R^{*}\leq (\sigma \mpc R^{*}) \wedge (R + w_{0}) \wedge \delta_{0}
+$$
+where $\mpc$ is the min-plus convolution operation, defined by $(f
+\mpc g) (t) = \inf_{s} f(s) + g(t-s)$. Since the shaper is an
+optimal shaper, the output is the maximum function satisfying this
+inequality. We know from \lref{lem-gs} that
+\[
+\begin{array}{ll}
+R^* & = \sigma \mpc [(R+w_0)\wedge \delta_0]\\ &= [\sigma \mpc
+(R+w_0)] \wedge [\sigma \mpc \delta_0]\\ &= [\sigma \mpc (R+w_0)]
+\wedge \sigma
+\end{array}
+\]
+which after some expansion gives the formula in the proposition.
+\qed.
+
+Another way to look at the proposition consists in saying that the
+initial buffer content is represented by an instantaneous burst at
+time $0$.
+
+The following is an immediate consequence.
+\begin{corollary}[Backlog for a shaper with non-zero initial buffer]
+\mylabel{l23b-proLB} The backlog of the shaper buffer with the
+initial buffer content $w_0$ is given by
+\begin{equation}
+w(t)= \left(R(t)- \sigma(t) + w_0 \right) \vee \sup_{0 < s\leq t}
+\{R(t)-R(s)-\sigma(t-s)\} \mylabel{l23b-elb}
+\end{equation}
+\end{corollary}
+
+
+\subsection{Leaky Bucket Shapers with Non-zero Initial Bucket Level}
+\mylabel{sec-nzib} Now we characterize a leaky-bucket shaper
+system with non-zero initial bucket levels.
+
+\begin{proposition}[Compliance with $J$ leaky buckets with non-zero initial
+bucket levels] \mylabel{l23b-corLB} A flow $S(t)$ is compliant
+with $J$ leaky buckets with leaky bucket specifications
+$(r_j,b_j)$, $j=1,2 \dots J$ and initial bucket level $q_j^0$ if
+and only if
+\[
+\begin{array}{lr}
+S(t) - S(s) \leq
+        \displaystyle\min_{1 \leq j \leq J}[r_j \cdot (t-s) +b_j]
+        & \mfa 0 < s\leq t \\
+S(t) \leq \displaystyle \min_{1 \leq j \leq J} [ r_j \cdot t +
+                b_j - q_j^0 ]
+        & \mfa t \geq 0 \\
+\end{array}
+\]
+\end{proposition}
+\pr
+Apply \sref{l23b-proLB} to each of the buckets. \qed
+
+\begin{proposition}[Leaky-Bucket Shaper with non-zero
+initial bucket levels] \mylabel{l23b-proNZLB} Consider a greedy
+shaper system defined by the conjunction of $J$ leaky buckets
+$(r_j,b_j)$, with $j=1,2 \dots J$. Assume that the initial bucket
+level of the j-th bucket is $q_j^0$. The initial level of the
+shaping buffer is zero. The output $R^*$ for a given input $R$ is
+\begin{equation}
+\mylabel{l23b-enzlb}
+\begin{array}{lr}
+R^*(t)= \min [\sigma^0(t), (\sigma \mpc R)(t)]&\mfa t \geq 0
+\end{array}
+\end{equation}
+where $\sigma$ is the shaping function
+\[
+\sigma(u)=\displaystyle \min_{1 \leq j \leq J}\{\sigma_j(u)\}
+        = \displaystyle\min_{1 \leq j \leq J}\{r_j \cdot u+b_j\}
+\]
+and $\sigma^0$ is defined as
+\[
+\sigma^0(u)=\displaystyle \min_{1 \leq j \leq J} \{ r_j \cdot u +
+                b_j - q_j^0 \}
+\]
+\end{proposition}
+\pr By \coref{l23b-corLB} applied to $S=R^*$, the condition that
+the output is compliant with the $J$ leaky buckets is
+\[
+\begin{array}{lr}
+R^*(t) - R^*(s) \leq \sigma(t-s) & \mfa 0 < s\leq t \\ R^*(t) \leq
+\sigma^0(t) & \mfa t \geq 0 \\
+\end{array}
+\]
+Since $\sigma^0(u) \leq \sigma(u)$ we can extend the validity of
+the first equation to $s=0$. Thus we have the following
+constraint:
+\[
+R^*(t) \leq [(\sigma \mpc R^*) \wedge (R  \wedge \sigma^0)](t)
+\]
+Given that the system is a greedy shaper, $R^*(\cdot)$ is the
+maximal solution satisfying those constraints. Using the same
+min-plus result as in \pref{prop-proNZB}, we obtain:
+$$
+R^* = \sigma \mpc (R  \wedge \sigma^0)= (\sigma \mpc R) \wedge
+(\sigma \mpc \sigma^0)$$
+ As $\sigma^0 \leq \sigma$, we obtain
+ $$R^* = (\sigma \mpc R) \wedge
+\sigma^0
+ $$
+\qed
+
+We can now obtain the characterization of a leaky-bucket shaper
+ with non-zero initial conditions.
+\begin{theorem}[Leaky-Bucket Shaper with non-zero
+initial conditions] \mylabel{l23b-proNZ} Consider a shaper defined
+by $J$ leaky buckets $(r_j,b_j)$, with $j=1,2 \dots J$
+(leaky-bucket  shaper). Assume that the initial buffer level of
+ is $w_0$ and the initial level
+of the $j$th bucket is $q_j^0$. The output $R^*$ for a given input
+$R$ is
+\begin{equation}
+\mylabel{l23b-enz}
+\begin{array}{lr}
+R^*(t)= \min \{ \sigma^0(t), w_0 + \displaystyle \inf_{u>0} \{
+R(u) + \sigma(t-u) \} \} &\mfa t \geq 0
+\end{array}
+\end{equation}
+with
+\[
+\sigma^0(u)=\displaystyle \min_{1 \leq j \leq J} ( r_j \cdot u +
+                b_j - q_j^0 )
+\]
+\end{theorem}
+\pr
+Apply \pref{l23b-proNZLB} to the input $R'=(R+ w_0) \wedge
+\delta_0$ and observe that $\sigma^0 \leq \sigma$. \qed
+
+An interpretation of \eref{l23b-enz} is that the output of the
+shaper with non-zero initial conditions is either the output of
+the ordinary leaky-bucket shaper, taking into account the initial
+level of the buffer, or, if smaller, the output imposed by the
+initial conditions, independent of the input.
+%
+\section{Time Varying Leaky-Bucket Shaper}
+ \mylabel{sec-tvlb}
+
+We consider now time varying leaky-bucket shapers that are
+piecewise constant. The shaper is defined by a fixed number $J$ of
+leaky buckets, whose parameters change at times $t_i$. For $t \in
+[t_i, t_{i+1}):=I_i$, we have thus
+$$
+r_j(t)=r_j^i \; \mand \; b_j(t)=b_j^i
+$$
+At times $t_i$, where the leaky bucket parameters are changed, we
+keep the leaky bucket level $q_j(t_i)$ unchanged.
+
+We say that $\sigma_i(u):=\min_{1\leq j J}\{r_j^i u + b_j^i\}$ is
+the value of the time varying shaping curve during interval $I_i$.
+With the notation in \sref{sec-tvs}, we have
+$$
+H(t,t_i)=\sigma_i(t-t_i) \;\mif t \in I_i
+$$
+
+We can now use the results in the previous section.
+
+\begin{proposition}[Bucket Level]
+\mylabel{l23b-proQ} Consider a piecewise constant time varying
+leaky-bucket shaper with output $R^*$. The bucket level $q_j(t)$
+of the j-th bucket is, for $t \in I_i$:
+\begin{equation}
+\mylabel{l23b-q}
+  \begin{array}{rl}
+    q_j(t)= &\left[ R^*(t)-R^*(t_i)-r_j^i \cdot(t-t_i)+q_j(t_i) \right]
+ \vee  \\
+     & \sup_{t_i < s\leq t}
+              \{R^*(t)-R^*(s)-r_j^i \cdot(t-s)\}
+  \end{array}
+\end{equation}
+\end{proposition}
+\pr
+We use a time shift, defined as follows. Consider a fixed interval
+$I_i$ and define
+$$x^*(\tau):=R^*(t_i + \tau) - R^*(t_i)$$
+
+Observe that $q_j(t_i+\tau)$ is the backlog at time $\tau$ (call
+it $w(\tau)$ at the shaper with shaping curve $\sigma(\tau)=r_j^i
+\cdot t$, fed with flow $x^*$, and with an initial buffer level
+$q_j(t_i)$. By \cref{l23b-proLB} we have
+ $$
+w(\tau)=\left[x^*(\tau)-r_j^i \cdot \tau + q_j(t_i) \right] \vee
+\sup_{0 <s'\leq \tau}
+                \{x^*(\tau)-x^*(s')-r_j^i \cdot(\tau-s')\}
+ $$
+ which after re-introducing $R^*$ gives \eref{l23b-q}
+ \qed
+
+%We can now characterize a time varying leaky-bucket shaper in the
+%interval $I_i$ by using the input-output characterization given
+%for a leaky-bucket
+% shaper  with
+%non-zero initial conditions. The initial conditions are
+%represented by $q_j(t_i)$ and $w(t_i)$, which are respectively the
+%bucket level and the backlog that are found by the traffic
+%arriving in the interval $I_i$. We also derive the backlog at any
+%time.
+%
+\begin{theorem}[Time Varying Leaky-Bucket
+Shapers] \mylabel{l23b-proDS} Consider a piecewise constant time
+varying leaky-bucket shaper with time varying shaping curve
+$\sigma_i$ in the interval $I_i$. The output $R^*$ for a given
+input $R$ is
+\begin{equation}
+\mylabel{l23b-resultDS} R^*(t)=\min \left[ \sigma^0_i(t-t_i)+
+R^*(t_i), \displaystyle\inf_{t_i <s \leq t} \{ \sigma_i(t-s)
++R(s)\}\right]
+\end{equation}
+with $\sigma^0_i$ is defined by
+\[
+\sigma^0_i(u)=\displaystyle \min_{1 \leq j \leq J} \left[ r_j^i
+\cdot u +
+                b_i^j - q_j(t_i) \right]
+\]
+and $q_j(t_i)$ is defined recursively by \eref{l23b-q}. The
+backlog at time $t$ is defined recursively by
+\begin{equation}
+\mylabel{l23b-shbuf} w(t)=\begin{array}{lr}
+      \max \left [ \begin{array}{l}
+        \displaystyle\sup_{t_i < s \leq t}\{R(t)-R(s)-\sigma_i(t-s)\},\\
+                     R(t)-R(t_i)-\sigma^0_i(t-t_i) +w(t_i)\\
+                        \end{array}
+                        \right] &
+                t \in I_i\\
+\end{array}
+\end{equation}
+\end{theorem}
+\pr
+Use the same notation as in the proof of \pref{l23b-proQ} and
+define in addition
+$$x(\tau):=R(t_i + \tau) - R(t_i)$$
+
+We can now apply \thref{l23b-proNZ}, with initial bucket levels
+equal to $q_j(t_i)$ as given in \eref{l23b-q} and with an initial
+buffer level equal to $w(t_i)$. The input-output characterization
+of this system is given by \eref{l23b-enz}, thus
+\[
+x^*(\tau) = \sigma^0_i(\tau) \wedge [\sigma_i \mpc x'](\tau)
+\]
+where
+\[
+x'(\tau)=\left \{ \begin{array}{lr} x(\tau)+w(t_i) & \tau > 0 \\
+x(\tau) & \tau \leq 0\\
+\end{array}
+\right .
+\]
+Hence, re-introducing the original notation, we obtain
+\[
+R^*(t) - R^*(t_i)=\left[ \sigma^0_i(t-t_i)\wedge
+\displaystyle\inf_{t_i <s \leq t} \{ \sigma_i(t-s) +R(s)
+-R(t_i)+w(t_i)\}\right]
+\]
+which gives \eref{l23b-resultDS}.
+
+The backlog at time $t$ follows immediately. \qed
+
+Note that \thref{l23b-proDS} provides a representation of
+$\overline{H}$. However, the representation is recursive: in order
+to compute $R^*(t)$, we need to compute $R^*(t_i)$ for all $t_i <
+t$.
+
+
+\section{Bibliographic Notes}
+\cite{Gioleb} illustrates how the formulas in \sref{sec-tvlb} form
+the basis for defining a renegotiable VBR service. It also
+illustrates that, if some inconsistency exists between network and
+user sides whether leaky buckets should be reset or not at every
+renegotiation step, then this may result in inacceptable losses
+(or service degradation) due to policing.
+
+ \cite{changCruz98} analyzes the general concept of time varying
+ shapers.

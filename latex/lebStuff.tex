@@ -1,0 +1,575 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% This is Leb's usual stuff  %%%%%%%%%%%%%
+%%%%%%%%                            %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{lebListes}  %%% modifie les bullets selon AMS et fournit les macros suivants
+\noitemsep  %%% no spacing between list items
+%\doitemsep %%% retablir spacing par defaut
+
+%%%% euro symbol by Alain Delplanque
+\def\euro{\mbox{\raisebox{.25ex}{{\it =}}\hspace{-.5em}{\sf C}}}
+
+
+
+\usepackage{ifthen}
+
+
+\usepackage{algorithm,algpseudocode}
+
+%% Bremaud's stuff
+\usepackage{color,pstcol,pstricks}
+%\usepackage{pstricks}
+%\usepackage{color}
+\newgray{backgroundgray}{0.90}
+\definecolor{backgroundgray}{gray}{0.90}
+
+%\usepackage{xspace}
+%\newcounter{example}[section]
+%\renewcommand{\theexample}{\arabic{section}.\arabic{example}}
+%\newlength{\labelexample}
+%\setlength{\labelexample}{2cm}
+%\newenvironment{example}[1]
+%{\refstepcounter{example}\par\noindent{\gray\rule{\labelexample}{1pt}}\par\vspace*{-.2\baselineskip}\noindent\textsc{Example~\theexample:\xspace}\ifthenelse{\equal{#1}{}}{}{{\sc\blue#1}}}
+%{\nobreak\par\nobreak{\gray\hfill\rule{\labelexample}{1pt}}\par} %\vspace{-.5\baselineskip}
+
+\newcommand{\eqframe}[1]{{\psframebox[linecolor=gray, framesep=4pt]{#1}}}
+
+\newenvironment{preuve}
+{\begin{quote}
+\par\vspace{.5\baselineskip}\noindent\footnotesize\imp{Proof.}}
+{\end{quote}\nobreak\hfill$\Box$\par\vspace{.5\baselineskip}}
+
+\newenvironment{petit}
+{\par\vspace{.5\baselineskip}\noindent\footnotesize}
+{\nobreak\par\vspace{.5\baselineskip}}
+
+
+\newenvironment{petiteNote}
+{\begin{petit} \begin{quote} \imp{Note. }}
+ {\end{quote}\end{petit}}
+
+
+
+%% end Bremaud's stuff
+
+%%%%%%%% paths, system dependent   %%%%%%%%
+%\def\figuresfolder{../exoFigures/}
+%\def\sourcefolder{../sourceFiles/}
+\def\tempfolder{./temp/}
+%\def\tempfolder{/Documents and Settings/leboudec/Desktop/evidbackup/leboudec/DocsDeCours/Common/BD d'exos/Temp/}
+%%%%%%% end of system dependent part %%%%%
+
+%%% set the flags to default values, unless they are already defined in
+%% the main file
+
+\providecommand{\imprimeTexteCache}{non}
+\providecommand{\imprimeTexteSecret}{non}
+
+
+%%% do not modify these lines
+\newif\ifsol
+\newif\ifnfs
+
+\ifthenelse{\equal{\imprimeTexteCache}{oui}}{\soltrue}{\solfalse }
+\ifthenelse{\equal{\imprimeTexteSecret}{oui}}{\nfstrue}{\nfsfalse}
+
+%%% insert solutions or comments not for students with \sol, \ifsol...\fi
+%%%  and \nfs
+
+
+
+\ifsol
+   \providecommand{\sol}[1]{\bs #1 \es}
+\else
+   \providecommand{\sol}[1]{}
+\fi
+
+\ifnfs
+   \providecommand{\nfs}[1]{~\\{\footnotesize \sffamily \emph{\textbf{Note: } #1}~\\}}
+\else
+   \providecommand{\nfs}[1]{}
+\fi
+
+%% new method for solutions
+%% use \bs \es instead
+
+\newenvironment{mySolution}
+{\red \it
+\par\vspace{.5\baselineskip}\noindent\textbf{Solution.~}}
+{\vspace{.5\baselineskip}}
+\def\bs{\begin{mySolution}}
+\def\es{\end{mySolution}}
+
+
+
+
+
+\def\problemfile#1{%
+\begin{filecontents}{\tempfolder#1}}
+
+%\providecommand{\finproblemfile}{
+%\end{filecontents}}
+
+\providecommand{\m}[1]{
+   \mylabel{#1}
+   \input{\tempfolder#1}
+   }
+
+
+
+% \providecommand{\gradCourse}{oui}
+% eventually modify to become compatible with my database of exercises
+% \providecommand{\pointex}[1]{\fbox{$\rightarrow$ Exercise \ref{#1}}}
+
+
+%%%% include graphics only with these commands %%%%%%%%%%%%%%%
+\ifnfs
+\providecommand{\insfignc}[2]{% same as insfig, no centering
+ \includegraphics[width=#2\textwidth,keepaspectratio]{#1.eps}
+ \footnote{\fbox{\texttt{file: #1}}}
+ }
+
+\else
+\providecommand{\insfignc}[2]{% same as insfig, no centering
+ \includegraphics[width=#2\textwidth,keepaspectratio]{#1.eps}
+ }
+
+\fi
+
+
+\ifnfs
+
+\providecommand{\Ifignc}[3]{% same as Ifig, no centering
+ \includegraphics[width=#2\textwidth,height=#3\textwidth]{#1.eps}
+ \footnote{\fbox{\texttt{file: #1}}}
+ }
+
+\else
+
+\providecommand{\Ifignc}[3]{% same as Ifig, no centering
+ \includegraphics[width=#2\textwidth,height=#3\textwidth]{#1.eps}
+ }
+
+\fi
+
+\providecommand{\insfig}[2] {
+\begin{center}
+\insfignc{#1}{#2}\\
+\end{center}
+}
+
+\providecommand{\Ifig}[3]{% modify width and height separately
+ \begin{center}
+ \Ifignc{#1}{#2}{#3}\\
+ \end{center}
+ }
+
+
+\providecommand{\ifig}[2]{%% obsolete, for compatibility
+ \insfignc{#1}{#2}
+ }
+%\providecommand{\ifig}[2] {\epsfig{file=#1.eps,
+%width=#2\textwidth}}
+
+% macros to be used instead of \label, \marginpar and \caption
+% values of labels are printed when \imprimeTexteSecret is equal to oui
+\newcommand{\mycaption}[1]{\caption{\small
+\sffamily #1}}
+
+\newcommand{\mycaptionof}[1]{\captionof{figure}{\small
+\sffamily #1}}
+
+
+\newcommand{\mymarginpar}[1]{
+    \marginpar{\sffamily \footnotesize #1}
+    }
+    
+    
+    
+\ifnfs
+\newcommand{\mylabel}[1]{
+    %\fbox{\ttfamily \footnotesize #1 \label{#1}
+    \label{#1}
+    \footnote{\fbox{\texttt{label: #1}}}
+  }
+\else
+\newcommand{\mylabel}[1]{
+    \label{#1}
+    }
+\fi
+
+\newcommand{\petitcar}[1]  {
+   {\small \sffamily #1}
+   }
+
+
+%%%%%%%%%%%%%%%%%%% " to be done " flag %%%%%%%%%%%%%%%%%%%
+%% printed only if solutions are printed
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifnfs
+\newcommand{\tbd}[1]{\textsc{To be done:\\#1}}
+\else
+\newcommand{\tbd}[1]{}
+\fi
+
+
+%%%%%%%%%%% inline questions %%%%%%%%%%%%%%%
+% use mq for inline questions
+
+\newtheorem{maquestion}{\sc Question}[section]
+\newcommand\metEnFin[3]{
+   %\AtEndDocument{\textbf{Question \ref{#1} on page \pageref{#1}: } #2~\\~\textbf{Answer. }#3~\\~\\}%
+   \AtEndDocument{{\red{\sc\textbf{\ref{#1} (p.~\pageref{#1}). }} #2}~\\~{\sc \textbf{Answer. }}#3~\\~\\}%
+   }
+%\newcounter{monNumeroDeQuestion}
+%\newcommand{\str}[2]{\addtocounter{strophe}{1}\thestrophe
+%\newcommand\mq[3]{%%%label, question, reponse
+%  \begin{maquestion}
+%  \label{#1} #2 ~\\ \textbf{Solution.} #3
+%  \end{maquestion}%
+%  }
+
+\ifsol
+\newcommand\mq[3]{%%%label, question, reponse
+  {
+  \begin{maquestion}
+  \label{#1} #2
+  \end{maquestion}
+  {\red \sc{ A. }
+  }
+   {\footnotesize \sffamily #3~\\}
+   }
+  }
+\else
+%\newcommand\mq[3]{%%%label, question, reponse
+% {
+%  \begin{maquestion}
+%  \label{#1} #2
+%  \end{maquestion}%
+%  }
+%  \metEnFin{#1}{#2}{#3}
+%  }
+  \newcommand\mq[3]{%%%label, question, reponse
+  \begin{maquestion}
+  \label{#1} #2 \footnote{#3}
+  \end{maquestion}%
+  }
+\fi
+
+%%%%%%% new term %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\nt}[1]{{\blue \it \textsf{#1}\index{#1}}}
+\newcommand{\imp}[1]{{\blue \bf #1}}
+
+%%%%%%% various shortcuts  %%%%%%%%%%%%%%%%%%%
+
+
+%\newcommand{\mas}[1]{\section[#1]{\sc #1}}
+%\newcommand{\mass}[1]{\subsection[#1]{\sc #1}}
+%\newcommand{\masss}[1]{\subsubsection[#1]{\sc #1}}
+%\newcommand{\monp}[1]{\paragraph{\sc #1}}
+
+%%% for including pseudo code in text
+\newcommand{\bp}{ % begin program
+  \small \ttfamily
+ \begin{tabbing}
+ aaa\=aaa\=aaa\=aaa\=aaaaaaaa \= aaaaaaaaaa\= \kill
+ }
+\newcommand{\ep}{\end{tabbing}\normalfont\normalsize }% end program
+
+%\newcommand{\pro}[1]{\ttfamily\small#1\normalfont\normalsize}
+\newcommand{\pro}[1]{{\ttfamily\small#1}}
+
+\newcommand{\aref}[1]{Algorithm~\ref{#1}}
+\newcommand{\fref}[1]{Figure~\ref{#1}}
+\newcommand{\sref}[1]{Section~\ref{#1}}
+\newcommand{\cref}[1]{Chapter~\ref{#1}}
+\newcommand{\coref}[1]{Corollary~\ref{#1}}
+\newcommand{\eref}[1]{(\ref{#1})}
+\newcommand{\tref}[1]{Table~\ref{#1}}
+\newcommand{\dref}[1]{Definition~\ref{#1}}
+\newcommand{\lref}[1]{Lemma~\ref{#1}}
+\newcommand{\thref}[1]{Theorem~\ref{#1}}
+\newcommand{\pref}[1]{Proposition~\ref{#1}}
+\newcommand{\pgref}[1]{Page~\pageref{#1}}
+\newcommand{\qref}[1]{Question~\ref{#1}}
+\newcommand{\exref}[1]{Example~\ref{#1}}
+\newcommand{\exoref}[1]{Exercise~\ref{#1}}
+\newcommand{\hyporef}[1]{Hypothesis~\ref{#1}}
+
+\newcommand{\paref}[1]{Algorithm~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pfref}[1]{Figure~\ref{#1} on page~\pageref{#1}}
+\newcommand{\psref}[1]{Section~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pcref}[1]{Chapter~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pcoref}[1]{Corollary~\ref{#1} on page~\pageref{#1}}
+\newcommand{\peref}[1]{Equation~(\ref{#1}) on page~\pageref{#1}}
+\newcommand{\ptref}[1]{Table~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pdref}[1]{Definition~\ref{#1} on page~\pageref{#1}}
+\newcommand{\plref}[1]{Lemma~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pthref}[1]{Theorem~\ref{#1} on page~\pageref{#1}}
+\newcommand{\ppref}[1]{Proposition~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pqref}[1]{Question~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pexref}[1]{Example~\ref{#1} on page~\pageref{#1}}
+\newcommand{\pexoref}[1]{Exercise~\ref{#1} on page~\pageref{#1}}
+
+\newcommand{\maketline}{\noindent \rule{16.5cm}{0.02in} \newline }
+\newcommand{\makeline}{\noindent \rule{16.5cm}{0.04in}}
+
+%\newtheorem{st}{Student Tutorial}[section]
+%\newtheorem{exo}{Exercise}[section]
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{lemma}{Lemma}[section]
+%\newtheorem{proposition}{Proposition}[section]
+%\newtheorem{corollary}{Corollary}[section]
+%\newtheorem{definition}{Definition}[section]
+%\newtheorem{conj}{Conjecture}[section]
+%\newtheorem{claim}{Claim}[section]
+%\newtheorem{remark}{Remark}[section]
+%\newtheorem{fact}{Fact}[section]
+%\newtheorem{conjecture}{Conjecture}[section]
+%\newtheorem{ex}{Example}[section]
+
+
+\newcommand{\dis}{\displaystyle}
+\newcommand{\ie}{{\em i.e., }}
+\newcommand{\eg}{{\em e.g., }}
+\newcommand{\cqfd}{\hfill $\diamond$}
+%\newcommand{\qed}{\hfill{$\diamond$}}
+\newcommand{\la}{\lambda}
+\newcommand{\calA}{\mathcal A}
+\newcommand{\calB}{\mathcal B}
+\newcommand{\calC}{\mathcal C}
+\newcommand{\calD}{\mathcal D}
+\newcommand{\calE}{\mathcal E}
+\newcommand{\calF}{\mathcal F}
+\newcommand{\calG}{\mathcal G}
+\newcommand{\calH}{\mathcal H}
+\newcommand{\calI}{\mathcal I}
+\newcommand{\calJ}{\mathcal J}
+\newcommand{\calK}{\mathcal K}
+\newcommand{\calL}{\mathcal L}
+\newcommand{\calM}{\mathcal M}
+\newcommand{\calN}{\mathcal N}
+\newcommand{\calQ}{\mathcal Q}
+\newcommand{\calP}{\mathcal P}
+\newcommand{\calR}{\mathcal R}
+\newcommand{\calS}{\mathcal S}
+\newcommand{\calT}{\mathcal T}
+\newcommand{\calU}{\mathcal U}
+\newcommand{\calV}{\mathcal V}
+\newcommand{\calX}{\mathcal X}
+\newcommand{\call}{\mathcal l}
+\newcommand{\calZ}{\mathcal Z}
+
+\newcommand{\lp}{\left(}
+\newcommand{\lb}{\left[}
+\newcommand{\lc}{\left\{}
+\newcommand{\ld}{\left.}
+\newcommand{\rp}{\right)}
+\newcommand{\rb}{\right]}
+\newcommand{\rc}{\right\}}
+\newcommand{\rd}{\right.}
+
+\newcommand{\eps}{\epsilon}
+\newcommand{\esp}[1]{\E\left(#1\right)}
+\newcommand{\espc}[2]{\E\left(\left.#1 \right| #2\right)}
+
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\card}{\mbox{card}}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+
+
+\newcommand{\midwor}[1]{\;\textnormal{ #1 }\;} % text in math mode
+
+\newcommand{\nin}{\not\in} %% negation of \in
+%\newcommand{\nin}{\in\!\!\!\!/} %% negation of \in
+%\newcommand{\nin}{\in\!\!\/} %% negation of \in
+% comb(n,p) = number of combinations of p among n
+\newcommand{\comb}[2]{
+ \left(
+ \begin{array}{c}
+    #1 \\
+    #2
+  \end{array}
+  \right)
+  }
+%%% indicator functions
+\newcommand{\ind}[1]{\mathbf{1}_{\{#1\}}}
+
+
+ %%% norm
+ \newcommand{\norm}[1]{\left\|#1\right\|}
+
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+\def\ben{\[}
+\def\een{\]}
+\def\bearn{\begin{eqnarray*}}
+\def\eearn{\end{eqnarray*}}
+\def\bear{\begin{eqnarray}}
+\def\eear{\end{eqnarray}}
+\def\barr{\begin{array}}
+\def\earr{\end{array}}
+\def\bel{\be \barr{l}}% equation array adjusted left, numbered
+\def\eel{\earr\ee}
+\def\beln{\ben \barr{l}}% equation array adjusted left, no number
+\def\eeln{\earr\een}
+
+\def\bfig{\begin{figure}}
+\def\efig{\end{figure}}
+% matrix with column formats in argument
+% for example \bmat{cccc}
+\def\bmat{\left(\begin{array}}
+\def\emat{\end{array}\right)}
+
+\newcommand{\erfc}{\mathrm{erfc}}
+\newcommand{\cov}{\mathrm{cov}}
+\newcommand{\var}{\mathrm{var}}
+\newcommand{\sinc}{\mathrm{sinc}}
+\newcommand{\diag}{\mathrm{diag}}
+\newcommand{\limit}[2]{\lim_{#1 \rightarrow #2}}
+\newcommand{\eqdef}{\stackrel{\mathrm{def}}{=}} % by definition
+
+
+\newcommand{\pd}{day$^{-1}$}% per day
+\newcommand{\dert}[1]{\frac{d#1}{dt}} % derivative wr t
+\newcommand{\pdert}[1]{\frac{\partial#1}{\partial t}} % partial derivative wr t
+\newcommand{\pder}[2]{\frac{\partial#1}{\partial#2}} % partial derivative wr 2nd arg
+\newcommand{\rear}[1]{\stackrel{#1}{\rightarrow}} % reaction arrow
+\newcommand{\drear}[2]{\begin{array}{c}#1\\ \rightleftarrows\\#2\end{array}} % double reaction arrow
+\newcommand{\df}[1]{\textbf{#1}} % deterministic function
+\newcommand{\rf}[1]{\textsf{\textbf{#1}}} % random quantity
+\newcommand{\pbd}[1]{\parbox[t]{14cm}{#1}} % parbox approx 10 cm wide
+%\newcommand{\eqdef}{\stackrel{\mathrm{def}}{=}} % equality as a definition
+
+\newcommand{\vone}{\vec{1}}
+\newcommand{\vzero}{\vec{0}}
+\newcommand{\vu}{\vec{u}}
+\newcommand{\vmu}{\vec{\mu}}
+\newcommand{\vomega}{\vec{\omega}}
+\newcommand{\vtheta}{\vec{\theta}}
+\newcommand{\vtau}{\vec{\tau}}
+\newcommand{\va}{\vec{a}}
+\newcommand{\vb}{\vec{b}}
+\newcommand{\vc}{\vec{c}}
+\newcommand{\ve}{\vec{e}}
+\newcommand{\vf}{\vec{f}}
+\newcommand{\vk}{\vec{k}}
+\newcommand{\vm}{\vec{m}}
+\newcommand{\vn}{\vec{n}}
+\newcommand{\vp}{\vec{p}}
+\newcommand{\vq}{\vec{q}}
+\newcommand{\vr}{\vec{r}}
+\newcommand{\vs}{\vec{s}}
+\newcommand{\vx}{\vec{x}}
+\newcommand{\vy}{\vec{y}}
+\newcommand{\vz}{\vec{z}}
+\newcommand{\vv}{\vec{v}}
+\newcommand{\vw}{\vec{w}}
+\newcommand{\vK}{\vec{K}}
+\newcommand{\vX}{\vec{X}}
+\newcommand{\vY}{\vec{Y}}
+\newcommand{\vZ}{\vec{Z}}
+\newcommand{\vV}{\vec{V}}
+\newcommand{\vepsilon}{\vec{\epsilon}}
+\newcommand{\vphi}{\vec{\varphi}}
+
+\newcommand{\mif}{\mathrm{\; if \; }}
+\newcommand{\mthen} {\mathrm{\;  then \;  }}
+\newcommand{\melse} {\mathrm{\;  else \;  }}
+\newcommand{\mand} {\mathrm{\;  and \; }}
+\newcommand{\mor} {\mathrm{\;  or \; }}
+\newcommand{\mst} {\mathrm{\;  such \;  that \; }}
+\newcommand{\mfa} {\mathrm{\;  for \;  all \; }}
+\newcommand{\mfor} {\mathrm{\;  for \;  }}
+\newcommand{\mf} {\mathrm{\;  for \; }}
+\newcommand{\mfs} {\mathrm{\;  for \; some \; }}
+\newcommand{\moth} {\mathrm{\;  otherwise \; }}
+\newcommand{\mwith} {\mathrm{\;  with \; }}
+
+\def\I{I\!d}
+\def\Reals{\mathbb{R}}
+\def\Rats{\mathbb{Q}}
+\def\Ints{\mathbb{Z}}
+\def\Comps{\ensuremath{\mathbb{C}}}
+\def\GF{\ensuremath{\mathbb{F}}}
+\newcommand{\ints}[1]{{\Ints/#1\Ints}}
+\def\Nats{\mathbb{N}}
+\def\E{\mathbb{E}}
+\def\P{\mathbb{P}}
+\def\T{\mathbb{T}}
+\def\Abb{\mathbb{A}}
+\def\mpc{\otimes}
+\def\mpd{\oslash}
+\def\Mpc{\overline{\otimes}}
+\def\Mpd{\overline{\oslash}}
+
+\newcommand{\cro}[1]{\langle#1\rangle}   % bracket for integrals etc
+\newcommand{\bra}[1]{\lb#1\rb}   % modulo class
+% ajoute LEB 2001.01.11 to compile netcal book
+\def\mod{\bmod}
+\def\hdots{\cdots}
+
+
+%% for compatibility, don't use any more the \pr command;
+%% use \begin{preuve} instead
+\newcommand{\pr}{\paragraph{Proof: }}
+
+%% copied from VOJ
+%\def\cqfd{\mbox{\rule[0pt]{1.5ex}{1.5ex}}}
+%\newenvironment{preuve}{\emph{Proof: }}{\hspace*{\fill}~\QED\par\endtrivlist\unskip}
+% replaced by Bremaud's proof env.
+%\newenvironment{preuve}{\emph{Proof: }}{\hspace*{\fill}~\cqfd\par\endtrivlist\unskip}
+
+\newcommand{\bracket}[1]{ \left\{\begin{array}{l} #1 \end{array} \right.}
+\newcommand{\gap}{\,\,\,}
+
+
+
+%%% don't use these commands any more- left for compatibility
+
+\providecommand{\idb}[1]{
+   \input{#1}
+   }
+
+
+
+
+
+%%% from Andrea Ridolfi's style for Bremaud's book
+%% modified LEB to fit multicolumn
+\newsavebox{\coloredbox}
+\newenvironment{shadethm}
+{\par\noindent\begin{lrbox}{\coloredbox}\begin{minipage}{\linewidth}\begin{theorem}}
+{\end{theorem}\end{minipage}\end{lrbox}\noindent\psframebox[fillstyle=solid,
+fillcolor=backgroundgray, linestyle=none,
+framesep=10pt]{\usebox{\coloredbox}}}
+
+
+%%% shaded box
+\newenvironment{sh}
+{\begin{lrbox}{\coloredbox}\begin{minipage}{\linewidth}}
+{\end{minipage}\end{lrbox}\noindent\psframebox[fillstyle=solid,
+fillcolor=backgroundgray, linestyle=none,
+framesep=10pt]{\usebox{\coloredbox}}}
+
+%%% boxed theorem
+\newsavebox{\traitbox}
+\newenvironment{framethm}
+{\begin{lrbox}{\traitbox}\begin{minipage}[h]{0.97\linewidth}\begin{theorem}}
+{\end{theorem}\end{minipage}\end{lrbox}
+\framebox[\linewidth][c]{\usebox{\traitbox}}}
+
+%%% framedbox
+
+\newenvironment{fr}
+{\begin{lrbox}{\traitbox}\begin{minipage}[h]{0.97\linewidth}}
+{\end{minipage}\end{lrbox}
+\framebox[\linewidth][c]{\usebox{\traitbox}}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%  End of Leb's usual stuff  %%%%%%%%%%%%%
+%%%%%%%%                            %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

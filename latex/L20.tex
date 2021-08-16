@@ -1,0 +1,4315 @@
+%\chapter[Network Calculus]{Network Calculus, with Application to Intserv and
+%ATM}%
+\chapter[Network Calculus]{Network Calculus}%
+\mylabel{L20}
+%\section{Introduction}
+\nfs{Leftover 1: does
+packetized re-shaping increase delay bound ?}
+%Modifier intro pour tenir compte du texte packetizer
+%
+%Implementation of shaper in real packet world: Peris
+%
+%Put Viniotis and Steve Wright's work on ATM schedulers.
+%
+%Explain CDVT in terms of a periodic function with delay due to
+%multiplexing.
+%
+%Application: representation de la convolution quand $\sigma$ est
+%PCL comme l'output d'un controlleur a buckets multiples.
+
+In this chapter we introduce the basic network calculus concepts
+of arrival, service curves and shapers.  The application given in
+this chapter concerns primarily networks with reservation services
+such as ATM or the Internet integrated services
+(``Intserv''\index{Intserv}). Applications to other settings are
+given in the following chapters.
+
+We begin the chapter by defining cumulative functions, which can
+handle both continuous and discrete time models.  We show how
+their use can give a first insight into playout buffer issues,
+which will be revisited with more detail in Chapter~\ref{L22}.
+Then the concepts of Leaky Buckets and Generic Cell Rate
+algorithms are described in the appropriate framework, of arrival
+curves.  We address in detail the most important arrival curves:
+piecewise linear functions and stair functions. Using the stair
+functions, we clarify the relation between spacing and arrival
+curve.
+
+We introduce the concept of service curve as a common model for a
+variety of network nodes. We show that all schedulers generally
+proposed for ATM or the Internet integrated services can be
+modeled by a family of simple service curves called the
+rate-latency service curves.  Then we discover physical properties
+of networks, such as ``pay bursts only once" or ``greedy shapers
+keep arrival constraints".  We also discover that greedy shapers
+are min-plus, time invariant systems. Then we introduce the
+concept of maximum service curve, which can be used to account for
+constant delays or for maximum rates. We illustrate all along the
+chapter how  the results can be used for practical buffer
+dimensioning. We give practical guidelines for handling fixed
+delays such as propagation delays. We also address the distortions
+due to variability in packet size.
+
+\section{Models for Data Flows}
+
+\subsection{Cumulative Functions, Discrete Time versus Continuous Time Models}
+It is convenient to describe data flows by means of the cumulative
+function $R(t)$, defined as the number of bits seen on the flow in
+time interval $[0,t]$. By convention, we take $R(0)=0$, unless
+otherwise specified. Function $R$ is always wide-sense increasing,
+that is, it belongs to the space $\calF$ defined in
+\sref{sec:wsifunctions} on \pgref{sec:wsifunctions}. We can use a
+discrete or continuous time model. In real systems, there is
+always a minimum granularity (bit, word, cell or packet),
+therefore  discrete time with a finite set of values for $R(t)$
+could always be assumed. However, it is often computationally
+simpler to consider continuous time, with a function $R$ that may
+be continuous or not. If $R(t)$ is a continuous function, we say
+that we have a {\em fluid model}. Otherwise, we take the
+convention that the function is either right or left-continuous
+(this makes little difference in practice).%
+\footnote{It would be nice to stick to either left- or
+right-continuous functions. However, depending on the model, there
+is no best choice: see \sref{sec-vd}, \sref{arrcur-def} and \sref{sec-vlp}.}
+Figure~\ref{modF} illustrates these definitions.
+
+\hrulefill
+\paragraph{Convention: } A flow is described by a wide-sense
+increasing function $R(t)$; unless otherwise specified, in this
+book, we consider  the following types of models:
+\begin{itemize}
+  \item discrete time: $t \in \Nats=\{0,1,2,3,...\}$\index{1Nats@$\Nats$}
+  \item fluid model: $t \in \Reals^+=[0,+\infty)$\index{1Reals+@$\Reals^+$} and $R$ is a continuous
+  function
+  \item general, continuous time model: $t \in \Reals^+$ and $R$ is
+   a left- or right-continuous
+  function
+\end{itemize}
+\hrulefill
+
+\begin{figure}[htbp]
+\mylabel{modF} \vspace{1.5cm} \insfig{modf}{0.8}
+        \mycaption{Examples of Input and Output functions, illustrating our terminology and
+        convention.
+        $R_1$ and $R^*_1$ show a
+       continuous function of continuous time (fluid model); we assume
+        that packets arrive bit by bit, for a duration of one time unit
+        per packet arrival. $R_2$ and $R^*_2$ show
+        continuous time with discontinuities at packet
+        arrival times (times 1, 4, 8, 8.6 and 14); we assume here that packet arrivals
+        are observed only when the packet has been fully received; the dots
+        represent the value at the point of discontinuity; by convention, we
+        assume that the function is
+        left- or right-continuous.
+        $R_3$ and $R^*_3$ show a discrete time model;
+        the system is observed only at times
+        $0, 1, 2...$}
+\end{figure}
+
+If we assume that $R(t)$ has a derivative $\frac{dR}{dt}=r(t)$
+such that $R(t)=\int_{0}^t r(s) ds$ (thus we have a fluid model),
+then $r$ is called the rate function. Here, however, we will see
+that it is much simpler to consider cumulative functions such as
+$R$ rather than rate functions. Contrary to standard algebra, with
+min-plus algebra we do not need functions to have ``nice"
+properties such as having a derivative.
+
+It is always possible to map a continuous time model $R(t)$ to a
+discrete time model $S(n), n \in \Nats$ by choosing a time slot
+$\delta$ and sampling by
+
+\begin{equation} \mylabel{eq-map-samp}
+  S(n) = R( n \delta)
+\end{equation}
+In general, this results in a loss of information. For the reverse
+mapping, we use the following convention. A continuous time model
+can be derived from
+$S(n), n \in \Nats$ by letting%
+\footnote{$\lceil x \rceil$ (``ceiling of $x$'')
+is defined as the smallest integer $\geq x$;
+for example $\lceil 2.3\rceil = 3$ and
+$\lceil 2\rceil = 2$}%
+\begin{equation} \mylabel{eq-map-inter}
+ R'(t)= S(\lceil
+\frac{t}{\delta}\rceil)
+\end{equation}
+The resulting function $R'$ is
+always left-continuous, as we already required. Figure~\ref{modF} illustrates this
+mapping with $\delta = 1$, $S=R_3$ and $R'=R_2$.
+
+Thanks to the mapping in Equation~(\ref{eq-map-samp}), any result
+for a continuous time model also applies to discrete time. Unless
+otherwise stated, all results in this book apply to both
+continuous and discrete time. Discrete time models are generally
+used in the context of ATM; in contrast, handling variable size
+packets is usually done with a continuous time model (not
+necessarily fluid). Note that handling variable size packets
+requires some specific mechanisms, described in
+Section~\ref{sec-vlp}.
+
+Consider now a system $\calS$, which we view as a blackbox;
+$\calS$ receives input data, described by its cumulative function
+$R(t)$, and delivers the data after a variable delay. Call
+$R^{*}(t)$ the \emph{output function}, namely, the cumulative
+function at the output of system $\calS$. System $\calS$ might be,
+for example, a single buffer served at a constant rate, a complex
+communication node, or even a complete network. Figure~\ref{modF}
+shows input and output functions for a single server queue, where
+every packet takes exactly 3 time units to be served. With output
+function $R^*_1$ (fluid model) the assumption is that a packet can
+be served as soon as a first bit has arrived (cut-through
+assumption), and that a packet departure can be observed bit by
+bit, at a constant rate. For example, the first packet arrives
+between times 1 and 2, and leaves between times 1 and 4. With
+output function $R^*_2$ the assumption is that a packet is served
+as soon as it has been fully received and is considered out of the
+system only when it is fully transmitted (store and forward
+assumption). Here, the first packet arrives immediately after time
+1, and leaves immediately after time 4. With output function
+$R^*_3$ (discrete time model), the first packet arrives at time 2
+and leaves at time 5.
+
+\subsection{Backlog and Virtual Delay}
+\label{sec-vd}
+From the input and output functions, we derive the two following
+quantities of interest.
+\begin{definition}[Backlog and Delay]
+\mylabel{L20-intro} For a lossless system:
+\begin{itemize}
+        \item  The \emph{backlog} at time $t$ is $R(t) - R^{*}(t)$.
+        \item  The \emph{virtual delay} at time $t$ is
+        $$d(t) = \inf \left\{
+               \tau \geq 0 : R(t) \leq R^*(t + \tau)
+              \right\}
+    $$
+\end{itemize}
+\end{definition}
+
+The backlog is the amount of bits that are held inside the system;
+if the system is a single buffer, it is the queue length. In
+contrast, if the system is more complex, then the backlog is the
+number of bits ``in transit'', assuming that we can observe input
+and output simultaneously.  %The virtual delay at time $t$ is the
+%delay that would be experienced by a bit arriving at time $t$ if
+%all bits received before it are served before it.
+In
+Figure~\ref{modF}, the backlog, called $x(t)$, is shown as the
+vertical deviation between input and output functions.
+
+Roughly speaking, the virtual delay at time $t$ is the
+delay that is experienced by a bit arriving at time $t$ if
+all bits received before it are served before it (we say that such a system is \nt{FIFO} for this flow, where FIFO stands for ``First In, First Out"). On the figure, it is the horizontal deviation
+between input and output functions.  More precisely, if these functions %continuous (fluid model), then it is easy to see that
+%
+are left-continuous (as in Figure~\ref{modF}, subfigure 2), and for a FIFO system, $d(t)$ is the delay for a  hypothetical bit that would arrive \emph{just before} time $t$; the delay for a bit that arrives \emph{at} time $t$ is the limit from the right of $d(t)$, namely, $d_r(t)\eqdef\limit{s}{t, s>t}d(s)$
+\index{limit from
+the right}\footnote{Other authors often use the
+notation $d(t^+)$ for $d_r(t)$.}.
+In contrast, if the input and output functions are right-continuous, and for a FIFO system, $d(t)$ is the delay for a bit that arrives at time $t$.
+%If, as we usually assume
+%in this book, $R$ and $R^*$ are left-continuous, then $d(t)= \min
+%\left\{ \tau \geq 0 : R(t) \leq R^*(t + \tau) \right\}$, in other
+%words, the minimum is attained in the definition of $d(t)$.
+
+In Figure~\ref{modF}, we see that the values of backlog and
+virtual delay slightly differ for the three models. Thus the delay
+experienced by the last bit of the first packet is $d(2)=2$ time
+units for the first subfigure; in contrast, it is equal to
+$d_r(1)=3$ time units on the second subfigure. This is of course in
+accordance with the different assumptions made for each of the
+models. Similarly, the delay for the fourth packet on subfigure 2
+is $d_r(8.6)=5.4$ time units, which corresponds to 2.4 units of
+waiting time and 3 units of service time. In contrast, on the
+third subfigure, it is equal to $d(9)=6$ units; the difference is
+the loss of accuracy resulting from discretization.
+
+
+
+\subsection{Example: The Playout Buffer}
+\mylabel{sec-playoutBuf} Cumulative functions are a powerful tool
+for studying delays and buffers. In order to illustrate this,
+consider the simple playout buffer problem that we describe now.
+\input{L20-pb}%
+%
+%Consider a packet switched network that carries bits of
+%information from a source with a constant bit rate $r$ (Figure
+%\ref{fig-playoutBuf}) as is the case for example, with circuit
+%emulation. We take a fluid model, as illustrated in
+%Figure~\ref{fig-playoutBuf}. We have a first system $\calS$, the
+%network, with input function $R(t)=rt$. The network imposes some
+%variable delay, because of queuing points, therefore the output
+%$R^{*}$ does not have a constant rate $r$. What can be done to
+%recreate a constant bit stream ?
+%\begin{figure}[!htbp]
+%\insfig{playBuf}{1.0}
+%        \mycaption{A Simple Playout Buffer Example}
+%        \mylabel{fig-playoutBuf}
+%\end{figure}
+%A standard mechanism is to smooth the delay variation in a playout
+%buffer. It operates as follows. When the first bit of data
+%arrives, at time $d_r(0)$, where $d_r(0)=\lim_{t \rightarrow 0,
+%t>0}d(t)$ is the limit to the right of function $d$\index{limit to
+%the right}\footnote{It is the virtual delay for a hypothetical bit
+%that would arrive just after time $0$. Other authors often use the
+%notation $d(0+)$}, it is stored in the buffer until a fixed time
+%$\Delta$ has elapsed. Then the buffer is served at a constant rate
+%$r$ whenever it is not empty. This gives us a second system
+%$\calS'$, with input $R^*$ and output $S$.
+%
+%\index{limit to the right}
+%
+%Let us assume that the network delay variation is bounded by
+%$\Delta$. This implies that for every time $t$, the virtual delay
+%(which is the real delay in that case) satisfies
+% $$ - \Delta \leq
+%d(t) - d_r(0) \leq \Delta $$
+% Thus, since we have a fluid model, we
+%have
+% $$r (t - d_r(0) - \Delta)  \leq R^*(t) \leq r (t - d_r(0) + \Delta)$$
+% which is illustrated in the figure by the two lines (D1) and (D2)
+%parallel to $R(t)$.
+% The figure suggests that,  for the playout
+%buffer $\calS'$ the input function $R^*$ is always above the
+%straight line (D2), which means that the playout buffer never
+%underflows. This suggests in turn that the output function $S(t)$
+%is given by $S(t)=r( t - d_r(0) - \Delta)$.
+%
+%Formally, the proof is as follows. We proceed by contradiction. Assume the buffer starves at
+%some time, and let $t_{1}$ be the first time at which this happens. Clearly the playout buffer
+%is empty at time $t_{1}$, thus $R^*(t_1)=S(t_1)$. There is a time interval $[t_{1}, t_{1}+
+%\epsilon]$ during which the number of bits arriving at the playout buffer is less than $r
+%\epsilon$ (see Figure~\ref{fig-playoutBuf}). Thus, $d(t_{1}+ \epsilon) > d_r(0) + \Delta$ which
+%is not possible. Secondly, the backlog in the buffer at time $t$ is equal to $R^*(t)-S(t)$,
+%which is bounded by the vertical deviation between (D1) and (D2), namely, $2r \Delta$.
+%
+%We have thus shown that the playout buffer is able to remove the
+%delay variation imposed by the network. We summarize this as
+%follows.
+%
+%\begin{proposition}
+%        Consider a constant bit rate stream of rate $r$, modified by a network
+%        that imposes a variable delay variation and no loss. The
+%        resulting flow is put into a playout buffer, which
+%        operates by delaying the first bit of the flow by
+%        $\Delta$, and reading the flow at rate $r$. Assume that the
+%        delay variation imposed by the network is bounded by $\Delta$, then
+%\begin{enumerate}
+%                \item  the playout buffer never starves and produces a constant
+%                output at rate $r$;
+%                \item  a buffer size of $2 \Delta r$ is sufficient to avoid overflow.
+%        \end{enumerate}
+%\end{proposition}
+
+We study playout buffers in more details in Chapter~\ref{L22},
+using the network calculus concepts further introduced in this
+chapter.
+
+% ``space method'' = applies to both continuous time and discrete time
+% ``time methods'' = applies to discrete time only
+
+
+\section{Arrival Curves}
+\mylabel{con-flows}
+
+\subsection{Definition of an Arrival Curve}
+\mylabel{arrcur-def}
+
+
+Assume that we want to provide guarantees to data flows. This
+requires some specific support in the network, as explained in
+Section~\ref{sec-sercur}; as a counterpart, we need to limit the
+traffic sent by sources. With integrated services networks (ATM or
+the integrated services internet), this is done by using the
+concept of arrival curve, defined below.
+%We will see an
+%alternative in Chapter~\ref{L21}.
+\input{L20-arc}
+%\begin{definition} [Arrival Curve]
+%Given a wide-sense increasing function $\alpha$ defined for $t
+%\geq 0$ (namely, $\alpha \in \calF$), we say that a flow $R$ is
+%constrained by $\alpha$ if and only if for all $s \leq t$:
+%$$R(t)-R(s) \leq \alpha(t-s)$$
+%We say that $R$ has $\alpha$ as an arrival curve, or also that $R$
+%is $\alpha$-smooth.%
+%\index{arrival curve}%
+%\index{smooth ($\alpha$-smooth for some function $\alpha(t)$}
+%\end{definition}
+%Note that the condition is over a set of overlapping intervals, as
+%Figure~\ref{affArrCur} illustrates.
+%\begin{figure}[!htbp]
+%   \insfig{arrcurdef}{0.8}
+%  \mycaption{Example of Constraint by arrival curve,
+%  showing a cumulative function
+%  $R(t)$ constrained by the arrival curve $\alpha(t)$.}
+%   \mylabel{affArrCur}
+%\end{figure}
+%
+%\paragraph{Affine Arrival Curves: }
+%For example, if $\alpha(t)=rt$, then the constraint means that, on
+%any time window of width $\tau$, the number of bits for the flow
+%is limited by $r \tau$. We say in that case that the flow is peak
+%rate limited. This occurs if we know that the flow is arriving on
+%a link whose physical bit rate is limited by $r$ b/s. A flow where
+%the only constraint is a limit on the peak rate is often
+%(improperly) called a ``constant bit rate" (CBR) flow, or
+%``deterministic bit rate" (DBR) flow.
+%
+%Having $\alpha(t)=b$, with $b$ a constant, as an arrival curve
+%means that the maximum number of bits that may ever be sent on the
+%flow is at most $b$.
+%
+%More generally, because of their relationship with leaky buckets,
+%we will often use \emph{affine} arrival curves $\gamma_{r,b}$,
+%defined by:
+%%\index{1gamma@$\gamma_{r,b}$ (affine arrival curve)} \index{affine
+%%arrival curve}
+%$\gamma_{r,b}(t)=rt +b$ for $t>0$ and $0$ otherwise (see
+%Section~\ref{sec:wsifunctions} for an illustration). Having
+%$\gamma_{r,b}$ as an arrival curve allows a source to send $b$
+%bits at once, but not more than $r$ b/s over the long run.
+%Parameters $b$ and $r$ are called the burst tolerance (in units of
+%data) and the rate (in units of data per time unit).
+%Figure~\ref{affArrCur} illustrates such a constraint.
+%
+\paragraph{Stair Functions as Arrival Curves: }
+In the context of ATM, we also use arrival curves of the form $k
+v_{T, \tau}$, where $v_{T, \tau}$ is the stair functions defined
+by
+  $v_{T, \tau}(t) = \lceil \frac{t+ \tau}{T} \rceil$ for $t>0$ and
+  $0$ otherwise
+(see Section~\ref{sec:wsifunctions} for an illustration). Note
+that $v_{T, \tau}(t) = v_{T, 0}(t+\tau)$, thus $v_{T, \tau}$
+results from $v_{T, 0}$ by a time shift to the left. Parameter $T$
+(the ``interval") and $\tau$ (the ``tolerance") are expressed in
+time units.
+%Figure~\ref{arrcurcata} summarizes and illustrates the
+%definitions of $\gamma_{r,b}$ and $v_{T, \tau}$.
+%\begin{figure}[!htbp]
+%  \mylabel{arrcurcata}
+%$$
+%\begin{array}{lccr}
+%\gamma_{r,b}(t)=rt +b \mif t > 0 &\hspace{3cm}& k v_{T, \tau}(t) =
+%k \lceil \frac{t+ \tau}{T} \rceil&\hspace{2cm}\\
+%\end{array}
+%$$
+%  \insfig{arrcurcata}{0.8}
+%  \mycaption{Definition of arrival curves used in this book: $\gamma_{r,b}$
+%  with rate $r$ and burst tolerance $b$;
+%  $k v_{T, \tau}$ with step $k$, interval $T$ and tolerance
+%  $\tau$.
+%  }
+%\end{figure}
+In order to understand the use of $v_{T, \tau}$, consider a flow
+that sends packets of a fixed size, equal to $k$ unit of data (for
+example, an ATM flow). Assume that the packets are spaced by at
+least $T$ time units. An example is a constant bit rate voice
+encoder, which generates packets periodically during talk spurts,
+and is silent otherwise. Such a flow has $k v_{T, 0}$ as an
+arrival curve.
+
+Assume now that the flow is multiplexed with some others. A simple
+way to think of this scenario is to assume that the packets are
+put into a queue, together with other flows. This is typically
+what occurs at a workstation, in the operating system or at the
+ATM adapter. The queue imposes a variable delay; assume it can be
+bounded by some value equal to $\tau$ time units. We will see in
+the rest of this chapter and in Chapter~\ref{L21} how we can
+provide such bounds. Call $R(t)$ the input function for the flow
+at the multiplexer, and $R^*(t)$ the output function. We have
+$R^*(s) \geq R(s - \tau)$, from which we derive:
+$$
+R^*(t) - R^*(s) \leq R(t) - R(s - \tau) \leq k v_{T,0}(t-s+\tau) =
+k v_{T,\tau}(t-s)
+$$
+Thus $R^*$ has $k v_{T,\tau}$ as an arrival curve. We have shown
+that \emph{a periodic flow, with period $T$, and packets of
+constant size $k$, that suffers a variable delay $\leq \tau$, has
+$k v_{T, \tau}$ as an arrival curve}. The parameter $\tau$ is
+often called the ``one-point cell delay variation", as it
+corresponds to a
+deviation from a periodic flow that can be observed at one point.%
+%
+%
+%
+%
+% is equivalent to requiring that packets are spaced by at
+%least $T$ time units.
+%
+%
+%For $\tau >0$, packets are spaced by $T$, but there is an initial
+%tolerance of $\tau$. For example, an ATM flow constrained by $3
+%v_{10, 4}$ may send, over any interval, 3 cells in the first
+%$T-\tau=6$ time units, then no more than 3 cells per 10 time
+%units.
+
+In general, function $v_{T, \tau}$ can be used to express
+\emph{minimum spacing} between packets, as the following
+proposition shows.
+
+\begin{proposition}[Spacing as an arrival constraint]
+\mylabel{theo-l20-jud} Consider a flow, with cumulative function
+$R(t)$, that generates packets of constant size equal to $k$ data
+units, with instantaneous packet arrivals. Assume time is discrete
+or time is continuous and $R$ is left-continuous. Call $t_{n}$ the
+arrival time for the $n$th packet. The following two properties
+are equivalent:
+\begin{enumerate}
+    \item  for all $m,n$, $t_{m+n}-t_{m} \geq nT - \tau$
+    \item  the flow has $k v_{T, \tau}$ as an arrival curve
+\end{enumerate}
+\end{proposition}
+The conditions on packet size and packet generation mean that $R(t)$
+has the form $nk$, with $n \in \Nats$.  The spacing condition implies
+that the time interval between two consecutive packets is $\geq T-
+\tau$, between a packet and the next but one is $\geq 2T- \tau$, etc.
+\pr Assume that property 1 holds.
+% We prove by contradiction that property
+% 2 also holds.
+Consider an arbitrary interval $]s, t]$, and call $n$ the number
+of packet arrivals in the interval. Say that these packets are
+numbered $m+1, \ldots, m+n$, so that $s < t_{m+1}\leq \ldots \leq
+t_{m+n} \leq t$, from which we have
+$$
+t-s > t_{m+n}- t_{m+1}
+$$
+Combining with  property 1,  we get
+$$
+t-s > (n-1) T - \tau
+$$
+From the definition of $v_{T, \tau}$ it follows that $v_{T,
+\tau}(t-s) \geq n$. Thus $R(t)-R(s) \leq k v_{T, \tau}(t-s)$,
+which shows the first part of the proof.
+
+Conversely, assume now that property 2 holds. If time is discrete,
+we convert the model to continuous time using the mapping in
+Equation~\ref{eq-map-inter}, thus we can consider that we are in
+the continuous time case. Consider some arbitrary integers $m, n$;
+for all $\epsilon >0$, we have, under the assumption in the
+proposition: $$ R(t_{m+n}+\epsilon)- R(t_{m}) \geq (n+1)k $$ thus,
+from the definition of $v_{T, \tau}$, $$ t_{m+n} - t_{m} +\epsilon
+> nT -\tau $$ This is true for all  $\epsilon >0$, thus $t_{m+n} -
+t_{m} \geq  nT -\tau$. \qed
+
+In the rest of this section we clarify the relationship between
+arrival curve constraints defined by affine and by stair
+functions. First we need a technical lemma, which amounts to
+saying that we can always change an arrival curve to be
+left-continuous.
+\begin{lemma}[Reduction to left-continuous arrival curves]
+\mylabel{lem-red-lc} Consider a flow $R(t)$ and a wide sense
+increasing function $\alpha(t)$, defined for $t\geq 0$. Assume
+that $R$ is either left-continuous, or right-continuous. Denote
+with $\alpha_l(t)$ the limit from the left%
+\index{limit from the left} of $\alpha$ at $t$ (this limit exists at
+every point because $\alpha$ is wide sense increasing); we have
+$\alpha_l(t)=\sup_{s<t}\alpha(s)$. If $\alpha$ is an arrival curve
+for $R$, then so is $ \alpha_l$.
+\end{lemma}
+\pr Assume first that $R$ is left-continuous. For some $s < t$,
+let $t_{n}$ be a sequence of increasing times converging towards
+$t$, with $s < t_{n} \leq t$.  We have $R(t_{n})- R(s) \leq
+\alpha(t_{n}-s) \leq \alpha_l(t-s)$.  Now $\lim_{n \rightarrow
++\infty} R(t_{n})=R(t)$ since we assumed that $R$ is
+left-continuous.  Thus $R(t)-R(s) \leq \alpha_l(t-s)$.
+
+If in contrast $R$ is right-continuous, consider a sequence
+$s_{n}$ converging towards $s$ from above. We have similarly
+$R(t)- R(s_{n}) \leq \alpha(t-s_{n}) \leq \alpha_l(t-s)$ and
+$\lim_{n \rightarrow +\infty} R(s_{n})=R(s)$, thus $R(t)-R(s) \leq
+\alpha_l(t-s)$ as well. \qed
+
+Based on this lemma, we can always reduce an arrival curve to be
+left-continuous%
+\footnote{If we consider $\alpha_r(t)$, the limit from the right of
+$\alpha$ at $t$, then $\alpha \leq \alpha_r$ thus $\alpha_r$ is
+always an arrival curve, however it is not better than $\alpha$.}.
+Note that $\gamma_{r,b}$ and $v_{T, \tau}$ are left-continuous.
+Also remember that, in this book, we use the convention that
+cumulative functions such as $R(t)$ are left continuous; this is a
+pure convention, we might as well have chosen to consider only
+right-continuous cumulative functions. In contrast, an arrival
+curve can always be assumed to be left-continuous, but not
+right-continuous.
+
+
+In some cases, there is equivalence between a constraint defined
+by $\gamma_{r,b}$ and $v_{T, \tau}$. For example, for an ATM flow
+(namely, a flow where every packet has a fixed size equal to one
+unit of data) a constraint $\gamma_{r,b}$ with $r=\frac{1}{T}$ and
+$b=1$ is equivalent to sending one packet every $T$ time units,
+thus is equivalent to a constraint by the arrival curve $v_{T,
+0}$. In general, we have the following result.
+\begin{proposition}
+        \mylabel{theo-gamma-u}
+Consider either a left- or right- continuous flow $R(t), t \in
+\Reals^+$, or a discrete time flow $R(t), t \in \Nats$, that
+generates packets of constant size equal to $k$ data units, with
+instantaneous packet arrivals. For some $T$ and $\tau$, let
+$r=\frac{k}{T}$ and $b=k(\frac{\tau}{T}+1)$. It is equivalent to
+say that $R$ is constrained by $\gamma_{r,b}$ or by $k v_{T,
+\tau}$.
+\end{proposition}
+\pr Since we can map any discrete time flow to a left-continuous,
+continuous time flow, it is sufficient to consider a
+left-continuous flow $R(t), t \in \Reals^+$. Also, by changing the
+unit of data to the size of one packet, we can assume without loss
+of generality that $k=1$. Note first, that with the parameter
+mapping in the proposition, we have $v_{T, \tau} \leq
+\gamma_{r,b}$, which shows that if $v_{T, \tau}$ is an arrival
+curve for $R$, then so is $\gamma_{r,b}$.
+
+Conversely, assume now that $R$ has $\gamma_{r,b}$ as an arrival
+curve. Then for all $s\leq t$, we have
+$
+R(t)-R(s) \leq rt +b
+$,
+and since $R(t)- R(s) \in \Nats$, this implies
+$
+R(t) -R(s) \leq \lfloor rt + b \rfloor $, Call $\alpha(t)$ the
+right handside in the above equation and apply
+Lemma~\ref{lem-red-lc}. We have $\alpha_l(t)=\lceil rt + b -1
+\rceil = v_{T, \tau}(t)$. \qed
+
+Note that the equivalence holds if we can assume that the packet
+size is constant and equal to the step size in the constraint $k
+v_{T, \tau}$.  In general, the two families of arrival curve do
+not provide identical constraints.  For example, consider an ATM
+flow, with packets of size 1 data unit, that is constrained by an
+arrival curve of the form $ k v_{T, \tau}$, for some $k > 1$. This
+flow might result from the superposition of several ATM flows. You
+can convince yourself that this constraint cannot be mapped to a
+constraint of the form $\gamma_{r,b}$.  We will come back to this
+example in Section~\ref{3bornes}.
+
+\subsection{Leaky Bucket and Generic Cell Rate Algorithm}
+\mylabel{sec-lbarcur}
+
+Arrival curve constraints find their origins in the concept of
+leaky bucket and generic cell rate algorithms, which we describe
+now. We show that leaky buckets correspond to affine arrival
+curves $\gamma_{r,b}$, while the generic cell rate algorithm
+corresponds to stair functions $v_{T, \tau}$. For flows of fixed
+size packets, such as ATM cells, the two are thus equivalent.
+
+\input{L20-lb}
+%
+%\begin{definition} [Leaky Bucket Controller]
+%A Leaky Bucket Controller is a device that analyzes the data on a
+%flow $R(t)$ as follows. There is a pool (bucket) of fluid of size
+%$b$. The bucket is initially empty. The bucket has a hole and
+%leaks at a rate of $r$ units of fluid per second when it is not
+%empty.
+%
+%Data from the flow $R(t)$ has
+%to pour into the bucket an amount of fluid equal to the amount of
+%data. Data that would cause the bucket to overflow is declared
+%non-conformant, otherwise the data is declared conformant.
+%\end{definition}
+%Figure~\ref{leabu} illustrates the definition.  Fluid in the leaky
+%bucket does not represent data, however, it is counted in the same
+%unit as data.
+%
+%Data that is not able to pour fluid into the bucket is said to be
+%``non-conformant'' data. In ATM systems, non-conformant data is either
+%discarded, tagged with a low priority for loss (``red'' cells), or can
+%be put in a buffer (buffered leaky bucket controller). With the
+%Integrated Services Internet, non-conformant data is in principle not
+%marked, but simply passed as best effort traffic (namely, normal IP
+%traffic).
+%\begin{figure}[!htbp]
+%\mylabel{leabu}
+%  \insfig{leabu}{0.8}
+%  \mycaption{A Leaky Bucket Controller. The second part of the figure shows (in grey) the
+%  level of the bucket $x(t)$ for a sample input, with $r=0.4$ kbits per time
+%  unit and $b=1.5$ kbits. The packet arriving at time $t=8.6$ is not
+%  conformant, and no fluid is added to the bucket. If $b$ would be
+%  equal to $2$ kbits, then all packets would be conformant.}
+%\end{figure}
+%
+%We want now to show that a leaky bucket controller enforces an
+%arrival curve constraint equal to $\gamma_{r,b}$. We need the
+%following lemma.
+%\begin{lemma}
+%        \mylabel{lem-buf-simple}
+%        Consider a buffer served at a constant rate $r$. Assume that the
+%        buffer is empty at time $0$. The input is described by the cumulative
+%        function $R(t)$. If there is no overflow during $[0,t]$, the buffer
+%        content at time $t$ is given by
+%        $$
+%        x(t)=\sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\}
+%        $$
+%\end{lemma}
+%\pr
+%The lemma can be obtained as a special case of
+%Corollary~\ref{coro-shaper-buffer-occupancy} on
+%page~\pageref{coro-shaper-buffer-occupancy}, however we give here
+%a direct proof. First note that for all $s$ such that $s\leq t$,
+%$(t-s)r$ is an upper bound on the number of bits output in
+%$]s,t]$, therefore:
+%$$
+%R(t)-R(s) - x(t) +x(s) \leq (t-s)r
+%$$
+%
+%Thus
+%$$
+%x(t) \geq R(t)-R(s) + x(s) - (t-s)r \geq R(t)-R(s) - (t-s)r
+%$$
+%
+%which proves that $x(t) \geq \sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\}$.
+%
+%Conversely, call $t_{0}$ the latest time at which the buffer was
+%empty before time $t$: $$t_{0} = \sup \{s: s\leq t, x(s) = 0\}$$
+%(If $x(t)  > 0$ then $t_{0}$ is the beginning of the busy period
+%at time $t$). During $]t_{0}, t]$, the queue is never empty,
+%therefore it outputs bit at rate $r$, and thus
+%\begin{equation} \mylabel{eq-d4-37443}
+%        x(t)=x(t_{0 })+R(t)-R(t_{0 }) - (t-t_{0 })r
+%\end{equation}
+%
+%We assume that $R$ is left-continuous (otherwise the
+%proof is a little more complex); thus $x(t_{0 })=0$
+%and thus $x(t) \leq \sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\}$ \qed
+%
+%Now the content of a leaky bucket behaves exactly like a buffer
+%served at rate $r$, and with capacity $b$. Thus, a flow $R(t)$ is
+%conformant if and only if the bucket content $x(t)$ never exceeds
+%$b$. From Lemma~\ref{lem-buf-simple}, this means that
+%$$
+%\sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\} \leq b
+%$$
+%which is equivalent to
+%$$
+%R(t)-R(s) \leq r(t-s) +b
+%$$
+%for all $s \leq t$. We have thus shown the following.
+%\begin{proposition}
+%A leaky bucket controller with leak rate $r$ and bucket size $b$
+%forces a flow to be constrained by the arrival curve $\gamma_{r,b}$,
+%namely:
+%\begin{enumerate}
+%        \item  the flow of conformant data has $\gamma_{r,b}$ as an arrival
+%        curve;
+%\item  if the input already has $\gamma_{r,b}$ as an arrival
+%        curve, then all data is conformant.
+%\end{enumerate}
+%\end{proposition}
+
+We will see in Section~\ref{3bornes} a simple interpretation of
+the leaky bucket parameters, namely: $r$ is the minimum rate
+required to serve the flow, and $b$ is the buffer required to
+serve the flow at a constant rate.
+
+Parallel to the concept of leaky bucket is the Generic Cell Rate
+Algorithm (GCRA)\index{GCRA (Generic Cell Rate Algorithm!definition},
+used with ATM.
+\begin{definition}[GCRA ($T,\tau$)]
+The Generic Cell Rate
+Algorithm (GCRA) with parameters ($T,\tau$) is used with fixed size
+packets, called cells, and defines conformant cells as follows.
+It takes as input a cell
+arrival time {\tt t} and returns {\tt result}. It has an internal
+(static) variable {\tt tat} (theoretical arrival time).
+\begin{itemize}
+        \item  initially, {\tt tat = 0}
+        \item  when a cell arrives at time {\tt t}, then
+        \begin{verbatim}
+                if (t < tat - tau)
+                   result = NON-CONFORMANT;
+                else {
+                     tat = max (t, tat) + T;
+                     result = CONFORMANT;
+                     }
+        \end{verbatim}
+\end{itemize}
+\end{definition}
+Table~\ref{tab-gcra} illustrate the definition of GCRA. It
+illustrates that $\frac{1}{T}$ is the long term rate that can be
+sustained by the flow (in cells per time unit); while $\tau$ is a
+tolerance that quantifies how early cells may arrive with respect
+to an ideal spacing of $T$ between cells. We see on the first
+example that cells may be early by 2 time units (cells arriving at
+times 18 to 48), however this may not be cumultated, otherwise the
+rate of $\frac{1}{T}$ would be exceeded (cell arriving at time
+57).
+\begin{table}[htbp]
+        \begin{center}
+        \begin{tabular}{|r||c|c|c|c|c|c|c|}
+                \hline
+                arrival time & 0 & 10 & 18 & 28 & 38 & 48 & 57  \\
+                \hline
+                tat before arrival & 0 & 10 & 20 & 30 & 40 & 50 & 60  \\
+                \hline
+                result & c &  c  &  c  & c  &
+                c  & c &
+                non-c   \\
+                \hline
+        \end{tabular}
+         \end{center}
+        \begin{center}
+        \begin{tabular}{|r||c|c|c|c|c|}
+                \hline
+                arrival time & 0 & 10 & 15 & 25 & 35  \\
+                \hline
+                tat before arrival & 0 & 10 & 20 & 20 & 30  \\
+                \hline
+                result & c &  c  &  non-c  & c  &  c   \\
+                \hline
+        \end{tabular}
+        \end{center}
+        \mycaption{Examples for GCRA(10,2). The table gives the cell arrival
+        times, the value of the \texttt{tat} internal variable just before
+        the cell arrival, and the result for the cell (c = conformant,
+        non-c = non-conformant).}
+        \protect\mylabel{tab-gcra}
+\end{table}
+
+In general, we have the following result, which establishes the
+relationship between GCRA and the stair functions $v_{T, \tau}$.
+\begin{proposition}
+    \mylabel{theo-gcra-step}
+Consider a flow, with cumulative function $R(t)$, that generates
+packets of constant size equal to $k$ data units, with
+instantaneous packet arrivals. Assume time is discrete or time is
+continuous and $R$ is left-continuous. The following two
+properties are equivalent:
+\begin{enumerate}
+    \item  the flow is conformant to GCRA($T, \tau$)
+    \item  the flow has $(k \; v_{T, \tau})$ as an arrival curve
+\end{enumerate}
+\end{proposition}
+\pr
+The proof uses max-plus algebra.
+Assume that property 1 holds.  Denote with $\theta_{n}$ the value
+of $\texttt{tat}$ just after the arrival of the $n$th packet (or
+cell), and by convention $\theta_{0}=0$.
+Also call $t_{n}$ the arrival time of the $n$th packet.
+From the definition of the GCRA we have $\theta_{n}= \max (t_{n},
+\theta_{n-1}) + T$. We write this equation for all $m \leq n$, using
+the notation $\vee$ for $\max$. The distributivity of addition with
+respect to $\vee$ gives:
+$$
+\bracket
+  {
+  \theta_{n} = (\theta_{n-1}+T) \vee (t_{n}+T) \\
+  \theta_{n-1}+T = (\theta_{n-2}+2T) \vee (t_{n-1}+2T) \\
+  \ldots \\
+  \theta_{1}+(n-1)T = (\theta_{0}+nT) \vee (t_{1}+nT)
+  }
+$$ Note that $(\theta_{0}+nT) \vee (t_{1}+nT) = t_{1}+nT$ because
+$\theta_{0}=0$ and $t_{1} \geq 0$, thus the last equation can be
+simplified to $\theta_{1}+(n-1)T =t_{1}+nT$. Now the iterative
+substitution of one equation into the previous one, starting from
+the last one, gives
+\begin{equation} \mylabel{eq-thetan}
+    \theta_{n} = (t_{n}+T) \vee (t_{n-1}+2T) \vee \ldots \vee (t_{1}+nT)
+\end{equation}
+Now consider the $(m+n)$th arrival, for some $m, n \in \Nats$, with
+$m\geq 1$. By
+property 1, the packet is conformant, thus
+ \begin{equation} \mylabel{eq-l20-as8}
+    t_{m+n} \geq \theta_{m+n-1} -\tau
+ \end{equation}
+Now from Equation~(\ref{eq-thetan}), $\theta_{m+n-1} \geq
+t_{j}+(m+n-j)T$ for all $1 \leq j\leq m+n-1$. For $j=m$, we obtain
+$\theta_{m+n-1}\geq t_{m}+ nT$. Combining this with
+Equation~(\ref{eq-l20-as8}), we have $t_{m+n} \geq t_{m} + nT -
+\tau$. With proposition~\ref{theo-l20-jud}, this shows property 2.
+
+Conversely, assume now that property 2 holds. We show by induction
+on $n$ that the $n$th packet is conformant. This is always true
+for $n=1$. Assume it is true for all $m \leq n$. Then, with the
+same reasoning as above, Equation~(\ref{eq-thetan}) holds for $n$.
+We rewrite it as $\theta_{n}= \max_{1 \leq j \leq n
+}\{t_{j}+(n-j+1)T \}$. Now from proposition~\ref{theo-l20-jud},
+$t_{n+1} \geq t_{j}+(n-j+1)T - \tau$ for all $1 \leq j \leq n$,
+thus $t_{n+1} \geq \max_{1 \leq j \leq n }\{t_{j}+(n-j+1)T \}-
+\tau$. Combining the two, we find that $t_{n+1} \geq \theta_{n} -
+\tau$, thus the $(n+1)$th packet is conformant. \qed
+
+Note the analogy between Equation~(\ref{eq-thetan}) and
+Lemma~\ref{lem-buf-simple}.  Indeed, from
+proposition~\ref{theo-gamma-u}, for packets of constant size,
+there is equivalence between arrival constraints by affine
+functions $\gamma_{r,b}$ and by stair functions $v_{T, \tau}$.
+This shows the following result.
+\begin{corollary}
+    \mylabel{coro-lb-eq-gcra}
+    For a flow with packets of constant size, satisfying the
+GCRA($T,\tau$) is equivalent to satisfying a leaky bucket
+controller, with rate $r$ and burst tolerance $b$ given by:
+$$ b = (\frac{\tau}{T} + 1) \delta $$
+$$ r = \frac{\delta}{T} $$
+In the formulas, $\delta$ is the packet size in units of data.
+\end{corollary}
+The corollary can also be shown by a direct equivalence of the GCRA
+algorithm to a leaky bucket controller%
+\ifexos
+~(see Problem~\ref{L20-gcra2}).%
+\else
+.%
+\fi
+
+Take the ATM cell as unit of data. The results above show that for
+an ATM cell flow, being conformant to GCRA($T, \tau$) is
+equivalent to having $v_{T, \tau}$ as an arrival curve. It is also
+equivalent to having $\gamma_{r,b}$ as an arrival curve, with
+$r=\frac{1}{T}$ and $b=\frac{\tau}{T}+1$.
+
+Consider a family of $I$ leaky bucket controllers (or GCRAs), with
+parameters $r_{i}, b_{i}$, for $1 \leq i \leq I$. If we apply all
+of them in parallel to the same flow, then the conformant data is
+data that is conformant for each of the controllers in isolation.
+The flow of conformant data has as an arrival curve
+$$\alpha(t) = \min_{1 \leq i \leq I}(\gamma_{r_{i}, b_{i}}(t))=
+\min_{1 \leq i \leq I}  (r_{i}t + b_{i})$$
+
+It can easily be shown that the family of arrival curves that can be
+obtained in this way is the set of concave, piecewise linear
+functions, with a finite number of pieces.  We will see in
+Section~\ref{shapers} some examples of functions that do not belong to
+this family.
+
+\paragraph{Application to ATM and the Internet}
+
+Leaky buckets and GCRA are used by standard bodies to define
+conformant flows in Integrated Services Networks. With ATM, a
+constant bit rate connection (CBR) is defined by one GCRA (or
+equivalently, one leaky bucket), with parameters $(T, \tau)$. $T$
+is called the ideal cell interval, and $\tau$ is called the Cell
+Delay Variation Tolerance (CDVT)\index{CDVT (cell delay variation
+tolerance)}. Still with ATM, a variable bit rate (VBR) connection
+is defined as one connection with an arrival curve that
+corresponds to 2 leaky buckets or GCRA controllers. The Integrated
+services framework of the Internet (Intserv) uses the same family
+of arrival curves, such as
+\begin{equation}\mylabel{eq-tspec}
+ \alpha(t) = \min(M+pt, rt+b)
+\end{equation}
+where $M$ is interpreted as the maximum packet size, $p$ as the
+peak rate, $b$ as the burst tolearance, and $r$ as the sustainable
+rate (Figure~\ref{fig-vbrenv}). In Intserv jargon, the 4-uple
+$(p,M,r,b)$ is also called a T-SPEC (traffic specification).
+\index{T-SPEC (traffic specification)}
+\begin{figure}[!htbp]
+    \insfig{figvbr}{0.4}
+    \mycaption{Arrival curve for ATM VBR and
+    for Intserv flows}
+    \protect\mylabel{fig-vbrenv}
+ \end{figure}
+
+\subsection{Sub-additivity and Arrival Curves}
+
+In this Section we discover the fundamental relationship between
+min-plus algebra and arrival curves. Let us start with a
+motivating example.
+
+Consider a flow $R(t) \in \Nats$ with $t\in \Nats$; for example
+the flow is an ATM cell flow, counted in cells. Time is discrete
+to simplify the discussion. Assume that we know that the flow is
+constrained by the arrival curve $3v_{10,0}$; for example, the
+flow is the superposition of 3 CBR connections of peak rate $0.1$
+cell per time unit each. Assume in addition that we know that the
+flow arrives at the point of observation over a link with a
+physical characteristic of 1 cell per time unit. We can conclude
+that the flow is also constrained by the arrival curve $v_{1,0}$.
+Thus, obviously, it is constrained by $\alpha_{1}=\min(3v_{10,0},
+v_{1,0})$. Figure~\ref{fig-alpha-sadd} shows the function
+$\alpha_{1}$.
+
+
+\begin{figure}[!htbp]
+\insfig{alphasadd}{0.9}
+    \mycaption{The arrival curve
+    $\alpha_{1}=\min(3v_{10,0}, v_{1,0})$ on the left, and its sub-additive closure
+    (``good'' function) $\bar{\alpha_{1}}$ on the right.
+    Time is discrete, lines are put for ease of reading.}
+    \protect\mylabel{fig-alpha-sadd}
+\end{figure}
+Now the arrival curve $\alpha_{1}$ tells us that $R(10)\leq 3$ and $R(11)
+\leq 6$. However, since there can arrive at most 1 cell per time
+unit , we can also conclude that $R(11) \leq R(10) + [R(11)-R(10)]
+\leq \alpha_{1}(10) + \alpha_{1}(1) = 4$. In other words, the sheer knowledge
+that $R$ is constrained by $\alpha_{1}$ allows us to derive a better
+bound than $\alpha_{1}$ itself. This is because $\alpha_{1}$ is not a
+``good'' function, in a sense that we define now.
+
+\begin{definition}
+\mylabel{def-subaddi}
+    Consider a function $\alpha$ in $\calF$.
+    We say that $\alpha$ is a ``good'' function if any one of
+    the following equivalent properties is satisfied%
+\index{Good function}%
+    \begin{enumerate}
+        \item  $\alpha$ is sub-additive and $\alpha(0)=0$
+        \item  $\alpha= \alpha \mpc \alpha$
+        \item $\alpha \mpd \alpha = \alpha$
+        \item  $\alpha = \bar{\alpha}$ (sub-additive closure of $\alpha$).
+    \end{enumerate}
+\end{definition}
+
+The definition uses the concepts of sub-additivity, min-plus
+convolution, min-plus deconvolution and sub-additive closure,
+which are defined in Chapter~\ref{L10}. The equivalence between
+the four items comes from
+Corollaries~\ref{cor:sub-additiveclosure} on
+page~\pageref{cor:sub-additiveclosure}
+and~\ref{thm:mpdsub-additive} on
+page~\pageref{thm:mpdsub-additive}. Sub-additivity (item 1) means
+that $\alpha(s+t) \leq \alpha(s) + \alpha(t)$.  If $\alpha$ is not
+sub-additive, then $\alpha(s) + \alpha(t)$ may be a better bound
+than $\alpha(s+t)$, as is the case with $\alpha_{1}$ in the
+example above. Item 2, 3 and 4 use the concepts of min-plus
+convolution, min-plus deconvolution and sub-additive closure,
+defined in Chapter~\ref{L10}. We know in particular
+(Theorem~\ref{thm:sub-additiveclosure}) that the sub-additive
+closure of a function $\alpha$ is the largest ``good'' function
+$\bar{\alpha}$ such that $\bar{\alpha} \leq \alpha$. We also know
+that $\bar{\alpha}\in \calF$ if $\alpha \in \calF $.
+
+The main result about arrival curves is that {\em any} arrival curve
+can be replaced by its sub-additive closure, which is a ``good'' arrival
+curve. Figure~\ref{fig-alpha-sadd} shows $\bar{\alpha_{1}}$ for our example
+above.
+\begin{theorem}[Reduction of Arrival Curve to a
+    Sub-Additive One] Saying that a flow is constrained by a
+    wide-sense increasing function $\alpha$ is equivalent to saying that
+    it is constrained by the sub-additive closure $\bar{\alpha}$.
+    \mylabel{theo-goodarrcur}
+\end{theorem}
+The proof of the theorem leads us to the heart of the concept of
+arrival curve, namely, its correspondence with  a fundamental,
+linear relationships in min-plus algebra, which we will now
+derive.
+\begin{lemma}
+\mylabel{lem-l20-lwius}
+    A flow $R$ is constrained by arrival curve $\alpha$ if and only if
+    $R \leq R \mpc \alpha$
+\end{lemma}
+\pr Remember that an equation such as $R \leq R \mpc \alpha$ means
+that for all times $t$, $R(t) \leq (R \mpc \alpha)(t)$.  The
+min-plus convolution $R \mpc \alpha$ is defined in
+Chapter~\ref{L10}, page~\pageref{def:minplusconvolution}; since
+$R(s)$ and $\alpha(s)$ are defined only for $s \geq 0$, the
+definition of $R \mpc \alpha$ is: $(R \mpc \alpha)(t) = \inf_{0
+\leq s \leq t} (R(s) + \alpha(t-s))$. Thus $R \leq R \mpc \alpha$
+is equivalent to $R(t) \leq R(s) + \alpha(t-s)$ for all $0 \leq s
+\leq t$. \qed
+\begin{lemma}
+    If $\alpha_{1}$ and
+    $\alpha_{2}$ are arrival curves for a flow $R$, then so is
+    $\alpha_{1} \mpc \alpha_{2}$
+\end{lemma}
+\pr We know from Chapter~\ref{L10} that $\alpha_{1}
+\mpc \alpha_{2}$ is wide-sense increasing if $\alpha_{1}$ and
+$\alpha_{2}$ are.  The rest of the proof follows immediately from
+Lemma~\ref{lem-l20-lwius} and the associativity of $\mpc$.
+\qed
+\paragraph{Proof of Theorem}
+Since $\alpha$ is an arrival curve, so is $\alpha \mpc \alpha$,
+and by iteration, so is $\alpha^{(n)}$ for all $n \geq 1$. By the
+definition of $\delta_{0}$, it is also an arrival curve. Thus so
+is $\bar{\alpha}=\inf_{n\geq 0}\alpha^{(n)}$.
+
+Conversely, $\bar{\alpha} \leq \alpha$; thus, if $\bar{\alpha}$ is
+an arrival curve, then so is $\alpha$. \qed
+
+\paragraph{Examples}
+
+We should thus restrict our choice of arrival curves to
+sub-additive functions.  As we can expect, the functions
+$\gamma_{r,b}$ and $v_{T, \tau}$ introduced in
+Section~\ref{arrcur-def} are sub-additive and since their value is
+$0$ for $t=0$, they are ``good'' functions, as we now show.
+Indeed, we know from Chapter~\ref{L20} that any concave function
+$\alpha$ such that $\alpha(0)=0$ is sub-additive.  This explains
+why the functions $\gamma_{r,b}$ are sub-additive.
+
+Functions $v_{T, \tau}$ are not concave, but they still are
+sub-additive. This is because, from its very definition, the
+ceiling function is sub-additive, thus $$v_{T, \tau}(s+t)=\lceil
+\frac{s+t+\tau}{T} \rceil \leq  \lceil \frac{s+\tau}{T} \rceil +
+\lceil \frac{t}{T} \rceil \leq \lceil \frac{s+\tau}{T} \rceil +
+\lceil \frac{t + \tau}{T} \rceil = v_{T, \tau}(s) + v_{T, \tau}(t)
+$$ Let us return to our introductory example with $\alpha_{1}=
+\min(3v_{10,0}, v_{1,0})$.  As we discussed, $\alpha_{1}$ is not
+sub-additive.  From Theorem~\ref{theo-goodarrcur}, we should thus
+replace $\alpha_{1}$ by its sub-additive closure
+$\bar{\alpha_{1}}$, which can be computed by
+Equation~(\ref{eq:sub-additiveclosure}). The computation is
+simplified by the following remark, which follows immediately from
+Theorem ~\ref{thm:propertiessub-additiveclosure}:
+\begin{lemma}
+    \mylabel{lem-cmpsou}
+    Let $\gamma_{1}$ and
+$\gamma_{2}$ be two ``good'' functions. The sub-additive closure of
+$\min (\gamma_{1},\gamma_{2}) $ is
+$\gamma_{1} \mpc \gamma_{2}$.
+\end{lemma}
+We can apply the lemma to $\alpha_{1}= 3v_{10,0} \wedge v_{1,0}$,
+since $v_{T, \tau}$ is a ``good'' function. Thus
+$\bar{\alpha_{1}}= 3v_{10,0}\mpc v_{1,0}$, which the alert reader
+will enjoy computing. The result is plotted in
+Figure~\ref{fig-alpha-sadd}.
+
+Finally, let us mention the following equivalence, the proof of
+which is easy and left to the reader.
+
+\begin{proposition}
+\mylabel{theo-greedy} For a given wide-sense increasing function
+$\alpha$, with $\alpha(0)=0$, consider a source defined by
+$R(t)=\alpha(t)$ (greedy source). The source has $\alpha$ as an arrival curve if and only if $\alpha$ is a ``good" function.%
+\index{greedy source}
+\end{proposition}
+
+\paragraph{VBR arrival curve}
+Now let us examine the family of arrival curves obtained by
+combinations of leaky buckets or GCRAs (concave piecewise linear
+functions). We know from Chapter~\ref{L10} that if $\gamma_{1}$
+and $\gamma_{2}$ are concave, with
+$\gamma_{1}(0)=\gamma_{2}(0)=0$, then $\gamma_{1} \mpc \gamma_{2}
+= \gamma_{1} \wedge \gamma_{2}$. Thus any concave piecewise linear
+function $\alpha$ such that $\alpha(0)=0$ is a ``good'' function.
+In particular, if we define the arrival curve for VBR connections
+or Intserv flows by
+$$
+\bracket{
+\alpha(t) = \min (pt + M, rt +b) \gap \mif t >0\\
+ \alpha(0) = 0
+} $$ (see Figure~\ref{fig-vbrenv}) then $\alpha$ is a ``good"
+function.
+
+%\mymarginpar{Skip these two paragraphs at a first reading}%
+%\petitcar{%
+We have seen in Lemma~\ref{lem-red-lc} that an arrival curve
+$\alpha$ can always be replaced by its limit from the left
+$\alpha_l$. We might wonder how this combines with the
+sub-additive closure, and in particular, whether these two
+operations commute (in other words, do we have $(\bar{\alpha})_l =
+\overline{\alpha _l}$~?). In general, if $\alpha$ is
+left-continuous, then we cannot guarantee that $\bar{\alpha}$ is
+also left-continuous, thus we cannot guarantee that the operations
+commute. However, it can be shown that $(\bar{\alpha})_l$ is
+always a ``good" function, thus
+$\overline{(\bar{\alpha})_l}=(\bar{\alpha})_l$. Starting from an
+arrival curve $\alpha$ we can therefore improve by taking the
+sub-additive closure first, then the limit from the left. The
+resulting arrival curve $(\bar{\alpha})_l$ is a ``good" function
+that is also left-continuous (a ``very good" function%
+\index{Very good function}), and the constraint by $\alpha$ is
+equivalent to the constraint by $(\bar{\alpha})_l$
+
+Lastly, let us mention that it can easily be shown, using an
+argument of uniform continuity, that if $\alpha$ takes only a
+finite set of values over any bounded time interval, and if
+$\alpha$ is left-continuous, then so is $\bar{\alpha}$ and then we
+do have $(\bar{\alpha})_l = \overline{\alpha _l}$. This assumption
+is always true in discrete time, and in most cases in practice.
+%}%% end of peticars
+
+\subsection{Minimum Arrival Curve}
+Consider now a given flow $R(t)$, for which we would like to
+determine a minimal arrival curve. This problem arises, for
+example, when $R$ is known from measurements. The following
+theorem says that there is indeed one minimal arrival curve.
+\begin{theorem}[Minimum Arrival Curve]\mylabel{theo-mac}
+    Consider a flow $R(t)_{t \geq 0}$. Then
+    \begin{itemize}
+        \item  function $R \mpd R$ is an arrival curve for the flow
+        \item  for any arrival curve $\alpha$ that constrains the flow, we
+        have: $(R \mpd R) \leq \alpha$
+        \item  $R \mpd R$ is a ``good" function
+    \end{itemize}
+    Function $R \mpd R$ is called the \emph{minimum arrival curve}
+    for flow $R$.
+\end{theorem}
+The minimum arrival curve uses min-plus deconvolution, defined in
+Chapter~\ref{L10}. Figure~\ref{minarrcur} shows an example of $R
+\mpd R$ for a measured function $R$.
+\pr
+By definition of $\mpd$, we have
+ $(R\mpd R)(t)
+= \sup_{v \geq 0} \{ R(t+v) -R(v) \}$, it follows that $(R \mpd
+R)$ is an arrival curve.
+
+Now assume that some $\alpha$ is also an arrival curve for $R$.
+From Lemma~\ref{lem-l20-lwius}, we have $R \leq R \mpc \alpha)$.
+From Rule~14 in Theorem~\ref{thm:rule11-14} in Chapter~\ref{L10},
+it follows that $R \mpd R \leq \alpha$, which shows that $R\mpd R$
+is the minimal arrival curve for $R$. Lastly, $R\mpd R$ is a
+``good" function from Rule 15 in  Theorem~\ref{thm:rule11-14}.
+\qed
+
+\begin{figure}[!htbp]
+ \insfig{trace0}{0.6}
+ \insfig{trace1}{0.6}
+ \insfig{mina01}{0.6}
+  \mylabel{minarrcur}
+  \mycaption{Example of minimum arrival curve.
+  Time is discrete, one
+  time unit is 40 ms.
+  The top figures shows, for two similar traces, the
+  number of packet arrivals at every time slot.
+  Every packet is of constant size (416 bytes). The bottom figure
+  shows the minimum arrival curve for the first trace (top curve) and
+  the second trace (bottom curve). The large burst in the first trace
+  comes earlier, therefore its minimum arrival curve is slightly larger.}
+\end{figure}
+Consider a greedy source, with $R(t)=\alpha(t)$, where $\alpha$ is
+a ``good" function. What is the minimum arrival curve~?%
+\footnote{Answer: from the equivalence in
+Definition~\ref{def-subaddi}, the minimum arrival curve is
+$\alpha$ itself.} Lastly, the curious reader might wonder whether
+$R \mpd R$ is left-continuous. The answer is as follows. Assume
+that $R$ is either right or left-continuous. By
+lemma~\ref{lem-red-lc}, the limit from the left $(R \mpd R)_l$ is
+also an arrival curve, and is bounded from above by $R \mpd R$.
+Since $R \mpd R$ is the minimum arrival curve, it follows that $(R
+\mpd R)_l=R \mpd R$, thus $R \mpd R$ is left-continuous (and is
+thus a ``very good" function).
+
+In many cases, one is interested not in the absolute minimum
+arrival curve as presented here, but in a minimum arrival curve
+within a family of arrival curves, for example, among all
+$\gamma_{r,b}$ functions. For a development along this line, see
+\cite{naudts99}.
+
+
+\section{Service Curves}
+\mylabel{sec-sercur}
+\subsection{Definition of Service Curve}
+\mylabel{sec-sercurdef} We have seen that one first principle in
+integrated services networks is to put arrival curve constraints
+on flows. In order to provide reservations, network nodes in
+return need to offer some guarantees to flows. This is done by
+packet schedulers \cite{keshav-96}. The details of packet
+scheduling are abstracted using the concept of service curve,
+which we introduce and study in this section. Since the concept of
+service curve is more abstract than that of arrival curve, we
+introduce it on some examples.
+
+A first, simple example of a scheduler is a Generalized Processor
+Sharing (GPS) node \cite{pg93}\index{GPS (generalized processor
+sharing}. We define now a simple view of GPS; more details are
+given in Chapter~\ref{L21}. A GPS node serves several flows in
+parallel, and we can consider that every flow is allocated a given
+rate. The guarantee is that during a period of duration $t$,  for
+which a flow has some backlog in the node, it receives an amount
+of service at least equal to $r t$, where $r$ is its allocated
+rate. A GPS node is a theoretical concept, which is not really
+implementable, because it relies on a fluid model, while real
+networks use packets. We will see in Section~\ref{sec-gps} on
+page~\pageref{sec-gps} how to account for the difference between a
+real implementation and GPS. Consider a input flow $R$, with
+output $R^*$, that is served in a GPS node, with allocated rate
+$r$. Let us also assume that the node buffer is large enough so
+that overflow is not possible. We will see in this section how to
+compute the buffer size required to satisfy this assumption. Lossy
+systems are the object of Chapter~\ref{L30}. Under these
+assumptions, for all time $t$, call $t_0$ the beginning of the
+last busy period for the flow up to time $t$. From the GPS
+assumption, we have
+$$R^{*}(t)-R^{*}(t_{0})\geq r(t-t_{0})$$
+Assume as usual that $R$ is left-continuous; at time $t_0$ the
+backlog for the flow is $0$, which is expressed by $R(t_0) -
+R^*(t_0)=0$. Combining this with the previous equation, we obtain:
+$$R^{*}(t)-R(t_{0})\geq r(t-t_{0}) $$
+We have thus shown that, for all time $t$: $R^{*}(t) \geq
+\inf_{0\leq s \leq t} [R(s) + r(t-s)]$, which can be written as
+\begin{equation}\mylabel{eq-gps}
+  R^{*} \geq R\mpc \gamma_{r,0}
+\end{equation}
+Note that a limiting case of GPS node is the constant bit rate
+server with rate $r$, dedicated to serving a single flow. We will
+study GPS in more details in Chapter~\ref{L21}.
+
+Consider now a second example. Assume that the only information we
+have about a network node is that the maximum delay for the bits
+of a given flow $R$ is bounded by some fixed value $T$, and that
+the bits of the flow are served in first in, first out order. We
+will see in Section~\ref{shapers} that this is used with a family
+of schedulers called ``earliest deadline first" (EDF). We can
+translate the assumption on the delay bound to $d(t) \leq T$ for
+all $t$.  Now since $R^*$ is always wide-sense increasing, it
+follows from the definition of $d(t)$ that $R^*(t+T) \geq R(t)$.
+Conversely, if $R^*(t+T) \geq R(t)$, then $d(t) \leq T$. In other
+words, our condition that the maximum delay is bounded by $T$ is
+equivalent to $R^*(t+T) \geq R(t)$ for all $t$. This in turn can
+be re-written as $$R^*(s) \geq R(s-T) $$for all $s \geq T$. We
+have introduced in Chapter~\ref{L10} the ``impulse" function
+$\delta_{T}$ defined by $\delta_{T}(t)=0$ if $0\leq t \leq T$ and
+$\delta_{T}(t)=+\infty $ if $ t > T$. It has the property that,
+for any wide-sense increasing function $x(t)$, defined for $t \geq
+0$, $(x \mpc \delta_T)(t)=x(t-T)$ if $ t \geq T$ and $(x \mpc
+\delta_T)(t)=x(0)$ otherwise. Our condition on the maximum delay
+can thus be written as
+\begin{equation}\mylabel{eq-delaynode2}
+ R^* \geq R\mpc \delta_T
+\end{equation}
+
+For the two examples above, there is an input-output relationship
+of the same form (Equations~(\ref{eq-gps}) and
+(\ref{eq-delaynode2})). This suggests the definition of service
+curve, which, as we see in the rest of this section, is indeed
+able to provide useful results.
+\begin{figure}[!htbp]
+  \insfig{sercurd}{0.8}
+  \mycaption{Definition of service curve. The output $R^*$ must be
+  above $R \mpc \beta$, which is
+  the lower
+  envelope of all curves $t \mapsto R(t_0) + \beta(t-t_0)$.}
+  \mylabel{fig-sercurd}
+\end{figure}
+
+\begin{definition}[Service Curve]
+\mylabel{def-sercur} Consider a  system $\mathcal{S}$ and a
+flow through $\mathcal{S}$ with input and output function $R$
+and $R^{*}$. We say that $\mathcal{S}$ offers to the flow a
+\emph{service curve} $\beta$ if and only if $\beta$ is wide
+sense increasing, $\beta(0)=0$ and $R^{*} \geq R \mpc \beta$
+\end{definition}
+Figure~\ref{fig-sercurd} illustrates the definition.
+
+The definition means that $\beta$ is a wide sense increasing
+function, with $\beta(0)=0$, and that for all $t\geq 0$,
+%\begin{equation}\mylabel{eq-sercur-d21}
+$$
+  R^{*}(t) \geq \inf_{s \leq t} \left(R(s)  + \beta(t-s)\right)
+$$
+In practice, we can avoid the use of an infimum if $\beta$ is
+continuous. The following proposition is an immediate consequence
+of \thref{theo-minplust0} on \pgref{theo-minplust0}.
+\begin{proposition}
+\mylabel{prop-sercurt0} If $\beta$ is continuous, the service
+curve property means that for all $t$ we can find $t_0 \leq t$
+such that
+\begin{equation}\mylabel{eq-sercur-d2a}
+  R^{*}(t) \geq R_l(t_{0}) + \beta(t-t_{0})
+\end{equation}
+where $R_l(t_0)= \sup_{\{s < t_0\}} R(s)$ is the limit from the left
+of $R$ at $t_0$. If $R$ is left-continuous, then
+$R_l(t_0)=R(t_0)$.
+\end{proposition}
+
+For a constant rate server (and also for any \emph{strict} service
+curve), the number $t_0$ in \eref{eq-sercur-d2a} can be taken as the
+beginning of the busy period, for other cases, we do not know.
+However, in some cases we can pick a $t_0$ that increases with $t$:
+
+\begin{proposition}
+\mylabel{prop-t0augmente} If the service curve $\beta$ is convex,
+then we can find some wide sense increasing function $\tau(t)$
+such that we can choose $t_0=\tau(t)$ in \eref{eq-sercur-d2a}.
+\end{proposition}
+Note that since a service curve is assumed to be wide-sense
+increasing, $\beta$, being convex, is necessarily continuous; thus
+we can apply \pref{prop-sercurt0}.
+\pr
+We give the proof when $R$ is left-continuous. The proof for the
+general case is essentially the same but involves some $\epsilon$
+cutting. Consider some $t_1 < t_2$ and call $\tau_1$ a value of
+$t_0$ as in \eref{eq-sercur-d2a}) at $t=t_1$. Also consider any
+$t' \leq \tau_1$.  From the definition of $\tau_1$, we have
+$$
+R^*(t') + \beta(t_1 - t' ) \geq R^*(\tau_1) + \beta(t_1 - \tau_1 )
+$$
+and thus
+$$
+R^*(t') + \beta(t_2 - t' ) \geq R^*(\tau_1) + \beta(t_1 - \tau_1 )
+- \beta(t_1 - t' ) + \beta(t_2 - t' )
+$$
+Now $\beta$ is convex, thus for any four numbers $a, b, c, d$ such
+that $a \leq c  \leq b$,  $a \leq d  \leq b$ and $a+b=c+d$, we
+have
+$$\beta(a) + \beta(b) \geq \beta(c) + \beta(d)$$
+(the interested reader will be convinced by drawing a small
+figure). Applying this to $a=t_1- \tau_1, b=t_2 - t', c=t_1-t',
+d=t_2-\tau_1$ gives
+$$
+R^*(t')+ \beta(t_2-t') \geq R^*(\tau_1)+\beta(t_2 - \tau_1)
+$$
+and the above equation holds for all $t'\leq \tau_1$. Consider now
+the minimum, for a fixed $t_2$, of $R^*(t') +\beta(t_2-t')$ over
+all $t' \leq t_2$. The above equation shows that the minimum is
+reached for some $t' \geq \tau_1$. \qed
+
+We will see in Section~\ref{bounds} that the combination of a
+service curve guarantee with an arrival curve constraint forms the
+basis for deterministic bounds used in integrated services
+networks. Before that, we give the fundamental service curve
+examples that are used in practice.
+
+
+\subsection{Classical Service Curve Examples}
+\mylabel{sec-clasc}
+
+\paragraph{Guaranteed Delay Node}
+\index{guaranteed delay node} The analysis of the second example
+in Section~\ref{sec-sercurdef} can be rephrased as follows.
+\begin{proposition}
+    For a lossless bit processing system, saying that the delay
+    for any bit is bounded by some fixed $T$ is equivalent to saying
+    that the system offers to the flow a service curve equal to
+    $\delta_{T}$.
+\end{proposition}
+\paragraph{Non Premptive Priority Node}
+\index{Priority Node}
+ Consider a node that serves two flows,
+$R_H(t)$ and $R_L(t)$. The first flow has non-preemptive priority
+over the second one (\fref{fig-HOL}). This example explains the
+general framework used when some traffic classes have priority
+over some others, such as with the Internet differentiated
+services \cite{RFC2475}. The rate of the server is constant, equal
+to $C$. Call $R_H^*(t)$ and $R_L^*(t)$ the outputs for the two
+flows.
+\begin{figure}[!htbp]
+    \insfig{sercurhol}{0.6}
+    \mycaption{Two priority flows (H and L) served with a preemptive head of
+    the line (HOL) service discipline. The high priority flow is constrained by
+    arrival curve $\alpha$.}
+\mylabel{fig-HOL}
+\end{figure}
+Consider first the high priority flow. Fix some time $t$ and call
+$s$ the beginning of the backlog period for high priority traffic.
+The service for high priority can be delayed by a low priority
+packet that arrived shortly before $s'$, but as soon as this
+packet is served, the server is dedicated to high priority as long
+as there is some high priority traffic to serve. Over the interval
+$(s,t]$, the output is $C(t-s)$Thus
+$$R_H^*(t)- R_H^*(s) \geq C(t-s) -l^H_{\max}
+$$
+where $l^L_{\max}$ is the maximum size of a low priority packet.
+Now by definition of $s$: $R_H^*(s)=R_H(s)$ thus
+$$R_H^*(t)\geq R_H(s) + C(t-s) -l^L_{\max}
+$$
+Now we have also
+$$R_H^*(t) - R_H(s) = R_H^*(t) - R_H^*(s) \geq 0$$
+from which we derive
+$$R_H^*(t)\geq R_H(s) + [C(t-s) -l^L_{\max}]^+$$
+The function $u \rightarrow [Cu -l^L_{\max}]^+$ is called the
+rate-latency function with rate $C$ and latency
+$\frac{l^L_{\max}}{C}$ \cite{SV96} (in this book we note it
+$\beta_{C,\frac{l^L_{\max}}{C}}$, see also
+Figure~\ref{fig:examplesoffunctions} on
+page~\pageref{fig:examplesoffunctions}). Thus the high priority
+traffic receives this function as a service curve.
+
+Now let us examine low priority traffic. In order to assure that
+it does not starve, we assume in such situations that the high
+priority flow is constrained by an arrival curve $\alpha_H$.
+Consider again some arbitrary time $t$. Call $s'$ the beginning of
+the server busy period (note that $s' \leq s$). At time $s'$, the
+backlogs for both flows are empty, namely, $R_H^*(s')=R_H(s')$ and
+$R_L^*(s')=R_L(s')$. Over the interval $(s',t]$, the output is
+$C(t-s')$. Thus
+ $$R_L^*(t) - R_L^*(s') = C(t-s') - \left[R_H^*(t) -R_H^*(s') \right]
+ $$
+Now
+$$ R_H^*(t) - R_H^*(s') = R_H^*(t) - R_H(s') \leq R_H(t) - R_H(s')
+\leq \alpha_H(t-s')
+$$
+and obviously $R_H^*(t) - R_H^*(s') \geq 0$ thus
+$$R_L^*(t) - R_L(s') = R_L^*(t) - R_L^*(s') \geq S(t-s')
+$$
+with $S(u) = \left(Cu -\alpha_H(u) \right)^+$. Thus, if $S$ is
+wide-sense increasing, the low-priority flow receives a service
+curve equal to function $S$. Assume further that $\alpha_H =
+\gamma_{r,b}$, namely, the high priority flow is constrained by
+one single leaky bucket or GCRA. In that case, the service curve
+$S(t)$ offered to the low-priority flow is equal to the
+rate-latency function $\beta_{R,T}(t)$, with $R=C-r$ and
+$T=\frac{b}{C-r}$.
+
+We have thus shown the following.
+\begin{proposition}
+Consider a constant bit rate server, with rate $C$, serving two
+flows, $H$ and $L$, with non-preemptive priority given to flow
+$H$. Then the high priority flow is guaranteed a rate-latency
+service curve with rate $C$ and latency $\frac{l^L_{\max}}{C}$
+where $l^L_{\max}$ is the maximum packet size for the low priority
+flow.
+
+If in addition the high priority flow is $\gamma_{r,b}$-smooth,
+with $r<C$, then the low priority flow is guaranteed a
+rate-latency service curve with rate $C-r$ and latency
+$\frac{b}{C-r}$. \mylabel{prop-prionode}
+\end{proposition}
+
+This example justifies the importance of the rate-latency service
+curve. We will also see in Chapter~\ref{L21}
+(Theorem~\ref{theo-GR} on page~\pageref{theo-GR}) that all
+practical implementations of GPS offer a service curve of the
+rate-latency type.
+
+
+%Let us introduce the following
+%definition (Figure~\ref{fig-ratelat}).%
+%%\index{rate latency function}%
+%%\index{1S@$S_{R,T}$ (rate-latency function)}%
+%\begin{definition}
+%\mylabel{def-2dfjS0} The ``rate-latency'' function $S_{R,T}$ is
+%defined by $$
+%    \beta_{R,T}(t)=  R(t-T)^{+}= R (t-T) \mif t \geq T \mand 0 \mif  t < T
+%$$
+%\end{definition}
+%\begin{figure}[!htbp]
+%  \insfig{ratelat}{0.3}
+%  \mylabel{fig-ratelat}
+%  \mycaption{Definition of rate-latency function $\beta_{R,T}$
+%  with rate $R$ and latency $T$.}
+%\end{figure}
+
+%in Chapter~\ref{L10}.
+
+\paragraph{Strict service curve}
+An important class of network nodes fits in the following
+framework.
+\begin{definition}[Strict Service Curve]
+\mylabel{def-ssc} We say that system $\calS$ offers a strict
+service curve $\beta$ to a flow if, during any backlogged period
+of duration $u$, the output of the flow is at least equal to
+$\beta(u)$.
+\end{definition}%
+\index{strict service curve} A GPS node is an example of node that
+offers a strict service curve of the form $\beta(t)=rt$. Using the
+same busy-period analysis as with the GPS example in the previous
+section, we can easily prove the following.
+\begin{proposition}\mylabel{prop-ssc}
+If a node offers $\beta$ as a strict service curve to a flow, then
+it also offers $\beta$ as a service curve to the flow.
+\end{proposition}
+
+The strict service curve property offers a convenient way of
+visualizing the service curve concept: in that case, $\beta(u)$ is
+the minimum amount of service guaranteed during a busy period.
+Note however that the concept of service curve, as defined in
+Definition~\ref{def-sercur} is more general. A greedy shaper
+(\sref{ioshaper}) is an example of system that offers its shaping
+curve as a service curve, without satisfying the strict service
+curve property. In contrast, we will find later in the book some
+properties that hold only if a strict service curve applies. The
+framework for a general discussion of strict service curves is
+given in \cref{L23}.
+
+\paragraph{Variable Capacity Node}
+\index{variable capacity node} Consider a network node that offers
+a variable service capacity to a flow. In some cases, it is
+possible to model the capacity by a cumulative function $M(t)$,
+where $M(t)$ is the total service capacity available to the flow
+between times $0$ and $t$. For example, for an ATM system, think
+of $M(t)$ as the number of time slots between times $0$ and $t$
+that are available for sending cells of the flow. Let us also
+assume that the node buffer is large enough so that overflow is
+not possible. The following proposition is obvious but important
+in practice
+\begin{proposition}
+ If the variable capacity satisfies a minimum
+guarantee of the form
+\begin{equation}\mylabel{eq-mot-sc4}
+ M(t) - M(s) \geq \beta(t-s)
+\end{equation}
+for some fixed function $\beta$ and for all $0\leq s \leq t$, then
+$\beta$ is a strict service curve,
+\end{proposition}
+Thus $\beta$ is also a service curve for that particular flow. The
+concept of variable capacity node is also a convenient way to
+establish service curve properties. For an application to real
+time systems (rather than communication networks) see
+\cite{thiele98}.
+
+We will show in \cref{L11} that the output of the variable
+capacity node is given by
+$$
+R^*(t) = \inf_{0 \leq  s \leq t} \{M(t)-M(s) + R(s) \}
+$$
+
+Lastly, coming back to the priority node, we have:
+\begin{proposition}
+ The service curve property in \pref{prop-prionode} for the high-priority flow is strict.
+ \mylabel{prop-priostric}
+\end{proposition}
+The proof is left to the reader. It relies on the fact that
+constant rate server is a shaper.
+
+
+
+
+%An important class of variable capacity nodes is the priority
+%node. Consider a node that serves two flows, $R_H(t)$ and
+%$R_L(t)$. The first flow has preemptive priority over the second
+%one (Figure \ref{fig-HOL}). This example is simplified, but it
+%explains the general framework used when some traffic classes have
+%priority over some others, such as with the Internet
+%differentiated services \cite{RFC2475}. A similar example with
+%non-preemptive priority can be analyzed in the same manner. The
+%rate of the server is constant, equal to $C$. Call $R_H^*(t)$ and
+%$R_L^*(t)$ the outputs for the two flows. In order to assure that
+%the high priority flow does not let the low priority flow starve,
+%we assume in such situations that the high priority flow is
+%constrained by an arrival curve $\alpha$.
+%\begin{figure}[!htbp]
+%    \insfig{sercurhol}{0.6}
+%    \mycaption{Two priority flows (H and L) served with a preemptive head of
+%    the line (HOL) service discipline. The high priority flow is constrained by
+%    arrival curve $\alpha$.}
+%\mylabel{fig-HOL}
+%\end{figure}
+%Consider some arbitrary time interval $]s,t]$. Over such an
+%interval, the node offers to the low-priority flow a capacity
+%equal to $C(t-s) - R_H^*(t) + R_H^*(s)$.  Now we will see in a
+%following section that greedy shapers keep arrival constraints,
+%and that our system is a greedy shaper for the flow with high
+%priority. Thus $R_H^*(t)-R_H^*(s) \leq \alpha(t-s)$ and finally:
+%$$R_H^*(t)-R_H^*(s) \leq C(t-s) \wedge \alpha(t-s)$$
+%Thus the capacity node offered to the low priority flow is at
+%least equal to $S(t-s)$, with $S$ defined by $S(u) = Cu - \left(
+%\alpha(u) \wedge Cu \right)$. Thus the low-priority flow receives
+%a service curve equal to function $S$.
+%
+%Assume further that $\alpha = \gamma_{r,b}$, namely the high
+%priority flow is constrained by one single leaky bucket or GCRA.
+%Let us introduce the following
+%definition (Figure~\ref{fig-ratelat}).%
+%%\index{rate latency function}%
+%%\index{1S@$S_{R,T}$ (rate-latency function)}%
+%\begin{definition}
+%\mylabel{def-2dfjS0} The ``rate-latency'' function $S_{R,T}$ is
+%defined by $$
+%    \beta_{R,T}(t)=  R(t-T)^{+}= R (t-T) \mif t \geq T \mand 0 \mif  t < T
+%$$
+%\end{definition}
+%\begin{figure}[!htbp]
+%  \insfig{ratelat}{0.3}
+%  \mylabel{fig-ratelat}
+%  \mycaption{Definition of rate-latency function $\beta_{R,T}$
+%  with rate $R$ and latency $T$.}
+%\end{figure}
+%In that case, the service curve $S(t)$ offered to the low-priority
+%flow is equal to the rate-latency function $\beta_{R,T}(t)$, with
+%$R=C-r$ and $T=\frac{b}{C-r}$. The rate-latency function
+%\cite{SV96} is defined by $\beta_{R,T}(t)=  R(t-T)^+$, see also
+%Figure~\ref{fig:examplesoffunctions} on
+%page~\pageref{fig:examplesoffunctions}.
+%%in Chapter~\ref{L10}.
+%
+%We will see in Chapter~\ref{L21} (Theorem~\ref{theo-GR} on
+%page~\pageref{theo-GR}) that all practical implementations of GPS
+%offer a service curve of the rate-latency type.
+
+\section{Network Calculus Basics}
+\mylabel{bounds} In this section we see the main simple network
+calculus results. They are all bounds for lossless systems with
+service guarantees.
+
+\subsection{Three Bounds}
+\mylabel{3bornes}
+The first theorem says that the backlog is
+bounded by the vertical deviation between the arrival and service
+curves:
+\begin{theorem}[Backlog Bound]
+Assume a flow, constrained by arrival curve $\alpha$, traverses a
+system that offers a service curve $\beta$.  The backlog
+$R(t)-R^{*}(t)$ for all $t$ satisfies: $$R(t)-R^{*}(t) \leq
+\sup_{s \geq 0} \{\alpha(s) - \beta(s) \}$$
+    \mylabel{theo-backlog}
+\end{theorem}
+\pr The proof is a straightforward application of the definitions
+of service and arrival curves:
+$$R(t) - R^{*}(t)
+\leq R(t) - \inf_{0 \leq s \leq t} [R(t-s) + \beta(s)]$$ Thus
+$$R(t) - R^{*}(t) \leq \sup_{0 \leq s \leq t}[R(t) -
+R(t-s) + \beta(s)] \leq \sup_{0 \leq s \leq t}[\alpha(s) +
+\beta(t-s)]$$ \qed
+
+We now use the concept of horizontal deviation, defined in
+Chapter~\ref{L10}, Equation~(\ref{eq:maxhorizontal}). The
+definition is a little complex, but is supported by the following
+intuition. Call $$\delta(s)=\inf \left\{ \tau \geq 0:\alpha(s)
+\leq \beta(s + \tau) \right\}$$ From Definition~\ref{L20-intro},
+$\delta(s)$ is the virtual delay for a hypothetical system that
+would have $\alpha$ as input and $\beta$ as output, assuming that
+such a system exists (in other words, assuming that ($\alpha \leq
+\beta$). Then,  $h(\alpha, \beta)$ is the supremum of all values
+of $\delta(s)$. The second theorem gives a bound on delay for the
+general case.
+\begin{theorem}[Delay Bound]
+Assume a flow, constrained by arrival curve $\alpha$, traverses a
+system that offers a service curve of $\beta$.  The virtual delay
+$d(t)$ for all $t$ satisfies: $d(t) \leq h( \alpha,\beta)$.
+    \mylabel{theo-delay}
+\end{theorem}
+\pr Consider some fixed $t\geq 0$; for all $\tau < d(t)$, we have,
+from the definition of  virtual delay, $R(t) > R^*(t+ \tau)$. Now
+the service curve property at time $t+ \tau$ implies that there is
+some $s_0$ such that
+$$
+R(t) > R(t + \tau - s_0) + \beta(s_0)
+$$
+It follows from this latter equation that $t + \tau - s_0 < t$.
+Thus
+$$
+\alpha(\tau - s_0) \geq [R(t) - R(t + \tau - s_0)] > \beta(s_0)
+$$
+Thus $\tau \leq \delta(\tau - s_0)\leq h( \alpha,\beta)$. This is
+true for all $\tau < d(t)$ thus $ d(t)\leq h( \alpha,\beta)$. \qed
+
+\begin{theorem}[Output Flow]
+Assume a flow, constrained by arrival curve $\alpha$, traverses a
+system that offers a service curve of $\beta$.  The output flow is
+constrained by the arrival curve $\alpha^{*}=\alpha \mpd \beta$.
+\mylabel{theo-output}
+\end{theorem}
+The theorem uses min-plus deconvolution, introduced in
+Chapter~\ref{L10}, which we have already used in
+Theorem~\ref{theo-mac}.
+
+\pr
+With the same notation as above, consider $R^{*}(t) - R^{*}(t-s)$,
+for $0 \leq t-s \leq t$. Consider the definition of the service
+curve, applied at time $t-s$. Assume for a second that the $\inf$
+in the definition of $R\mpc \beta$ is a $\min$, that is to say,
+there is some $u \geq 0$ such that $0\leq t-s-u$ and
+$$(R\mpc \beta )(t-s)=R(t-s-u) + \beta(u)
+$$
+Thus
+$$ R^{*}(t-s) - R(t-s-u) \geq \beta(u)
+$$ and thus
+$$ R^{*}(t) - R^{*}(t-s) \leq R^{*}(t) - \beta(u) - R(t-s-u) $$
+Now $ R^{*}(t) \leq R(t)$,  therefore $$ R^{*}(t) - R^{*}(t-s)
+\leq R(t) - R(t-s-u) - \beta(u) \leq \alpha(s+u) -\beta(u) $$ and
+the latter term is bounded by $(\alpha \mpd \beta) (s)$ by
+definition of the $\mpd$ operator.
+
+Now relax the assumption that the the $\inf$ in the definition of
+$R\mpc \beta$ is a $\min$. In this case, the proof is essentially
+the same with a minor complication. For all $\epsilon
+>0$ there is some $u\geq 0$ such that $0\leq t-s-u$ and
+$$(R\mpc \beta )(t-s)\geq R(t-s-u) + \beta(u)- \epsilon$$
+and the proof continues along the same line, leading to:
+$$ R^{*}(t) - R^{*}(t-s)
+\leq (\alpha \mpd \beta) (s) + \epsilon$$ This is true for all
+$\epsilon >0$, which proves the result. \qed
+
+\paragraph{A simple Example and Interpretation of Leaky Bucket}
+\begin{figure}[!htbp]
+  \insfig{calcules}{0.5}
+  \mycaption{Computation of buffer, delay and output bounds for an input flow
+  constrained by one leaky bucket, served in one node offered a rate-latency
+  service curve. If $r \leq R$, then the buffer bound is $x=b + rT$, the delay bound
+  is $d= T + \frac{b}{R}$ and
+  the burstiness of the flow is increased by $rT$. If $r>R$, the bounds are infinite.}
+  \mylabel{fig-calcules}
+\end{figure}
+Consider a flow constrained by one leaky bucket, thus with an
+arrival curve of the form $\alpha=\gamma_{r,b}$, served in a node
+with the service curve guarantee $\beta_{R,T}$. The alert reader
+will enjoy applying the three bounds and finding the results shown
+in Figure~\ref{fig-calcules}.
+
+Consider in particular the case $T=0$, thus a flow constrained by
+one leaky bucket served at a constant rate $R$. If $R\geq r$ then
+the buffer required to serve the flow is $b$, otherwise, it is
+infinite. This gives us a common interpretation of the leaky
+bucket parameters $r$ and $b$: $r$ is the minimum rate required to
+serve the flow, and $b$ is the buffer required to serve the flow
+at any constant rate $\geq r$.
+
+
+\paragraph{Example: VBR flow with rate-latency service curve}
+Consider a VBR flow, defined by T-SPEC $(M, p, r, b)$. This means
+that the flow has $\alpha(t) = \min(M+pt, rt+b)$ as an arrival
+curve (Section~\ref{con-flows}). Assume that the flow is served in
+one node that guarantees a service curve equal to the rate-latency
+function $\beta=\beta_{R,T}$. This example is the standard model
+used in Intserv. Let us apply Theorems~\ref{theo-backlog}
+and~\ref{theo-delay}.  Assume that $R \geq r$, that is, the
+reserved rate is as large as the sustainable rate of the flow.
+
+From the convexity of the region between $\alpha$ and $\beta$
+(Figure~\ref{fig-calculei}), we see that the vertical deviation
+$v=\sup_{s \geq 0}[\alpha(s)-\beta(s)]$ is reached for at an
+angular point of either $\alpha$ or $\beta$. Thus
+$$v = \max [\alpha(T), \alpha(\theta)-\beta(\theta)]
+$$with $\theta =\frac{b-M}{p-r}$.
+Similarly, the horizontal distance is reached an angular point. In
+the figure, it is either the distance marked as $AA'$ or $BB'$.
+Thus, the bound on delay $d$ is given by
+$$d = \max \left( \frac{\alpha(\theta)}{R}+T-\theta, \frac{M}{R}+T \right)$$
+After some max-plus algebra, we can re-arrange these results as
+follows.
+\begin{proposition}[Intserv model, buffer and delay bounds]
+\mylabel{theo-vbr-ratlat}Consider a VBR flow, with TSPEC $(M, p,
+r, b)$, served in a node that guarantees to the flow a service
+curve equal to the rate-latency function $\beta=\beta_{R,T}$. The
+buffer required for the flow is bounded by
+$$v=b + r T + \left(\frac{b-M}{p-r} - T\right)^+ [(p-R)^+ -p + r]
+$$ The maximum delay for the flow is bounded by
+$$d=\frac{M + \frac{b-M}{p-r}(p-R)^+ }{R} +T$$
+\end{proposition}
+\begin{figure}[htbp]
+  \insfig{calculeI}{0.5}
+  \mylabel{fig-calculei}
+  \mycaption{Computation of buffer and delay bound for one VBR flow
+  served in one Intserv node.}
+\end{figure}
+
+We can also apply Theorem~\ref{theo-output} and find an arrival
+curve $\alpha^{*}$ for the output flow. We have $\alpha^{*}=\alpha
+\mpd (\lambda_{R}\mpc \delta_{T}) = (\alpha \mpd \lambda_{R}) \mpd
+\delta_{T}$ from the properties of $\mpd$ (Chapter~\ref{L10}).
+Note that
+$$ (f \mpd \delta_{T}) (t) = f (t+T) $$ for all $f$
+(shift to the left).
+
+The computation of $\alpha \mpd \lambda_{R}$ is explained in
+\thref{theo-rep} on \pgref{theo-rep}: it consists in inverting
+time, and smoothing. Here, we give however a direct derivation,
+which is possible since $\alpha$ is concave. Indeed, for a concave
+$\alpha$, define $t_{0}$ as
+$$ t_{0}=\inf \{t \geq 0: \alpha'(t) \leq R \} $$ where $\alpha'$
+is the left-derivative, and assume that $t_{0} < +\infty$. A
+concave function always has a left-derivative, except maybe at the
+ends of the interval where it is defined. Then by studying the
+variations of the function $u \rightarrow \alpha(t+u) -Ru$ we find
+that $(\alpha \mpd \lambda_{R})(s) = \alpha(s) $ if $s \geq
+t_{0}$, and $(\alpha \mpd \lambda_{R})(s) = \alpha(t_{0}) +
+(s-t_{0})R$ if $s < t_{0}$.
+\begin{figure}[!htbp]
+    \insfig{F110}{0.7}
+    \mycaption{Derivation of arrival curve for the output of a flow
+  served in a node with rate-latency service curve $\beta_{R,T}$.}
+    \mylabel{fig-outgqos1}
+\end{figure}
+
+Putting the pieces all together we see that the output function
+$\alpha^{*}$ is obtained from $\alpha$ by
+\begin{itemize}
+    \item replacing $\alpha$ on $[0, t_{0}]$ by the linear function
+    with slope $R$ that has the same value as $\alpha$ for $t=t_{0}$,
+    keeping the same values as $\alpha$ on $[t_{0}, +\infty[$,
+\item and shifting by $T$ to the left.
+\end{itemize}
+Figure \ref{fig-outgqos1} illustrates the operation. Note that the
+two operations can be performed in any order since $\mpc$ is
+commutative. Check that the operation is equivalent to the
+construction in \thref{theo-rep} on \pgref{theo-rep}.
+
+If we apply this to a VBR connection, we obtain the following
+result.
+\begin{proposition}[Intserv model, output bound]
+\mylabel{theo-vbr-ratlat2}With the same assumption as in
+Proposition~\ref{theo-vbr-ratlat}, the output flow has an arrival
+curve $\alpha^*$ given by:
+$$\bracket{
+ \mif \frac{b-M}{p-r} \leq T \mthen \alpha^*(t) =
+ b+r(T+t) \\
+ \melse \alpha^*(t) = \min\left\{\ (t+T)(p\wedge R) + M +  \frac{b-M}{p-r}(p-R)^+ ,
+ b+r(T+t)
+  \right\}
+ }
+ $$
+\end{proposition}
+
+\paragraph{An ATM Example}
+
+Consider the example illustrated in Figure~\ref{fig-atmnetcalex}.
+The aggregate flow has as an arrival curve equal to the stair
+function $10 v_{25,4}$. The figure illustrates that the required
+buffer is $10$ ATM cells and the maximum delay is $18$ time slots.
+\begin{figure}[!htbp]
+  \insfig{atmnetcalex}{0.7}
+  \mycaption{Computation of bounds for buffer $x$ and delay $d$ for an ATM
+  example.
+  An ATM node serves $10$ ATM connections, each
+constrained with GCRA($25, 4$) (counted in time slots). The node
+offers to the aggregate flow a service curve $\beta_{R,T}$ with
+rate $R=1$ cell per time slot and latency $T=8$ time slots. The
+figure shows that
+  approximating the
+  stair function $10 v_{25, 4}$ by an affine function
+  $\gamma_{r,b}$ results into an overestimation of
+  the bounds.}
+  \mylabel{fig-atmnetcalex}
+\end{figure}
+We know from Corollary~\ref{coro-lb-eq-gcra} that a GCRA
+constraint is equivalent to a leaky bucket. Thus, each of the 10
+connections is constrained by an affine arrival curve
+$\gamma_{r,b}$ with $r=\frac{1}{25}=0.04$ and
+$b=1+\frac{4}{25}=1.16$. However, if we take as an arrival curve
+for the aggregate flow the resulting affine function $10
+\gamma_{r,b}$, then we obtain a buffer bound of $11.6$ and a delay
+bound of $19.6$. The affine function overestimates the buffer and
+delay bounds. Remember that the equivalence between stair function
+and affine function is only for a flow where the packet size is
+equal to the value of the step, which is clearly not the case for
+an aggregate of several ATM connections.
+
+A direct application of Theorem~\ref{theo-output} shows that an
+arrival curve for the output flow is given by
+ $\alpha^*_0(t) =  \alpha(t+T)= v_{25, 12}(t)$.
+
+In Chapter~\ref{L21}, we give a slight improvement to the bounds
+if we know that the service curve is a strict service curve.
+
+\subsection{Are the Bounds Tight ?}
+We now examine how good the three bounds are. For the backlog and
+delay bounds, the answer is simple:
+\begin{theorem}
+ \mylabel{theo-bist}
+Consider the backlog and delay bounds in
+Theorems~\ref{theo-backlog} and ~\ref{theo-delay}. Assume that
+\begin{itemize}
+  \item $\alpha$ is a ``good" function (that is, namely,
+  is wide-sense increasing, sub-additive and $\alpha(0)=0$)
+  \item $\beta$ is wide-sense increasing and  $\beta(0)=0$
+\end{itemize}
+Then the bounds are tight. More precisely, there is one causal
+system with input flow $R(t)$ and output flow $R^*(t)$, such that
+the input is constrained by $\alpha$, offering to the flow a
+service curve $\beta$, and which achieves both bounds.
+\end{theorem}
+A causal system means that $R(t) \leq R^*(t)$. The theorem means
+that the backlog bound in Theorem~\ref{theo-backlog} is equal to
+  $\sup_{t \geq 0} [R(t)-R^*(t)]$,
+  and the delay bound in Theorem~\ref{theo-backlog} is equal to
+  $\sup_{t \geq 0} d(t)$.
+In the above, $d(t)$ is the virtual delay defined in
+Definition~\ref{L20-intro}.
+\pr
+We build one such system $R, R^*$ by defining $R=\alpha,
+R^*=\min(\alpha, \beta)$. The system is causal because $R^*\leq
+\alpha=R$. Now consider some arbitrary time $t$. If
+$\alpha(t)<\beta(t)$ then $$R^*(t) = R(t) = R(t) + \beta(0)$$
+Otherwise, $$R^*(t) =\beta(t)=R(0)+ \beta(t)$$ In all cases, for
+all $t$ there is some $s\leq t$ such that $R^*(t) \geq R(t-s) +
+\beta(s)$, which shows the service curve property. \qed
+
+Of course, the bounds are as tight as the arrival and service
+curves are. We have seen that a source such that $R(t)=\alpha(t)$
+is called \emph{greedy}. Thus, the backlog and delay bounds are
+worst-case bounds that are achieved for greedy sources.
+
+In practice, the output bound is also a worst-case bound, even
+though the detailed result is somehow less elegant.
+\begin{theorem} \mylabel{theo-outworst}
+Assume that
+\begin{enumerate}
+  \item $\alpha$ is a ``good" function (that is,
+  is wide-sense increasing, sub-additive and $\alpha(0)=0$)
+  \item $\alpha$ is left-continuous
+  \item $\beta$ is wide-sense increasing and  $\beta(0)=0$
+  \item $\alpha \Mpd \alpha $ is not bounded from above.
+\end{enumerate}
+Then the output bound in Theorem~\ref{theo-output} is tight.  More
+precisely, there is one causal system with input flow $R(t)$ and
+output flow $R^*(t)$, such that the input is constrained by
+$\alpha$, offering to the flow a service curve $\beta$, and
+$\alpha^*$ (given by Theorem~\ref{theo-output}) is the
+\emph{minimum} arrival curve for $R^*$.
+\end{theorem}
+We know in particular from Section ~\ref{con-flows} that the first
+three conditions are not restrictive. Let us first discuss the
+meaning of the last condition. By definition of max-plus
+deconvolution:
+$$(\alpha \Mpd \alpha)(t)= \inf_{s \geq 0} \{\alpha (t+s) - \alpha(s)  \}
+$$
+One interpretation of $\alpha \Mpd \alpha$ is as follows. Consider
+a greedy source, with $R(t)=\alpha(t)$; then $(\alpha \Mpd
+\alpha)(t)$ is the minimum number of bits arriving over an
+interval of duration $t$. Given that the function is wide-sense
+increasing, the last condition means that $\lim_{t \rightarrow +
+\infty}(\alpha \Mpd \alpha)(t) = + \infty$. For example, for a VBR
+source with T-SPEC $(p,M,r,b)$ (Figure~\ref{fig-vbrenv}), we have
+$(\alpha \Mpd \alpha)(t)= rt$ and the condition is satisfied. The
+alert reader will easily be convinced that the condition is also
+true if the arrival curve is a stair function.
+
+The proof of Theorem~\ref{theo-outworst} is a little technical and
+is left at the end of this chapter.
+
+
+We might wonder whether the output bound $\alpha^*$ is a ``good"
+function. The answer is no, since $\alpha^*(0)$ is the backlog
+bound and is positive in reasonable cases. However, $\alpha^*$ is
+sub-additive (the proof is easy and left to the reader) thus the
+modified function $\delta_0 \wedge \alpha^*$ defined as
+$\alpha^*(t)$ for $t
+>0$ and $0$ otherwise is a ``good" function. If $\alpha$ is
+left-continuous, $\delta_0 \wedge \alpha^*$ is even a ``very good"
+function since we know from the proof of
+Theorem~\ref{theo-outworst} that it is left-continuous.
+
+\subsection{Concatenation}
+\mylabel{sec-concat}
+So far we have considered elementary network
+parts. We now come to the main result used in the concatenation of
+network elements.
+
+\begin{theorem}[Concatenation of Nodes]
+    \mylabel{theo-netSerCur}
+Assume a flow traverses systems $\mathcal{S}_{1}$ and
+$\mathcal{S}_{2}$ in sequence.  Assume that $\mathcal{S}_{i}$
+offers a service curve of $\beta_{i}$, $i=1,2$ to the flow. Then
+the concatenation of the two systems offers a service curve of
+$\beta_{1} \mpc \beta_{2}$ to the flow.
+\end{theorem}
+
+\pr Call $R_{1}$ the output of node 1, which is also the input to
+node 2. The service curve property at node 1 gives $$ R_{1} \geq R
+\mpc \beta_{1}$$ and at node 2 $$R^{*} \geq R_{1} \mpc \beta_{2}
+\geq (R \mpc \beta_{1}) \mpc \beta_{2} = R \mpc (\beta_{1} \mpc
+\beta_{2})$$ \qed
+\paragraph{Examples: }
+Consider two nodes offering each a rate-latency service curve
+$\beta_{R_i, T_i}$, $i=1,2$, as is commonly assumed with Intserv.
+A simple computation gives
+ $$\beta_{R_1, T_1} \mpc  \beta_{R_1, T_1} = \beta_{\min(R_1, R_2), T_1+T_2}
+ $$
+Thus concatenating Intserv nodes amounts to adding the latency
+components and taking the minimum of the rates.
+
+We are now also able to give another interpretation of the
+rate-latency service curve model. We know that $ \beta_{R,T} =
+(\delta_{T} \mpc \lambda_{R})(t)$; thus we can view a node
+offering a rate-latency service curve as the concatenation of a
+guaranteed delay node, with delay $T$ and a constant bit rate or
+GPS node with rate $R$.
+
+\paragraph{Pay Bursts Only Once}
+
+The concatenation theorem allows us to understand a phenomenon
+known as ``Pay Bursts Only Once". Consider the concatenation of
+two nodes offering each a rate-latency service curve $\beta_{R_i,
+T_i}$, $i=1,2$, as is commonly assumed with Intserv. Assume the
+fresh input is constrained by $\gamma_{r, b}$. Assume that $r<
+R_{1}$ and $r< R_{2}$. We are interested in the delay bound, which
+we know is a worst case. Let us compare the results obtained as
+follows.
+\begin{enumerate}
+    \item  by applying the network service curve;
+    \item  by iterative application of the individual bounds
+    on every node
+\end{enumerate}
+
+The delay bound $D_{0}$ can be computed by applying Theorem
+\ref{theo-delay}:
+ $$ D_{0}=\frac{b}{R} + T_{0} $$
+with $R=\min_{i}(R_{i})$ and $T_{0}= \sum_{i}T_{i}$ as seen above.
+
+Now apply the second method. A bound on the delay at node 1 is
+(Theorem \ref{theo-delay}):
+ $$ D_{1}= \frac{b}{R_{1}}+T_{1} $$
+The output of the first node is constrained by $\alpha^*$, given
+by :
+ $$ \alpha^*(t) = b + r \times (t+T_{1}) $$
+A bound on the delay at the second buffer is:
+ $$ D_{2}=\frac{b + r T_{1}}{R _{2}}+T_{2} $$
+And thus
+ $$D_1 + D_2 = \frac{b}{R_{1}}+ \frac{b + r T_{1}}{R _{2}}+ T_0
+ $$
+It is easy to see that $D_{0}< D_{1}+D_{2}$. In other words, the
+bounds obtained by considering the global service curve are better
+than the bounds obtained by considering every buffer in isolation.
+
+Let us continue the comparison more closely. The delay through one
+node has the form $\frac{b}{R_{1}}+T_{1}$ (for the first node).
+The element $\frac{b}{R_1}$ is interpreted as the part of the
+delay due to the burstiness of the input flow, whereas $T_1$ is
+due to the delay component of the node. We see that $D_{1}+D_2$
+contains twice an element of the form $\frac{b}{R_i}$, whereas
+$D_0$ contains it only once. We sometimes say that ``we pay bursts
+only once''. Another difference between $D_0$ and $D_1+D_2$ is the
+element $\frac{r T_1}{R_2}$: it is due to the increase of
+burstiness imposed by node 1. We see that this increase of
+burstiness does not result into an increase of the overall delay.
+
+A corollary of Theorem~\ref{theo-netSerCur} is also that the
+end-to-end delay bound does not depend on the order in which nodes
+are concatenated.
+
+\subsection{Improvement of Backlog Bounds}
+\mylabel{sec-bb-imp}
+
+We give two cases where we can slightly improve the backlog
+bounds. %We use these improvements in Chapters~\ref{L24}
+%and~\ref{L30}.
+
+\begin{theorem}%\cite{leb99}
+\mylabel{fifo-theo3} Assume that a lossless node offers a
+\emph{strict} service curve $\beta$ to a flow with arrival curve
+$\alpha$. Assume that $\alpha(u_0) \leq \beta (u_0)$ for some $u_0
+>0 $. Then the duration of the busy period is $\leq u_0$.
+Furthermore, for any time $t$, the backlog $R(t)-R^*(t)$ satisfies
+ $$
+ R(t) -R^*(t) \leq \sup_{u: 0 \leq u <u_0} \left[R(t)-R(t-u) - \beta(u)\right]
+ \leq \sup_{u: 0 \leq u <u_0} \left[\alpha(u)- \beta(u)\right]
+ $$
+ \end{theorem}
+The theorem says that, for the computation of a buffer bound, it
+is sufficient to consider time intervals less than $u_0$. The idea
+is that the busy period duration is less than $u_0$.
+\pr
+Consider a given time $t$ at which the buffer is not empty, and
+call $s$ the last time instant before $t$ at which the buffer was
+empty. Then, from the strict service curve property, we have
+$$R^*(t) \geq R^*(s) + \beta(t-s) = R(s) + \beta(t-s)$$
+Thus the buffer size $b(t)=R(t)-R^*(t)$ at time $t$ satisfies
+$$b(t)\leq R(t)-R(s) - \beta(t-s) \leq \alpha(t-s)-\beta(t-s)$$
+Now if $t-s  \geq u_0$, then there is a time $t' = s + u_0 $, with
+$s+1 \leq t' \leq  t$ such that $b(t')=0$. This contradicts the
+definition of $s$. Thus we can assume that $t-s < u_0$. \qed
+
+
+\begin{theorem}%\cite{clv00}
+\mylabel{fifo-theo4} Assume that a lossless node offers a service
+curve $\beta$ to a flow with sub-additive arrival curve $\alpha$.
+Assume that $\beta$ is \emph{super-additive}, and that
+$\alpha(u_0) \leq \beta (u_0)$ for some $u_0
+>0 $. Then for any time $t$, the backlog $R(t)-R^*(t)$ satisfies
+ $$
+ R(t) -R^*(t) \leq \sup_{u: 0 \leq u <u_0} \left[R(t)-R(t-u) - \beta(u)\right]
+ \leq \sup_{u: 0 \leq u <u_0} \left[\alpha(u)- \beta(u)\right]
+ $$
+ \end{theorem}
+ Note that the condition that $\alpha$ is sub-additive is not a
+ restriction. In contrast, the condition that $\beta$ is
+ super-additive is a restriction. It applies in  particular to
+rate-latency service curves. The theorem does not say anything
+about the duration of the busy period, which is consistent with
+the fact we do not assume here that the service curve is strict.
+
+ \pr
+ For an arbitrary time $t$ the backlog at time $t$ satisfies
+ $$b(t) \leq \sup_{u \geq 0} \left[R(t)-R(t-u) - \beta(u)\right]
+ $$
+ For $s \leq t$ define $k=\lceil \frac{t-s}{u_0} \rceil$ and
+ $s'=k u_0  + s$. We have $s\leq s' \leq t$ and
+\begin{equation}\mylabel{eq-defu0}
+t -u_0 < s'
+\end{equation}
+ Now from the super-additivity of $\beta$:
+ $$R(t)-R(s) \leq \left[R(t)-R(s') - \beta(t-s')\right] +
+ \left[R(s')-R(s) - \beta(s'-s) \right]
+ $$
+Note that for the second part we have
+$$R(s')- R(s) - \beta(s'-s) \leq k\left[\alpha(u_0) -
+\beta(u_0)\right] \leq 0
+$$
+thus
+$$R(t)-R(s) \leq \left[R(t)-R(s') - \beta(t-s')\right]
+$$
+which shows the theorem. \qed
+
+
+\section{Greedy Shapers}
+\mylabel{shapers}
+\subsection{Definitions}
+
+We have seen with the definition of the leaky bucket and of the
+GCRA two examples of devices that enforce a general arrival curve.
+We call \emph{policer}%
+\index{policer}%
+ with curve $\sigma$ a device that counts
+the bits arriving on an input flow and decides which bits conform
+with an arrival curve of $\sigma$. We call \emph{shaper}%
+\index{shaper}%
+, with shaping curve%
+\index{shaping curve}%
+  $\sigma$, a bit processing device that forces
+its output to have $\sigma$ as an arrival curve. We call
+\emph{greedy
+shaper}%
+\index{greedy shaper} a shaper that delays the input bits in a
+buffer, whenever sending a bit would violate the constraint
+$\sigma$, but outputs them as soon as possible.
+
+With ATM and sometimes with Intserv, traffic sent over one
+connection, or flow, is policed at the network boundary.  Policing
+is performed in order to guarantee that users do not send more
+than specified by the contract of the connection.  Traffic in
+excess is either discarded, or marked with a low priority for loss
+in the case of ATM, or passed as best effort traffic in the case
+of Intserv.  In the latter case, with IPv4, there is no marking
+mechanism, so it is necessary for each router along the path of
+the flow to perform the policing function again.
+
+Policing devices inside the network are normally buffered, they
+are thus shapers. Shaping is also often needed because the output
+of a buffer normally does not conform any more with the traffic
+contract specified at the input.
+%
+%In this Section we learn the main properties of greedy shapers.
+%
+\subsection{Input-Output Characterization of Greedy Shapers}
+\mylabel{ioshaper}
+
+The main result with greedy shapers is the following.
+
+\begin{theorem}[Input-Output Characterization of Greedy Shapers]
+    Consider a greedy shaper with shaping curve $\sigma$.  Assume that the
+    shaper buffer is empty at time $0$, and that it is is large enough
+    so that there is no data loss.  For an input flow $R$, the output
+    $R^{*}$ is given by
+    \begin{equation}
+    R^{*}=R\mpc \bar{\sigma}
+    \mylabel{eq-netcal-ndfdk8723}
+\end{equation}
+where $\bar{\sigma}$ is the sub-additive closure of $\sigma$.
+\mylabel{theo-gen-shaper}
+\end{theorem}
+
+\pr Remember first that if $\sigma$ is sub-additive and
+$\sigma(0)=0$, then $ \bar{\sigma} = \sigma$.  In general, we know
+that we can replace $\sigma$ by $\bar{\sigma}$ without changing
+the definition of the shaper.  We thus assume without loss of
+generality that $\bar{\sigma} = \sigma$.
+
+The proof of the theorem is an application of min-plus algebra.
+First, let us consider a virtual system that would take $R$ as
+input and have an output $S$ satisfying the constraints:
+\begin{equation}
+    \left \{
+    \begin{array}{l}
+         S  \leq  R \\
+        S  \leq S \mpc \sigma
+    \end{array}
+    \right .
+    \mylabel{eq-netcal-dkcnqlfenq9}
+\end{equation}
+
+Such a system would behave as a buffer (the first equation says
+that the output is derived from the input) and its output would
+satisfy the arrival curve constraint $\sigma$.  However, such a
+system is not necessarily a greedy shaper; we could have for
+example a lazy shaper with $S(t)=0$ for all $t\geq 0$~!  For this
+system to be a greedy shaper, it has to output the bits as soon as
+possible.  Now there is a general result about systems satisfying
+conditions~\ref{eq-netcal-dkcnqlfenq9}.
+ \begin{lemma}[A min-plus linear system]
+ Assume that $\sigma$ is a ``good" function
+ (that is, is sub-additive and $\sigma(0)=0$).
+ Among all functions $S(t)$ satisfying
+ conditions~\ref{eq-netcal-dkcnqlfenq9} for some fixed function $R$,
+ there is one that is an
+ upper bound for all. It is equal to $R \mpc \sigma$
+ \mylabel{lem-gs}
+ \end{lemma}
+ \paragraph{Proof of the lemma:} The lemma is a special case of a
+ general result in Chapter~\ref{L11}. However, it is also possible
+ to give a very simple proof, as follows.
+
+Define $S^*=R \mpc \sigma$. Since $\sigma$ is a ``good" function,
+it follows immediately that $S^*$ is a solution to
+System~(\ref{eq-netcal-dkcnqlfenq9}). Now, let $S'$ be some other
+solution. By the first condition in~(\ref{eq-netcal-dkcnqlfenq9}), $S'\leq R$ and thus $S'\mpc \sigma\leq R\mpc \sigma=S^*$. By the second condition,
+ $$S'\leq S' \mpc \sigma \leq S^{*}$$
+This shows that $S^{*}$ is the maximal solution.\qed
+
+Note that the lemma proves the existence of a maximal solution to
+System~(\ref{eq-netcal-dkcnqlfenq9}). Note also that, in the
+lemma, function $R$ need not be wide-sense increasing.
+
+Now we can use the lemma by showing that $R^{*}= S^{*}$. Function
+$R$ is wide-sense increasing, thus so is $S^*$. Obviously, $R^{*}$
+is a solution of System~(\ref{eq-netcal-dkcnqlfenq9}), thus
+$R^{*}(t) \leq S^{*}(t)$ for all $t$. Now if there would be some
+$t$ such that $R^{*}(t) \neq S^{*}(t)$, then this would contradict
+the condition that the greedy shaper attempts to send the bits out
+as early as possible.\qed
+
+The following corollary derives immediately.
+
+\begin{corollary}[Service Curve offered by a Greedy Shaper]
+Consider a greedy shaper with shaping curve $\sigma$. Assume that
+$\sigma$ is sub-additive and $\sigma(0)=0$. This system offers to
+the flow a service curve equal to $\sigma$. \mylabel{cor-0987}
+\end{corollary}
+
+\paragraph{Example: Buffer Sizing at a Re-shaper}
+\begin{figure}[htbp]
+  \insfig{reshap}{0.7}
+  \mycaption{Reshaping example.}
+  \mylabel{fig-reshap}
+\end{figure}
+Re-shaping is often introduced because the output of a buffer
+normally does not conform any more with the traffic contract
+specified at the input. For example, consider a flow with the
+arrival curve $\sigma(t) = \min(pt+M,rt+b)\ind{t>0}$ that traverses a
+sequence of nodes, which offer a service curve
+$\beta_1=\beta_{R,T}$. A greedy shaper, with shaping curve
+$\sigma$, is placed after the sequence of nodes
+(Figure~\ref{fig-reshap}). The input to the shaper ($R$ in the
+figure) has an arrival curve $\alpha^*$, given by
+Proposition~\ref{theo-vbr-ratlat2}. Corollary~\ref{cor-0987} gives
+a service curve property for the greedy shaper; observe that we need to make sure that $\sigma(t)=0$.
+The buffer
+$B$ required at the greedy shaper is then obtained as the vertical distance
+$v(\alpha^*,\sigma)$. After some algebra, we obtain:
+\begin{equation}
+B = \left\{
+\begin{array}{ll}
+    \mif \frac{b-M}{p-r}< T & \mthen  b +T r  \\
+    \mif \frac{b-M}{p-r}\geq T \mand p > R  & \mthen  M +
+    \frac{(b-M)(p-R)}{p-r} +T R \\
+    \melse &  M + T p
+\end{array}
+\right.
+    \mylabel{eq-d4-shap-jkcnui}
+\end{equation}
+
+\begin{corollary}[Buffer Occupancy at a Greedy Shaper]
+Consider a greedy shaper with shaping curve $\sigma$. Assume that
+$\sigma$ is sub-additive and $\sigma(0)=0$. Call $R(t)$ the input
+function. The buffer occupancy $x(t)$ at time $t$ is given by $$
+x(t) = \sup_{0 \leq s \leq t} \{ R(t) - R(s) - \sigma(t-s) \} $$
+\mylabel{coro-shaper-buffer-occupancy}
+\end{corollary}
+\pr The backlog is defined by $x(t)=R(t)-R^*(t)$, where $R^*$ is
+the output. We apply Theorem~\ref{theo-gen-shaper} and get:
+ $$
+ x(t)=R(t)-\inf_{0 \leq s \leq t}\{ R(s)+\sigma(t-s)\}
+ =R(t)+\sup_{0 \leq s \leq t}\{- R(s)-\sigma(t-s)\}
+ $$
+ \qed
+
+Note that Lemma~\ref{lem-buf-simple} is a special case of this
+corollary.
+
+In min-plus algebraic terms, we say that a system is linear and
+time invariant if its input-output characterization has the form
+$R^{*}=R\mpc \beta$ (where $\beta$ is not necessarily
+sub-additive).  We can thus say from the theorem that greedy
+shapers are min-plus linear and time invariant systems. There are
+min-plus linear and time invariant system that are not greedy
+shapers. For example, a node imposing a \emph{constant} delay $T$
+is characterized by the input-output relationship
+ $$R^* = R \mpc \delta_T
+ $$
+Compare to the guaranteed delay node (namely, a node imposing a
+variable delay bounded by $T$), for which the input-output
+relationship is a service curve property :
+ $$R^* \geq R \mpc \delta_T$$
+The rest of this Section illustrates similarly that the
+input-output characterization of greedy shapers $R^* = R \mpc
+\sigma$ is much stronger than the service curve property described
+in Corollary~\ref{cor-0987}.
+
+\subsection{Properties of Greedy Shapers}
+Consider again Figure~\ref{fig-reshap}. We have seen in the
+previous section how we can compute the buffer size required at
+the greedy shaper. Now if greedy shapers are introduced along a
+path, then some bits may be delayed at the shaper, thus the
+end-to-end delay might increase. However, this is not true, as the
+following results state that, from a global viewpoint, ``greedy
+shapers come for free''.
+
+\begin{theorem}[Re-Shaping does not increase delay or buffer requirements]
+Assume a flow, constrained by arrival curve $\alpha$, is input to
+networks $\mathcal{S}_{1}$ and $\mathcal{S}_{2}$ in sequence.
+Assume a greedy shaper, with curve $\sigma \geq \alpha$ is
+inserted between $\mathcal{S}_{1}$ and $\mathcal{S}_{2}$. Then the
+backlog and delay bounds given by Theorem \ref{theo-delay} for the
+system without shaper are also valid for the system with shaper.
+\mylabel{theo-shaping-for-free}
+\end{theorem}
+The condition $\sigma \geq \alpha$ means that re-shaping maybe
+only partial.
+ \pr Call $\beta_{i}$ the service curve of
+$\mathcal{S}_{i}$. The backlog bound in Theorem \ref{theo-backlog}
+is given by
+\begin{equation}\mylabel{eq-0599-a}
+  v(\alpha, \beta_{1} \mpc \sigma \mpc \beta_{2}) = v(\alpha,
+ \sigma \mpc \beta_{1}  \mpc \beta_{2})
+\end{equation}
+Now the last expression is the backlog bound obtained if we put
+the shaper immediately at the entrance of the network. Clearly,
+this introduces no backlog, which shows that the overall backlog
+is not influenced by the shaper. The same reasoning applies to the
+delay bound. \qed
+
+If you read carefully, you should not agree with the last
+paragraph.  Indeed, there is a subtlety. The bounds in Section
+\ref{bounds} are tight, but since we are using several bounds
+together, there is no guarantee that the resulting bound is tight.
+All we can say at this point is that the bound computed for the
+system with shaper is the same if we put the shaper in front; we
+still need to show that the bound for such a system is the same
+bound as if there would be no shaper. This can be proven in a
+number of ways. We give here a computational one. The proof relies
+on Lemma~\ref{leCor}, given below. \qed
+
+\begin{lemma}
+\mylabel{leCor}
+    Let $\alpha$ and $\sigma$ be ``good" functions. Assume $\alpha
+    \leq \sigma$. Then for any
+    function $\beta$,
+    $v(\alpha, \sigma \mpc \beta)=v(\alpha,\beta)$
+    and
+    $h(\alpha, \sigma \mpc \beta)=h(\alpha,\beta)$.
+\end{lemma}
+\pr
+We use the reduction to min-plus deconvolution explained in
+\sref{sec:deviations}. We have:
+$$v(\alpha, \sigma \mpc \beta)= [\alpha \mpd (\sigma \mpc
+\beta)](0)
+$$
+Now from \thref{thm:rule11-14} on \pgref{thm:rule11-14}: $\alpha
+\mpd (\sigma \mpc \beta)= (\alpha \mpd \sigma) \mpd \beta$. Also,
+since $\sigma \geq \alpha$, we have $\alpha \mpd \sigma \leq
+\alpha \mpd \alpha$. Now $\alpha \mpd \alpha=\alpha$ because
+$\alpha$ is a ``good" function, thus
+\begin{equation}\mylabel{eq-demolecor}
+  \alpha \mpd (\sigma \mpc \beta)= \alpha \mpd \beta
+\end{equation}
+and finally $v(\alpha, \sigma \mpc \beta) = v(\alpha, \beta)$.
+
+Similarly $h(\alpha, \beta)= \inf\{ d \mst (\alpha \mpd \beta)(-d)
+\leq 0 \}$ which, combined with \eref{eq-demolecor} proves that
+$h(\alpha, \sigma \mpc \beta)=h(\alpha, \beta)$.
+\qed
+
+Consider again Figure~\ref{fig-reshap}. Assume that the first
+network element and the greedy shaper are placed in the same node.
+Theorem~\ref{theo-shaping-for-free} says that the \emph{total}
+buffer required for this combined node is the same as if there
+would be no greedy shaper at the output. Thus, if you can
+dynamically allocate buffer space from a common pool to the first
+network element and the greedy shaper, then the greedy shaper
+costs no memory. However, the greedy shaper does need some buffer
+space, as given in Equation~(\ref{eq-d4-shap-jkcnui}). Similarly,
+the theorem says that there is no penalty for the worst-case
+delay.
+
+In contrast, placing a greedy shaper has an obvious benefit. The
+burstiness of the flow admitted in the next network element is
+reduced, which also reduces the buffer required in that element.
+To be more concrete, consider the example ``Pay Bursts Only Once"
+in Section~\ref{sec-concat}. Assume that a re-shaper is introduced
+at the output of the first node. Then the input to the second node
+has the same arrival curve as the fresh input, namely,
+$\gamma_{r,b}$ instead of $\gamma_{r,b+r T_1}$. The buffer
+required for the flow at node 2 is then $b+rT_2$ instead of
+$b+r(T_1+T_2)$.
+
+The following result is another ``physical" property of greedy
+shapers. It says that shaping cannot be undone by shaping.
+
+\begin{theorem}[Shaping Conserves Arrival Constraints]
+    Assume a flow with arrival curve $\alpha$ is input to a greedy shaper with
+    shaping curve $\sigma$. Assume $\sigma$ is a ``good" function. Then the
+    output flow is still constrained by the original arrival curve $\alpha$.
+    \mylabel{theo-shape-keeps-arrival}
+\end{theorem}
+
+\pr
+$$ R^{*}=R \mpc \sigma \leq (R \mpc \alpha) \mpc \sigma
+$$ since the condition $R \leq R \mpc \alpha$ expresses that
+$\alpha$ is an arrival curve. Thus $$ R^{*} \leq R \mpc \sigma
+\mpc \alpha = R^{*} \mpc \alpha $$ \qed
+
+The output of the greedy shaper has thus $\min(\alpha, \sigma)$ as
+an arrival curve. If $\alpha$ is also a ``good" function, we know
+(Lemma~\ref{lem-cmpsou}) that the sub-additive closure of
+$\min(\alpha, \sigma)$ is $\alpha \mpc \sigma$.
+
+\paragraph{Example (ATM Multiplexer): } Consider an ATM
+switch that receives 3 ATM connections, each constrained by
+GCRA(10, 0) (periodic connections). The switch serves the
+connection in any work conserving manner and outputs them on a
+link with rate 1 cell per time slot. What is a good arrival curve
+for the aggregate output ?
+
+The aggregate input has an arrival curve $\alpha=3 v_{10,0}$. Now
+the server is a greedy shaper with shaping curve $\sigma=v_{1,0}$,
+thus it keeps arrival constraints. Thus the output is constrained
+by $3 v_{10,0} \mpc v_{1,0}$, which is a ``good" function. We have
+already met this example in Figure~\ref{fig-alpha-sadd}.
+
+\section{Maximum Service Curve, Variable and Fixed Delay}
+\mylabel{sec-maxsercur}
+
+\subsection{Maximum Service Curves}
+\mylabel{sec-maxsercur-prop}
+
+If we modify the sense of the inequation in the definition of
+service curve in Section~\ref{sec-sercur}, then we obtain a new
+concept, called \emph{maximum service curve}, which is useful to
+(1) account for constant delays and (2) in some cases to establish
+a relationship between delay and backlog.
+\begin{definition}[Maximum Service Curve]
+\mylabel{def-maxsercur}
+ Consider a  system $\mathcal{S}$ and a flow
+through $\mathcal{S}$ with input and output function $R$ and
+$R^{*}$. We say that $\mathcal{S}$ offers to the flow a
+\emph{maximum service curve} $\gamma$ if and only if $\gamma \in
+\calF$ and $R^{*} \leq R \mpc \gamma$
+\end{definition}
+Note that the definition is equivalent to saying that $\gamma$ is
+wide-sense increasing and that
+ $$R^*(t) \leq R(s) + \gamma(t-s)
+ $$
+for all $t$ and all $s \leq t$, or equivalently
+ $$R^*(t)-R^*(s) \leq B(s) + \gamma(t-s) $$
+ where $B(s)$ is the backlog at time $s$.
+A greedy shaper with shaping curve $\sigma$ offers $\sigma$ both
+as a service curve and a maximum service curve.
+
+In general, the concept of maximum service curve is not as
+powerful as the concept of service curve. However, as we see
+below, it can be useful to account for maximum rates and for
+constant propagation delays. We also see in \cref{L24} that it
+allows us to find good bounds for aggregate multiplexing.
+
+The following propositions give two special cases of interest.
+Their proof is easy and left to the reader.
+\begin{proposition}[Minimum Delay]
+A lossless node offers a maximum service curve equal to $\delta_T$
+if and only if it imposes a minimum virtual delay equal to $T$.
+\end{proposition}
+\begin{proposition}[Arrival Constraint on Output]
+Assume the output of a lossless node is constrained by some
+arrival curve $\sigma$. Then the node offers $\sigma$ as a maximum
+service curve.
+\end{proposition}
+
+Like minimum service curves, maximum service curves can be
+concatenated:
+
+\begin{theorem}[Concatenation of Nodes]
+    \mylabel{theo-maxNetSerCur}
+Assume a flow traverses systems $\mathcal{S}_{1}$ and
+$\mathcal{S}_{2}$ in sequence.  Assume that $\mathcal{S}_{i}$
+offers a maximum service curve of $\gamma_{i}$, $i=1,2$ to the
+flow. Then the concatenation of the two systems offers a service
+curve of $\gamma_{1} \mpc \gamma_{2}$ to the flow.
+\end{theorem}
+\pr The proof mimics the proof of Theorem~\ref{theo-netSerCur}
+\qed
+
+\paragraph{Application: }
+Consider a node with a maximum output rate equal to $c$ and with
+internal propagation delay equal to $T$. It follows from
+Theorem~\ref{theo-maxNetSerCur} and the two previous propositions
+that this node offers to any flow a maximum service curve equal to
+the rate-latency function $\beta_{c,T}(t)=\left[c(t-T) \right]^+$.
+
+Maximum service curves do not allow us to derive as strong results
+as (ordinary) service curves. However, they can be used to reduce
+the output bound and, in some cases, to obtain a minimum delay
+bound. Indeed, we have the following two results.
+
+\begin{theorem}[Output Flow, generalization of Theorem ~\ref{theo-output} ]
+    \mylabel{theo-output-maxsc}
+Assume a flow, constrained by arrival curve $\alpha$, traverses a
+system that offers a service curve $\beta$ and a maximum service
+curve $\gamma$. The output flow is constrained by the arrival
+curve $\alpha^{*}=(\alpha \mpc \gamma) \mpd \beta$.
+\end{theorem}
+\pr
+Instead of a computational proof as with
+Theorem~\ref{theo-output}, it is simpler at this stage to use
+min-plus algebra. Call $R$ and $R^*$ the input and output
+functions, and consider $R^* \mpd R^*$, the minimum arrival curve
+for $R^*$. We have $R^* \leq R \mpc \gamma$ and $R^* \geq R \mpc
+\beta$, thus
+$$R^* \mpd R^* \leq (R \mpc \gamma) \mpd (R \mpc
+\beta)
+ $$
+From Rule 12 in Chapter~\ref{L10}, Theorem~\ref{thm:rule11-14},
+applied to $f=R \mpc \gamma$, $g=R$ and $h=\beta$, we derive
+$$R^* \mpd R^* \leq \left\{(R \mpc \gamma) \mpd R \right\} \mpd \beta
+ $$
+Now from the commutativity of $\mpc$ and from Rule 13 in
+Theorem~\ref{thm:rule11-14}:
+$$ \left\{(R \mpc \gamma) \mpd R \right\} =
+ \left\{(\gamma \mpc R) \mpd R \right\}
+ \leq \left\{ \gamma \mpc (R \mpd R )\right\}
+ $$
+Thus
+$$R^* \mpd R^* \leq \left\{ \gamma \mpc (R \mpd R )\right\} \mpd
+\beta \leq ( \gamma \mpc \alpha ) \mpd \beta
+ $$
+ \qed
+
+
+\begin{theorem}[Minimum Delay Bound]
+Assume a flow, constrained by arrival curve $\alpha$, traverses a
+system that offers a maximum service curve of $\gamma$ and is FIFO for this flow.  Assume
+that $\gamma(D)=0$. %The virtual delay $d(t)$ satisfies $d(t) \geq
+%D$ for all $t$.
+The delay for any bit is $\geq D$.
+    \mylabel{theo-delay-maxsc}
+\end{theorem}
+\pr We have $R^*(t+D) \leq R(t) + \gamma(D)$ thus $R^*(t+D) \leq
+R(t)$ for any $t\geq 0$. Assume first that the input and output functions are left-continuous and consider a bit that arrives at some time, say $t$. It follows that for any $t_1>t$ we have $R(t)<R(t_1)$ and thus $R^*(t+D) <R(t_1)$. Assume further that $t_1\leq t+D$; the previous inequality can be re-written as $R^*(t_1+(D-(t_1-t))) <R(t_1)$ and thus $d(t_1)\geq D+(t-t_1)$. Take the limit when $t_1\to t$ and obtain $d_r(t)\geq D$ (where $d_r$ is the limit from the right of $d$). Now the delay for a bit that arrives at time $t$ is $d_r(t)$.
+
+If the input and output functions are right-continuous instead of left-continuous (recall that we always assume either case), the proof is similar, by observing that $R(t_1)<R(t)$ for $t_1<t$ and establishing that $d(t)\geq D$.\qed
+
+Note that the output bound is improved by the knowledge of the
+maximum service curve since in general we expect $\alpha \mpc
+\gamma$ to be less than $\alpha$. In contrast, the minimum delay
+bound gives some new information only in the cases where there is
+a latency part in the maximum service curve, which is the case for
+the first example (Minimum Delay ), but not in general for the
+second example (Arrival Constraint on Output).
+
+\paragraph{Numerical Example: }
+
+%Consider again the example illustrated in
+%Figure~\ref{fig-atmnetcalex}. Let us first apply
+%Theorem~\ref{theo-output} and compute an arrival curve
+%$\alpha^*_0$ for the output. The details are as follows. We have
+% $$\alpha^*_0 = 10 v_{25,4} \mpd \beta_{1,8} =  10 v_{25,4} \mpd
+% \left(
+% \lambda_{1} \mpc \delta_8 \right)$$
+% Now from Rule 15 in Chapter~\ref{L10}, we have
+% $$\alpha^*_0 =  \left( 10 v_{25,4} \mpd \delta_8 \right) \mpd
+%\lambda_{1} $$ Now $(10 v_{25,4} \mpd \delta_8)(t)= 10
+%v_{25,4}(t+8)= 10 v_{25,12}(t)$. To compute the deconvolution with $\lambda_{1}$ we can use its interpretation as a smoothing operation in \sref{sec:timeinversion}, or a direct computation, and finally obtain $\alpha^*_0$ as shown on \fref{fig-113again}.
+%
+
+Consider the following example, which is a variant of
+Figure~\ref{fig-atmnetcalex}; time is discrete; a flow with arrival curve $\alpha_0=v_{25,4}$ is served in a system that guarantees a service curve $\beta_{1,8}$. Let us apply
+Theorem~\ref{theo-output} and compute an arrival curve
+$\alpha^*_0$ for the output. We have
+ $$\alpha^*_0 =  v_{25,4} \mpd \beta_{1,8} =  v_{25,4} \mpd
+ \left(
+ \lambda_{1} \mpc \delta_8 \right)$$
+ Now from Rule 15 in Chapter~\ref{L10}, we have
+ $$\alpha^*_0 =  \left( v_{25,4} \mpd \delta_8 \right) \mpd
+\lambda_{1} $$ Now $( v_{25,4} \mpd \delta_8)(t)=
+v_{25,4}(t+8)= v_{25,12}(t)$. To compute the deconvolution with $\lambda_{1}$ we can use its interpretation as a smoothing operation in \sref{sec:timeinversion}, or a direct computation, and finally obtain $\alpha^*_0=v_{25,12}$ (recall that time is discrete; in continuous time, we would obtain $\alpha^*_0=v_{25,11}\mpc \lambda_1$, i.e. the jumps of the staircase function are smoothed with a slope of $1$).
+
+
+Assume now that we have more information about the node, and that
+we can model is as node $\calS_1$ defined as the concatenation of
+two schedulers and a fixed delay element
+(Figure~\ref{fig-atmnetcalex2}). Each scheduler offers to the
+aggregate flow a service curve $\beta_{R_0,T_0}$ with rate $R_0=1$
+cell per time slot and latency $T_0=2$ time slots. The delay
+element is a link with maximum rate equal to $1$ cell per time
+slot, and a fixed propagation and transmission delay equal to $4$
+time slots. The delay element is thus the combination of a greedy
+shaper with shaping curve $\lambda_1(t)=t$ and a fixed delay
+element $\delta_4$. We can verify that the concatenation of the
+three elements in node 1 offers a service curve equal to
+$\beta_{1,2} \mpc \lambda_1 \mpc \delta_4 \mpc \beta_{1,2}=
+\beta_{1,8}$. Now, from the delay element allows us to say that,
+in addition, the node also offers to the aggregate flow a
+\emph{maximum service curve} equal to $\beta_{1,4}$. We can apply
+Theorem~\ref{theo-output-maxsc} and derive from that the output is
+constrained by the arrival curve $\alpha^*_1$ given by
+$$\alpha^*_1=\left( \alpha \mpc \beta_{1,4} \right) \mpd
+\beta_{1,8}
+$$
+The computation is similar to that of $\alpha^*_0$ and involves
+the computation of $10 v_{25, 4} \mpc \lambda_1$, which is similar
+to the example illustrated in Figure~\ref{fig-alpha-sadd}.
+Finally, we have:
+ $$\alpha^*_1(t) = (10 v_{25, 4} \mpc \lambda_1)(t+4) $$
+Figure~\ref{fig-atmnetcalex2} shows that $\alpha^*_1$ is a better
+bound than the arrival curve $\alpha^*_0$ that we would obtain if
+we did not know the maximum service curve property.
+\begin{figure}[!htbp]
+   \insfig{atmnetcalex2a}{0.6}
+   \insfig{atmnetcalex2b}{0.6}
+  \insfig{atmnetcalex2c}{0.6}
+  \mycaption{Use of maximum service curve to improve output bound.
+  The figure is for the same example as Figure~\ref{fig-atmnetcalex2}.
+  Top: nodes $\calS_1$ and $\calS_2$, two possible
+  implementations of a system offering the overall service curve
+  $\beta_{1,8}$. Middle: arrival curve $\alpha$ and overall
+  service curve $\beta_{1,8}$. Bottom: constraint for the output.
+  $\alpha^*_0$ (top curve, thick, plain line) is obtained with the only
+  knowledge that the service curve is $\beta_{1,8}$. $\alpha^*_1$
+  (middle curve, thick, dashed line) is obtained assuming the
+  system is $\calS_1$. $\alpha^*_2$
+  (bottom curve, thin, plain line) is obtained assuming the
+  system is $\calS_2$.
+  }
+  \mylabel{fig-atmnetcalex2}
+\end{figure}
+
+Assume next that we change the order of the delay element in node
+$\calS1$ and place it as the last element of the node. Call
+$\calS_2$ the resulting node. Then the conclusion of the previous
+paragraph remains, since the bounds are insensitive to the order,
+due to the commutativity of min-plus convolution. Thus the output
+of system $\calS_2$ also has $\alpha^*_1$ as an arrival curve.
+However, in that case, we can also model the delay element as the
+combination of a shaper, with shaping curve $\lambda_1$
+(corresponding to a fixed rate of $1$ cell per time slot),
+followed by a fixed delay element, with constant delay equal to
+$4$ time slots. The input to the shaper has an arrival curve equal
+to $\alpha \mpd \beta_{1,4}$, where $\alpha = 10 v_{25,4}$ is the
+fresh arrival curve. Thus, from the properties of shapers, the
+output of the shaper is constrained by
+ $$\alpha^*_2 = ( \alpha \mpd
+\beta_{1,4}) \mpc \lambda_1= 10 v_{25,8}\mpc \lambda_1$$
+ Since the
+fixed delay component does not alter the flow, the output of
+system $\calS_2$ has $\alpha^*_2$ as an arrival curve.
+Figure~\ref{fig-atmnetcalex2} shows that $\alpha^*_2$ is a better
+bound than $\alpha^*_1$.
+
+This fact is true in general: whenever a network element can be
+modeled as a shaper, then this model provides stronger bounds than
+the maximum service.
+
+\subsection{Delay from Backlog}
+In general it is not possible to bound delay from backlog with the
+framework of service curves, except in one particular but
+important case.
+\begin{theorem}
+Assume a lossless node offers to a flow a minimum service curve
+$\beta$ and a maximum service curve $\gamma$, such that
+$\beta(t)=\gamma(t-v)$. Let $f$ be the max-plus deconvolution
+$\gamma \Mpd \gamma$, that is,
+$$f(t)=\inf_{s \geq 0} [\gamma(s+t)-\gamma(s)]$$
+Then the backlog
+$B(t)$ and the virtual delay $d(t)$ satisfy
+ $$f(d(t)-v) \leq  B(t)$$
+ If in addition $\gamma$ is super-additive, then
+ $$\beta(d(t)) \leq  B(t)$$
+\mylabel{theo-backlog-delay}
+\end{theorem}
+\pr
+Fix some $t \geq 0$; we have$d(t)=\inf E_t$ where the set $E_t$ is
+defined by
+$$
+ E_t= \{s\geq 0: R^*(t+s) \geq R(t)\}
+$$
+Since $R^*$ and $R$ are wide-sense increasing, $E_t$ is an
+interval. Thus
+ $$d(t)=\sup\{s\geq 0: R^*(t+s) < R(t)\}$$
+We assume that $R$ and $R^*$ are left-continuous. It follows that
+$$
+ R^*(t+d(t)) \leq R(t)
+$$
+For some arbitrary $\epsilon$, we can find some $s$ such that
+ $$
+ R^*(t + d(t)) \geq R(s) + \beta(t-s+ d(t)) - \epsilon
+ $$
+ Now from the maximum service curve property
+ $$
+ R^*(t)-R(s) \leq \gamma (t-s)
+ $$
+Combining the three gives
+$$
+  B(t)= R(t) - R^*(t) \geq \beta(t-s+ d(t))  - \gamma (t-s) -
+  \epsilon = \gamma(t-s+ d(t)-v)  - \gamma (t-s) -
+  \epsilon
+$$
+and thus
+\begin{equation}\mylabel{eq-minmaxetdel}
+  B(t) \geq \inf_{u \geq 0} [ \gamma(d(t)-v+u)  - \gamma (u)]
+\end{equation}
+ From the definition of $f$, the latter term is $f(d(t)-v)$.
+ Finally, if $\gamma$ is super-additive, then $\gamma \Mpd \gamma=
+ \gamma$
+ \qed
+
+We can apply the theorem to a practical case:
+\begin{corollary}
+Assume a lossless node offers to a flow a minimum service curve
+$\beta=\beta_{r,v}$ and a maximum service curve
+$\gamma=\beta_{r,v'}$, with $v'\leq v$. The backlog $B(t)$ and the
+virtual delay $d(t)$ satisfy
+ $$d(t) \leq \frac{B(t)}{r} + v
+ $$
+\mylabel{coro-backlog-delay1}
+\end{corollary}
+\pr
+We apply the theorem and note that $\gamma$ is super-additive,
+because it is convex. \qed
+%
+%In general, the max-plus deconvolution of $\beta$ and $\gamma$ is
+%equal to $-\infty$, which gives no useful result.
+
+\subsection{Variable versus Fixed Delay}
+\mylabel{sec-fixedDelay}
+
+
+Some network elements impose fixed delays (propagation and
+transmission), whereas some other network elements impose variable
+delays (queueing). In a number of cases, it is important to
+evaluate separately the total delay and the variable part of the
+delay. The total delay is important, for example, for determining
+throughput and response time; the variable part is important for
+dimensioning playout buffers (see Section~\ref{sec-playoutBuf} for
+a simple example, and chapter~\ref{L22} for a more general
+discussion). We have seen at the end of end of
+Section~\ref{ioshaper} that a node imposing a constant delay can
+be modeled as a min-plus linear system. Beyond this, the concept
+of maximum service curve is a tool for telling apart variable
+delay from fixed delay, as follows.
+
+Consider a network, made of a series of network elements $1,...,
+I$, each element being the combination of a fixed delay $d_i$ and
+a variable delay. Assume the variable delay component offers a
+service curve $\beta_i$. A fixed delay component offers
+$\delta_{d_i}$ both as a service curve and as a maximum service
+curve. Define $\beta = \beta_1 \mpc ... \mpc \beta_I$; the network
+offers as end-to-end service curve
+ $\beta  \mpc \delta_{d_1+...+d_I}$,
+and as end-to-end maximum service curve $\delta_{d_1+...+d_I}$.
+Assume the input flow is constrained by some arrival curve
+$\alpha$; from Theorems~\ref{theo-delay}
+and~\ref{theo-delay-maxsc}, the end-to-delay $d(t)$ satisfies
+ $$d_1+...+d_I \leq d(t) \leq h(\alpha, \beta \mpc
+ \delta_{d_1+...+d_I})
+ $$
+By simple inspection, $h(\alpha, \beta \mpc \delta_{d_1+...+d_I})=
+d_1+...+d_I + h(\alpha, \beta)$, thus the end-to-end delay
+satisfies
+$$0 \leq d(t)- \left[d_1+...+d_I \right] \leq h(\alpha, \beta)
+ $$
+In the formula, $d_1+...+d_I$ is the fixed part of the delay, and
+$ h(\alpha, \beta)$ is the variable part. Thus, for the
+computation of the variable part of the delay, we can simply
+ignore fixed delay components.
+
+Similarly, an arrival curve constraint for the output is
+$$\alpha^*=\left(\alpha \mpc \delta_{d_1+...+d_I}\right) \mpd \left(\beta \mpc
+\delta_{d_1+...+d_I} \right) = \alpha \mpd \beta
+$$
+thus the fixed delay can be ignored for the computation of the
+output bound.
+
+For the determination of backlog, the alert reader can easily be
+convinced that fixed delays cannot be ignored. In summary:
+
+\begin{proposition}
+\begin{enumerate}
+  \item For the computation of
+backlog and fixed delay bounds, fixed or variable delay are
+modeled by introducing $\delta_{T}$ functions in the service
+curves. As a consequence of the commutativity of $\mpc$, such
+delays can be inserted in any order along a sequence of buffers,
+without altering the delay bounds.
+  \item For the computation of variable delay bounds, or for an
+  arrival constraint on the output, fixed delays can be ignored.
+\end{enumerate}
+\end{proposition}
+
+\section{Handling Variable Length Packets}
+\label{sec-vlp}
+
+All results in this chapter apply directly to ATM systems, using
+discrete time models. In contrast, for variable length packets (as
+is usually the case with IP services), there are additional
+subtleties, which we now study in detail. The main parts in this
+section is the definition of a packetizer, and a study of its
+effect on delay, burstiness and backlog bounds. We also revisit
+the notion of shaper in a variable length context. For the rest of
+this section, time is continuous.
+
+Throughout the section, we will consider some wide sense
+increasing sequences of packet arrival times $T_i \geq 0$. We
+assume that for all $t$ the set $\{i: T_i\leq t\}$ is finite.
+
+\subsection{An Example of Irregularity Introduced by Variable Length Packets}
+\mylabel{sec-exvlp} The problem comes from the fact that real
+packet switching systems normally output entire packets, rather
+than a continuous data flow. Consider the example illustrated in
+\fref{fig:vlp1}. It shows the output of a constant bit rate trunk,
+with rate $c$, that receives as input a sequence of packets, of
+different sizes. Call $l_i, T_i$ the size (in bits) and the
+arrival epoch for the $i$th packet, $i=1,2,...$. The input
+function is
+\begin{equation}\mylabel{eq-rvlp}
+  R(t)= \sum_i l_i 1_{\{T_i \leq t \}}
+\end{equation}
+In the formula, we used the indicator
+ function
+ $1_{\{\mbox{\emph{expr}}\}}$which
+ is equal to $1$ if $\mbox{\emph{expr}}$ is
+ true, and $0$ otherwise.%
+\index{1@$1_{\{\mbox{\emph{expr}}\}}$(Indicator function)}%
+%The stair function $v_{T_i}$ is defined in \cref{L10}.
+
+We assume, as is usual in most systems, that we observe only
+entire packets delivered by the trunk. This is shown as $R'(t)$ in
+the figure, which results from the bit-by-bit output $R^*$ by a
+packetization operation. The bit-by-bit output $R^*$ is well
+understood; we know from \sref{shapers} that  $R^*=R \mpc
+\lambda_c$. However, what is the effect of packetization ? Do the
+results in Sections~\ref{bounds} and \ref{shapers} still hold ?
+
+
+\begin{figure}[htbp]
+  \insfig{vlp1a}{1.0}
+  \mycaption{A real, variable length packet trunk of constant bit
+  rate, viewed as the concatenation of a greedy shaper and a packetizer.
+  The input is $R(t)$, the
+  output of the greedy shaper is $R^*(t)$, the final output is the output of the packetizer is $R'(t)$.}
+  \mylabel{fig:vlp1}
+\end{figure}
+
+Certainly, we should expect some modifications. For example, the
+bit-by-bit output $R^*$ in the figure is the output of a greedy
+shaper with curve $\lambda_c$, thus it has $\lambda_c$ as an
+arrival curve, but this is certainly not true for $R'$. Worse, we
+know that a greedy shaper keeps arrival constraints, thus if $R$
+is $\sigma$-smooth for some $\sigma$, then so is $R^*$. However,
+this is not true for $R'$. Consider the following example (which
+is originally from \cite{guerin-00}). Assume that
+$\sigma(t)=l_{\max}+rt$ with $r<c$. Assume that the input flow
+$R(t)$ sends a first packet of size $l_1 = l_{\max}$ at time $T_1=
+0$, and a second packet of size $l_2$ at time $T_2=\frac{l_2}{r}$.
+Thus the flow $R$ is indeed $\sigma$-smooth. The departure time
+for the first packet is $T'_1=\frac{l_{\max}}{c}$. Assume that the
+second packet $l_2$ is small, specifically, $l_2 <
+\frac{r}{c}l_{\max}$; then the two packets are sent back-to-back
+and thus the departure time for the second packet is
+$T'_2=T'_1+\frac{l_2}{c}$. Now the spacing $T'_2 - T'_1$ is less
+than $\frac{l_2}{r}$, thus the second packet is not conformant, in
+other words, $R'$ is not $\sigma$-smooth. Note that this example
+is not possible if all packets are the same size.
+
+We will see in this section that this example is quite general:
+packetizing variable length packets does introduce some additional
+irregularities. However, we are able to quantify them, and we will
+see that the irregularities are small (but may be larger than the
+order of a packet length). Most results are extracted from
+\cite{leb01}
+
+\subsection{The Packetizer}
+
+We first need a few definitions.
+\begin{definition}[cumulative packet lengths]
+\mylabel{def-L} A sequence $L$ of cumulative packet lengths is a
+wide sense increasing sequence $(L(0)=0, L(1), L(2), ...)$ such
+that $\limit{n}{\infty}L(n)=+\infty$ and $$l_{\max}=\sup_n\{L(n+1)-L(n)\}$$ is finite
+\index{Cumulative Packet Length}%
+\end{definition}
+In this chapter, we interpret $L(n)-L(n-1)$ as the length of the
+$n$th packet. We now introduce a new building block, which was
+introduced in \cite{Changbook}.
+
+\begin{definition}[Function $P^L$~\cite{Changbook}]
+Consider a sequence of cumulative packet lengths $L$ with
+$L(0)=0$. For any real number $x$, define
+\begin{equation}\mylabel{eq-vlp21}
+P^L(x)= \sup_{n \in \Nats} \{ L(n) 1_{\{L(n) \leq  x\}}
+ \}
+\end{equation}%
+\index{PL@$P^L$} \mylabel{def-pl}
+\end{definition}
+\begin{figure}[htbp]
+  \insfig{pldef1}{0.7}
+  \mycaption{Definition of function $P^L$.}
+  \mylabel{fig:PL}
+\end{figure}
+\fref{fig:PL} illustrates the definition. Intuitively, $P^L(x)$ is
+the largest cumulative packet length that is entirely contained in
+$x$. Function $P^L$ is right-continuous; if $R$ is
+right-continuous, then so is $P^L(R(t))$. For example, if all
+packets have unit length, then $L(n)=n$ and for $x>0$:
+$P^L(x)=\lfloor x \rfloor$. An equivalent characterization of
+$P^L$ is
+\begin{equation}\mylabel{eq-pl1}
+  P^L(x) = L(n) \Longleftrightarrow L(n) \leq x < L(n+1)
+\end{equation}
+
+\begin{definition}[Packetizer~\cite{ggp-96,AR-96,cruzln98,Changbook}]
+Consider a sequence $L$ of cumulative packet lengths. An
+$L$-packetizer is the system that
+transforms the input $R(t)$ into $P^L(R(t))$.%
+\index{Packetizer}
+\end{definition}
+
+For the example in \fref{fig:vlp1}, we have $R'(t)=P^L(R^*(t))$
+and the system can thus be interpreted as the concatenation of a
+greedy shaper and a packetizer.
+
+The following equation follows immediately:
+\begin{equation}\mylabel{eq-plmax}
+   x - l_{\max} < P^L(x) \leq x
+\end{equation}
+\begin{definition}
+We say that a flow $R(t)$ is $L$-packetized if $P^L(R(t))=R(t)$
+for all $t$.
+\end{definition}
+
+The following properties are easily proven and left to the reader.
+\begin{itemize}
+\item (The packetizer is isotone) If $x\leq y$
+then $P^L(x) \leq P^L(y)$ for all $x,y \in
+ \Reals$.
+ \item ($P^L$ is idempotent) $P^L(P^L(x))=P^L(x)$ for all $x \in
+ \Reals$
+\item (Optimality of Packetizer) We can
+characterize a packetizer in a similar way as we did for a greedy
+shaper in \sref{shapers}. Among all flows $x(t)$ such that
+\begin{equation}\mylabel{eq-shap-pack}
+  \bracket {
+x \mbox{ is } L \mbox{-packetized}\\
+ x \leq R
+  }
+\end{equation}
+there is one that upper-bounds all, and it is given by $x(t)=P^L(R(t))$.
+
+The proof for this last item mimics that of \lref{lem-gs}; it
+relies on the property that $P^L$ is idempotent.
+\end{itemize}
+
+We now study the effect of packetizers on the three bounds found
+in \sref{bounds}. We first introduce a definition.
+\begin{definition}[Per-packet delay]
+Consider a system with $L$- packetized input and output. Call
+$T_i, T'_i$ the arrival and departure time for the $i$th packet.
+Assume there is no packet loss. The per-packet delay is $\sup_i
+(T'_i -T_i)$
+\end{definition}
+
+Our main result in this section is the following theorem,
+illustrated in \fref{fig-theo-pl}.
+\begin{theorem}[Impact of packetizer]
+Consider a system (\emph{bit-by-bit system}) with $L$-packetized
+input $R$ and bit-by-bit output $R^*$, which is then
+$L$-packetized to produce a final packetized output $R'$. We call
+\emph{combined system} the system that maps $R$ into $R'$. Assume
+both systems are first-in-first-out and lossless.
+\begin{enumerate}
+  \item The \emph{per-packet delay} for the combined system
+   is the maximum virtual delay for the bit-by-bit system.
+  \item Call $B^*$ the maximum backlog
+for the bit-by-bit system and $B'$ the maximum backlog for the
+combined system. We have $$B^*\leq B' \leq B^* + l_{\max}$$
+  \item Assume that
+the bit-by-bit system offers to the flow a maximum service curve
+$\gamma$ and a minimum service curve $\beta$. The combined system
+offers to the flow a maximum service curve $\gamma$ and a minimum
+service curve $\beta'$ given by
+$$\beta'(t) = [\beta(t)-l_{\max}]^+
+$$
+\item If some flow $S(t)$ has $\alpha(t)$ as an arrival curve, then
+$P^L(S(t))$ has $\alpha(t) + l_{\max} 1_{\{t >0\}}$ as an arrival
+curve.
+\end{enumerate}
+\mylabel{theo-delvlp}
+\end{theorem}
+
+The proof of the theorem is given later in this section. Before,
+we discuss the implications.
+\begin{figure}[!htbp]
+  \insfig{theopl}{0.6}
+  \mycaption{The scenario and notation in \thref{theo-delvlp}.}
+  \mylabel{fig-theo-pl}
+\end{figure}
+Item 1 says that appending a packetizer to a node does not
+increase the packet delay at this node. However, as we see later,
+packetization does increase the end-to-end delay.
+
+Consider again the example in \sref{sec-exvlp}. A simple look at
+the figure shows that the backlog (or required buffer) is
+increased by the packetization, as indicated by item 2. Item 4
+tells us that the final output $R'$ has $\sigma'(t)= \sigma(t) +
+l_{\max} 1_{t>0}$ as an arrival curve, which is consistent with
+our observation in \sref{sec-exvlp} that $R'$ is not
+$\sigma$-smooth, even though $R^*$ is. We will see in
+\sref{sec-pgs} that there is a stronger result, in relation with
+the concept of ``packetized greedy shaper".
+
+Item 3 is the most important practical result in this section. It
+shows that packetizing weakens the service curve guarantee by one
+maximum packet length. For example, if a system offers a
+rate-latency service curve with rate $R$, then appending a
+packetizer to the system has the effect of increasing the latency
+by $\frac{l_{\max}}{R}$.
+  %reducing the service curve to
+% $\beta'=\beta_{R, T+\frac{l_{\max}}{R}}$.
+
+ Consider also the example in \fref{fig:vlp1}.
+ The combination of the
+ trunk and the packetizer can be modeled as a system offering
+\begin{itemize}
+  \item a minimum service curve $\beta_{c,\frac{l_{\max}}{c}}$
+  \item a maximum service curve $\lambda_c$
+\end{itemize}
+
+
+\paragraph{Proof of \thref{theo-delvlp}}
+\begin{enumerate}
+\item
+For some $t$ such that $T_i \leq t < T_{i+1}$ we have $R(t)=L(i)$
+and thus
+$$\sup_{t \in [T_i, T_{i+1})} d(t) =d(T_i)$$
+now $$d(T_i)=T'_i -T_i$$ Combining the two shows that
+$$\sup_t d(t) =\sup_i (T'_i -T_i)$$
+
+\item The
+proof is a direct consequence of \eref{eq-plmax}.
+
+\item The result on maximum service curve $\gamma$ follows immediately
+from \eref{eq-plmax}. Consider now the minimum service curve
+property.
+
+Fix some time $t$ and define $i_0$ by $T_{i_0} \leq t <T_{i_0
++1}$. For $1\leq i\leq i_0$ and for $T_{i-1} \leq s < T_{i}$
+we have $R(s)=R(T_{i-1})$ and $\beta$ is wide-sense
+increasing, thus
+ $$
+ \inf_{T_{i-1} \leq s < T_{i}}\left( R(s) + \beta(t-s) \right)
+ =
+ R(T_{i-1}) + \beta_r(t-T_{i})=R_l(T_{i})+ \beta_r(t-T_{i})
+ $$
+ where $\beta_r$ [resp. $R_l$] is the
+ limit of $\beta$ from the right [resp. of $R$ from the left]. Similarly
+ $$\inf_{s \in [T_{i_0},t]} \left( R(s) + \beta(t-s)
+ \right)=R(t)
+ $$
+ since $\beta(0)=0$. Thus (case 1) either there is some $i
+  \leq i_0$ such that $(R \mpc \beta )(t)=R_l(T_i)+
+ \beta_r(t-T_i)$ or (case 2) $(R \mpc \beta )(t)=R(t)$.
+
+ Consider case 1. By hypothesis, $R^*(t) \geq (R\mpc \beta) (t)$, thus
+ $$R'(t) \geq R^*(t) - l_{\max}
+ \geq  R_l(T_i) + \beta_r(t-T_i) -l_{\max}
+ $$
+On the other hand, $R^*(t) \geq R_l(T_i)=R(T_{i-1})$ and $R$
+is $L$-packetized, thus
+$$R'(t) \geq R_l(T_i)$$
+Combining the two shows that
+$$\begin{array}{rl}
+   R'(t) \geq & \max\left[ R_l(T_i), R_l(T_i) + \beta_r(t-T_i) -l_{\max}
+         \right] \\
+     = & R_l(T_i) + \max\left[\beta_r(t-T_i) -l_{\max},0 \right]\\
+     = & R_l(T_i) + \beta_r'(t-T_j)
+  \end{array}
+ $$
+ Now fix some arbitrary $\epsilon >0$. By definition of the limit from the right,
+we can find some $s \in (T_{i-1}, T_i)$ such that $\beta(t-s)
+\leq \beta_r(t-T_i) +\epsilon$. Now $R(s)=R_l(T_i)$ thus
+$$
+ R'(t) \geq R(s) + \beta(t-s) - \epsilon \geq (R
+ \mpc \beta')(t) -\epsilon
+ $$
+This is true for all $\epsilon >0$ thus $R'(t) \geq (R
+ \mpc \beta')(t)$, which proves that the service curve
+ property holds for case 1. The proof for case 2 is immediate.
+\item The
+proof is a direct consequence of \eref{eq-plmax}.
+\end{enumerate}
+
+\paragraph{Example: concatenation of GPS nodes}
+
+Consider the concatenation of the theoretical GPS node, with
+guaranteed rate $R$ (see \sref{sec-sercurdef} on
+\pgref{sec-sercurdef}) and an $L$-packetizer. Assume this system
+receives a flow of variable length packets. This models a
+theoretical node that would work as a GPS node but is constrained
+to deliver entire packets. This is not very realistic, and we will
+see in \cref{L21} more realistic implementations of GPS, but this
+example is sufficient to explain one important effect of
+packetizers.
+
+By applying \thref{theo-delvlp}, we find that this node offers a
+rate-latency service curve $\beta_{R,\frac{l_{\max}}{R}}$.
+\begin{figure}[htbp]
+  \insfig{congpsvl}{0.8}
+  \mycaption{The concatenation of several GPS fluid nodes with
+  packetized outputs}
+  \mylabel{fig-congpsvl}
+\end{figure}
+Now concatenate $m$ such identical nodes, as illustrated in
+\fref{fig-congpsvl}. The end-to-end service curve is the rate
+latency-function $\beta_{R, T}$ with
+$$
+ T = m \frac{l_{\max}}{R}
+$$
+We see on this example that the additional latency introduced by
+one packetizer is indeed of the order of one packet length;
+however, this effect is multiplied by the number of hops.
+
+For the computation of the end-to-end delay bound, we need to take
+into account \thref{theo-delvlp}, which tells us that we can
+forget the last packetizer. Thus, a bound on end-to-end delay is
+obtained by considering that the end-to-end path offers a service
+curve equal to the latency-function $\beta_{R, T_0}$ with
+$$
+ T_0 = (m-1) \frac{l_{\max}}{R}
+$$
+For example, if the original input flow is constrained by one
+leaky bucket of rate $r$ and bucket pool of size $b$, and if $r\leq R$, then an
+end-to-end delay bound is
+\begin{equation}\mylabel{eq-e2edelvlp}
+\frac{b + (m-1) l_{\max}}{R}
+\end{equation}
+The alert reader will easily show that this bound is a worst case
+bound. This illustrates that we should be careful in interpreting
+\thref{theo-delvlp}. It is only at the last hop that the
+packetizer implies no delay increase. The interpretation is as
+follows. Packetization delays the first bits in a packet, which
+delays the processing at downstream nodes. This effect is captured
+in \eref{eq-e2edelvlp}. In summary:
+\begin{remark}
+Packetizers do not increase the maximum delay at the node where
+they are appended. However, they generally increase the end-to-end
+delay.
+\end{remark}
+
+We will see in \cref{L21} that many practical schedulers can be
+modeled as the concatenation of a node offering a service curve
+guarantee and a packetizer, and we will give a practical
+generalization of \eref{eq-e2edelvlp}.
+
+\subsection{A Relation between Greedy Shaper and Packetizer}
+\mylabel{sec-psps}
+
+We have seen previously that appending a packetizer to a greedy
+shaper weakens the arrival curve property of the output. There is
+however a case where this is not true. This case is important for
+the results in \sref{sec-pgs}, but also has practical applications
+of its own. \fref{fig-theo-psps} illustrates the theorem.
+\begin{figure}[htbp]
+  \insfig{theopsps}{0.7}
+  \mycaption{\thref{theo-psps} says that $R^{(1)}$ is
+  $\sigma$-smooth.}
+  \mylabel{fig-theo-psps}
+\end{figure}
+\begin{theorem}
+Consider a sequence $L$ of cumulative packet lengths and call
+$\calP_L$ the $L$-packetizer. Consider a ``good" function $\sigma$
+and assume that
+\begin{equation}\mylabel{eq:condsigma}
+\bracket{
+  \mbox{There is a sub-additive function
+$\sigma_0$ and a number $l \geq l_{\max}$ such that}\\
+  \sigma(t)=\sigma_0(t) + l 1_{t>0}
+ }
+\end{equation}
+Call $\calC_{\sigma}$ the greedy shaper with shaping curve
+$\sigma$.
+For any input, the output of the composition%
+\footnote{We use the notation $\calP_L \circ \calC_{\sigma}$ to
+denote the composition of the two operators, with $\calC_{\sigma}$
+applied first;  see \sref{sec:catalogofoperators}.}%
+$\calP_L \circ \calC_{\sigma} \circ \calP_L$ is $\sigma$-smooth.
+ \mylabel{theo-psps}
+\end{theorem}
+
+In practical terms, the theorem is used as follows. Consider an
+$L$-packetized flow, pass it through a greedy shaper with shaping
+curve $\sigma$; and packetize the output; then the result is
+$\sigma$-smooth (assuming that $\sigma$ satisfies condition in
+\eref{eq:condsigma} in the theorem).
+
+Note that in general the output of $\calC_{\sigma} \circ \calP_L $
+is \emph{not} $L$-packetized, even if $\sigma$ satisfies the
+condition in the theorem (finding a counter-example is simple and
+is left to the reader for her enjoyment). Similarly, if the input
+to $\calP_L \circ \calC_{\sigma}$ is not $L$-packetized, then the
+output is not $\sigma$-smooth, in general.
+
+The theorem could also be rephrased by saying that, under
+condition in \eref{eq:condsigma}
+$$ \calP_L \circ
+\calC_{\sigma} \circ \calP_L = \calC_{\sigma} \circ \calP_L \circ
+\calC_{\sigma} \circ \calP_L$$ since the two above operators
+always produce the same output.
+
+\paragraph{Discussion of Condition in \eref{eq:condsigma}}
+
+Condition \eref{eq:condsigma} is satisfied in practice if $\sigma$
+is concave and $\sigma_r(0) \geq l_{\max}$, where $\sigma_r(0)=
+\inf_{t>0} \sigma(t)$ is the limit from the right of $\sigma$ at
+$0$. This occurs for example if the shaping curve is defined by
+the conjunction of leaky buckets, all with bucket size at least as
+large as the maximum packet size.
+
+This also sheds some light on the example in \fref{fig:vlp1}: the
+problem occurs because the shaping curve $\lambda_C$ does not
+satisfy the condition.
+
+The alert reader will ask herself whether a sufficient condition
+for \eref{eq:condsigma} to hold is that $\sigma$ is sub-additive
+and $\sigma_r(0) \geq l_{\max}$. Unfortunately, the answer is no.
+Consider for example the stair function $\sigma=l_{\max}v_{T}$. We
+have $\sigma_r(0) = l_{\max}$ but if we try to rewrite $\sigma$
+into $\sigma(t)=\sigma_0(t) + l 1_{t>0}$ we must have $l=l{\max}$
+and $\sigma_0(t)=0$ for $t \in (0,T]$; if we impose that
+$\sigma_0$ is sub-additive, the latter implies $\sigma_0=0$ which
+is not compatible with \eref{eq:condsigma}.%
+\footnote{The same conclusion unfortunately also holds if we
+replace sub-additive by ``star-shaped" (\sref{sec:minplus}).}
+
+\paragraph{Proof of \thref{theo-psps}: }
+ We use the notation in
+\fref{fig-theo-psps}. We want to show that $R^{(1)}$ is
+$\sigma$-smooth. We have $R^* = R \mpc \sigma$. Consider now some
+arbitrary $s$ and $t$ with $s<t$. From the definition of min-plus
+convolution, for all $\epsilon
+>0$, there is some $u \leq s$ such that
+\begin{equation}\mylabel{eq-sladk8}
+ (R \mpc \sigma)(s)  \geq R(u) + \sigma(s-u) - \epsilon
+\end{equation}
+Now consider the set $E$ of $\epsilon >0$ such that we can find
+one $u < s$ satisfying the above equation. Two cases are possible:
+either $0$ is an accumulation point for $E$%
+\footnote{namely, there is a sequence of elements in $E$ which
+converges to $0$} (case 1) , or not (case 2).
+
+Consider case 1; there is a sequence $(\epsilon_n, s_n)$, with
+$s_n < s$,
+$$\lim_{n\rightarrow + \infty} \epsilon_n =0$$
+and
+$$
+(R \mpc \sigma)(s)  \geq R(s_n) + \sigma(s-s_n) - \epsilon_n
+$$
+Now since $s_n \leq t$:
+$$
+(R \mpc \sigma)(t) \leq R(s_n) + \sigma(t-s_n)
+$$
+Combining the two:
+$$
+(R \mpc \sigma)(t) - (R \mpc \sigma)(s) \leq \sigma(t-s_n)-
+\sigma(s-s_n) + \epsilon_n
+$$
+Now $t-s_n >0$ and $s-s_n >0$ thus
+$$\sigma(t-s_n) - \sigma(s-s_n) = \sigma_0(t-s_n) -
+\sigma_0(s-s_n)
+$$
+We have assumed that $\sigma_0$ is sub-additive. Now $t \geq s$
+thus
+$$
+\sigma_0(t-s_n) - \sigma_0(s-s_n) \leq \sigma_0(t-s)
+$$
+we have thus shown that, for all $n$
+$$
+ (R \mpc \sigma)(t) - (R \mpc \sigma)(s)
+ \leq \sigma_0(t-s) + \epsilon_n
+$$ and thus
+$$
+ (R \mpc \sigma)(t) - (R \mpc \sigma)(s) \leq \sigma_0(t-s)
+$$
+Now from \eref{eq-plmax}, it follows that
+$$
+ R^{(1)}(t) -   R^{(1)}(s) \leq \sigma_0(t-s) + l_{\max}
+ \leq \sigma(t-s)
+$$
+which ends the proof for case 1.
+
+Now consider case 2. There is some $\epsilon_0$ such that for $0 <
+\epsilon < \epsilon_0$, we have to take $u=s$ in \eref{eq-sladk8}, and therefore
+$$
+(R \mpc \sigma)(s)  \geq R(s) + \sigma(0) - \epsilon = R(s) - \epsilon
+$$
+Since this holds for every $\epsilon$ such that $0 <
+\epsilon < \epsilon_0$, it comes that $(R \mpc \sigma)(s)\geq R(s)$, and thus $
+(R \mpc \sigma)(s)  = R(s)
+$.
+
+Now $R$ is $L$-packetized by hypothesis. Thus
+$$R^{(1)}(s)=P^L((R \mpc \sigma)(s))=
+P^L(R (s)) =R(s) = (R \mpc \sigma)(s)$$ thus
+$$
+  \begin{array}{rl}
+    R^{(1)}(t) - R^{(1)}(s)= & P^L((R \mpc \sigma)(t)) - (R \mpc
+\sigma)(s) \\
+     \leq & (R \mpc \sigma)(t) - (R \mpc \sigma)(s)
+  \end{array}
+$$
+now $R \mpc \sigma$ has $\sigma$ as an arrival curve thus
+$$
+ R^{(1)}(t) - R^{(1)}(s) \leq \sigma(t-s)
+$$
+which ends the proof for case 2.
+ \qed
+
+\paragraph{Example: Buffered Leaky Bucket Controller based on
+Virtual Finish Times} \thref{theo-psps} gives us a practical
+implementation for a packet based shaper. Consider that we want to
+build a device that ensures that a packet flow satisfies some
+concave, piecewise linear arrival curve (and is of course $L$-
+packetized). We can realize such a device  as the concatenation of
+a buffered leaky bucket controller operating bit-by-bit and a
+packetizer.  We compute the output time for the last bit of a
+packet (= finish time) under the bit-by-bit leaky bucket
+controller, and release the entire packet instantly at this finish
+time. If each bucket pool is at least as large as the maximum
+packet size then \thref{theo-psps} tells us that the final output
+satisfies the leaky bucket constraints.
+
+\paragraph{Counter-example}
+
+If we consider non-concave arrival curves, then we can find an
+arrival curve $\sigma$ that does satisfy $\sigma(t) \geq l_{\max}$
+for $t>0$ but that does not satisfy \eref{eq:condsigma}. In such a
+case, the conclusion of \thref{theo-psps} may not hold in general.
+\fref{fig:ctxpsps} shows an example where the output $R^{(1)}$ is
+not $\sigma$-smooth, when $\sigma$ is a stair function.
+\begin{figure}[!htbp]
+  \insfig{ctxpsps}{0.5}
+  \mycaption{A counter example for \thref{theo-psps}. A burst of
+  10 packets of size
+  equal to 10 data units arrive at time $t=0$,
+  and $\sigma= 25 v_{1}$. The greedy shaper emits $25$ data
+  units at times $0$ and $1$, which forces the packetizer to
+  create a
+  burst of 3 packets at time 1, and thus $R^{(1)}$ is not $\sigma$-smooth.}
+  \mylabel{fig:ctxpsps}
+\end{figure}
+
+\subsection{Packetized Greedy Shaper}
+\mylabel{sec-pgs} We can come back to the questions raised by the
+example in \fref{fig:vlp1} and give a more fundamental look at the
+issue of packetized shaping. Instead of synthesizing the
+concatenation of a greedy shaper and a packetizer as we did
+earlier, we define the following, consistent with \sref{shapers}.
+\begin{definition}
+\mylabel{def-packshap} [Packetized Greedy Shaper] Consider an
+input sequence of packets, represented by the function $R(t)$ as
+in \eref{eq-rvlp}. Call $L$ the cumulative packet lengths. We call
+\emph{packetized shaper}, with shaping curve $\sigma$, a system
+that forces its output to have $\sigma$ as an arrival curve {\emph
+and} be $L$-packetized. We call \emph{packetized greedy shaper} a
+packetized shaper that delays the input packets in a buffer,
+whenever sending a packet would violate the constraint $\sigma$,
+but outputs them as soon as possible.
+\end{definition}
+\paragraph{Example: Buffered Leaky Bucket Controller based on
+Bucket Replenishment}  The case $\sigma(t)= \min_{m=1,...,M}
+(\gamma_{r_m, b_m}(t)$ can be implemented by a controller that
+observes a set of $M$ fluid buckets, where the $m$th bucket is of
+size $b_m$ and leaks at a constant rate $r_m$. Every bucket
+receives $l_i$ units of fluid when packet $i$ is released ($l_i$
+is the size of packet $i$). A packet is released as soon as the
+level of fluid in bucket $m$ allows it, that is, has gone down
+below $b_m - l_i$, for all $m$. We say that now we have defined a
+buffered leaky bucket controller based on ``bucket replenishment".
+It is clear that the output has $\sigma$ as an arrival curve, is
+$L$-packetized and sends the packets as early as possible. Thus it
+implements the packetized greedy shaper. Note that this
+implementation differs from the buffered leaky bucket controller
+based on virtual finish times introduced in \sref{sec-psps}. In
+the latter, during a period where, say, bucket $m$ only is full,
+fragments of a packet are virtually released at rate $r_m$, bucket
+$m$ remains full, and the (virtual) fragments are then
+re-assembled in the packetizer; in the former, if a bucket becomes
+full, the controller waits until it empties by at least the size
+of the current packet. Thus we expect that the level of fluid in
+both systems is not the same, the former being an upper bound. We
+will see however in Corollary~\ref{corol-234} that both
+implementations are equivalent.
+
+In this example, if a bucket size is less than the maximum packet
+size, then it is never possible to output a packet: all packets
+remain stuck in the packet buffer, and the output is
+$\overline{R}(t)=0$. In general, we can say that
+\begin{proposition}
+If $\sigma_r(0) < l_{\max}$ then the the packetized greedy shaper
+blocks all packets for ever (namely, $\overline{R}(t)=0$). Thus in
+this section, we assume that $\sigma(t) \geq l_{\max}$ for $t>0$.
+\mylabel{prop:cnvls}
+\end{proposition}
+Thus, for practical cases, we have to assume that the arrival
+curve $\sigma$ has a discontinuity at the origin at least as large
+as one maximum packet size.
+
+How does the packetized greedy shaper compare with the
+concatenation of a greedy shaper with shaping curve $\sigma$ and a
+packetizer~? We know from the example in \fref{fig:vlp1} that the
+output has $\sigma'(t)= \sigma(t) + l_{\max} 1_{t>0}$ as an
+arrival curve, but not $\sigma$. Now, does the concatenation
+implement a packetized greedy shaper with shaping curve
+$\sigma'$~?  Before giving a general answer, we study a fairly
+general consequence of \thref{theo-psps}.
+
+\begin{theorem}[Realization of packetized Greedy Shaper]
+Consider a sequence $L$ of cumulative packet lengths and a ``good"
+function $\sigma$. Assume that $\sigma$ satisfies the condition in
+\eref{eq:condsigma}. Consider only inputs that are $L$ packetized.
+Then the packetized greedy shaper for $\sigma$ and $L$ can be
+realized as the concatenation of the greedy shaper with shaping
+curve $\sigma$ and the $L$-packetizer.
+ \mylabel{theo-iopshprime}
+\end{theorem}
+\begin{figure}[htbp]
+  \insfig{theorpgs}{0.5}
+  \mycaption{The packetized greedy shaper can be realized as a (bit-by-bit
+  fluid shaper followed by a packetizer, assuming \eref{eq:condsigma} holds.
+  In practice, this means
+  that we can realize packetized greedy shaping by computing finish times
+  in the virtual fluid system and release packets at their finish times.}
+  \mylabel{fig-theorpgs}
+\end{figure}
+
+\pr
+Call $R(t)$ the packetized input; the output of the bit-by-bit
+greedy shaper followed by a packetizer is $R^{(1)}(t)=P^L(R \mpc
+\sigma)(t))$. Call $\overline{R}(t)$ the output of the packetized
+greedy shaper. We have $\overline{R} \leq R$ thus
+$\overline{R}\mpc \sigma \leq R\mpc \sigma$ and thus
+$$P^L(\overline{R}\mpc \sigma) \leq P^L(R\mpc \sigma)$$
+But $\overline{R}$ is $\sigma$-smooth, thus $\overline{R}\mpc
+\sigma = \overline{R}$, and is $L$-packetized, thus
+$P^L(\overline{R}\mpc \sigma)=\overline{R}$. Thus the former
+inequality can be rewritten as
+ $\overline{R} \leq R^{(1)}$.
+ Conversely, from \thref{theo-psps}, $R^{(1)}$ is also
+ $\sigma$-smooth and
+ $L$-packetized. The definition of the packetized greedy shaper
+ implies that $\overline{R} \geq R^{(1)}$ (for a formal proof, see
+ \lref{lem:pakshap}) thus finally $\overline{R} = R^{(1)}$.
+\qed
+
+We have seen  that the condition in the theorem is satisfied in
+particular if
+ $\sigma$ is concave and $\sigma_r(0) \geq l_{\max}$, for
+ example if the shaping curve is defined by the conjunction of
+ leaky buckets, all with bucket size at least as large as the
+ maximum packet size. This shows the following.
+\begin{corollary}
+ For $L$-packetized inputs, the implementations of buffered leaky
+ bucket controllers based on bucket replenishment and virtual finish
+ times are equivalent.
+ \mylabel{corol-234}
+ \end{corollary}
+
+
+If we relax \eref{eq:condsigma} then the construction of the
+packetized greedy shaper is more complex:
+\begin{theorem}[I/O characterisation of packetized greedy shapers]
+Consider a packetized greedy shaper with shaping curve $\sigma$
+and cumulative packet length $L$. Assume that $\sigma$ is a
+``good" function. The output $\overline{R}(t)$ of the packetized
+greedy shaper is given by
+\begin{equation}\mylabel{eq-sp3}
+\overline{R} = \inf
+ \left\{ R^{(1)},  R^{(2)}, R^{(3)}, ...
+ \right\}
+\end{equation}
+with $R^{(1)}(t)=P^L((\sigma \mpc  R)(t))$ and $R^{(i)}(t)=P^L(
+(\sigma \mpc R^{(i-1)})(t))$ for $i\geq 2$.
+ \mylabel{theo:iopshapers}
+\end{theorem}
+\fref{fig:theopgsio} illustrates the theorem, and shows the
+iterative construction of the output on one example. Note that
+this example is for a shaping function that does not satisfy
+\eref{eq:condsigma}. Indeed, otherwise, we know from
+\thref{theo-iopshprime} that the iteration stops at the first
+step, namely, $\overline{R}=R^{(1)}$ in that case. We can also
+check for example that if $\sigma=\lambda_r$ (thus the condition
+in \pref{prop:cnvls} is satisfied) then the result of
+\eref{eq-sp3} is $0$.
+\begin{figure}[htbp]
+%  \insfig{theopgsio}{0.5}
+  \insfig{theoiogps}{1.0}
+  \mycaption{Representation of the output of the packetized greedy
+  shaper (left) and example of output (right). The data are the same
+  as with \fref{fig:ctxpsps}.}
+  \mylabel{fig:theopgsio}
+\end{figure}
+\pr
+The proof is a direct application of \lref{lem:pakshap} (which
+itself is an application of the general method in
+\sref{sec:fixedpointequation} on \pgref{sec:fixedpointequation}).
+\qed
+
+\begin{lemma}
+Consider a sequence $L$ of cumulative packet lengths and a ``good"
+function $\sigma$. Among all flows $x(t)$ such that
+\begin{equation}\mylabel{eq-sp2}
+  \bracket {
+  x \leq R \\
+  x \mbox{ is } L \mbox{-packetized}\\
+  x \mbox{ has } \sigma \mbox{ as an arrival curve}
+  }
+\end{equation}
+there is one flow $\overline{R}(t)$ that upper-bounds all. It is
+given by \eref{eq-sp3}.
+ \mylabel{lem:pakshap}
+  \end{lemma}
+  \pr
+ The lemma is a direct application of \thref{thm:spacemethod}, as
+ explained in \sref{sec:iopacketizedgreedyshaper}. However, in
+ order to make this chapter self-contained, we give an alternative, direct
+ proof, which is quite short.
+
+If $x$ is a solution, then it is straightforward to show by
+induction on $i$ that $x(t) \leq R^{(i)}(t)$ and thus $x \leq
+\overline{R}$. The difficult part is now to show that
+$\overline{R}$ is indeed a solution. We need to show that the
+three conditions in \eref{eq-sp2} hold. Firstly, $R^{(1)}\leq
+R(t)$ and by induction on $i$, $R^{(i)}\leq R$ for all $i$; thus
+$\overline{R}\leq R$.
+
+Secondly, consider some fixed $t$; $R^{(i)}(t)$ is $L$-packetized
+for all $i \geq 1$. Let $L(n_0):= R^{(1)}(t)$. Since
+$R^{(i)}(t)\leq R^{(1)}(t)$,  $R^{(i)}(t)$ is in the set
+$$\{L(0),
+L(1), L(2), ..., L(n_0)\}.$$ This set is finite, thus,
+$\overline{R}(t)$, which is the infimum of elements in this set,
+has to be one of the $L(k)$ for $k\leq n_0$. This shows that
+$\overline{R}(t)$ is $L$-packetized, and this is true for any time
+$t$.
+
+Thirdly, we have, for all $i$
+$$\overline{R}(t) \leq R^{(i+1)}(t) = P^L ((\sigma \mpc R^{(i)})(t)) \leq (\sigma \mpc
+R^{(i)})(t)$$
+ thus
+ $$\overline{R} \leq \inf_{i} (\sigma \mpc
+R^{(i)})$$
+
+Now convolution by a fixed function is upper-semi-continuous,
+which means that
+$$\inf_{i} (\sigma \mpc
+R^{(i)}) = \sigma \mpc \overline{R}$$ This is a general result in
+\cref{L11} for any min-plus operator. An elementary proof is as
+follows.
+ $$
+  \begin{array}{rl}
+    \inf_i ( \sigma \mpc R^{(i)} )(t) = &
+    \inf_{s \in [0,t], i \in \Nats}\left[\sigma(s) + R^{(i)}(t-s)\right] \\
+    = &
+    \inf_{s \in [0,t]} \left\{\inf_{i \in \Nats}
+    \left[(\sigma(s) + R^{(i)}(t-s)\right] \right\}\\
+    = &  \inf_{s \in [0,t]} \left\{\sigma(s) + \inf_{i \in \Nats}
+    \left[R^{(i)}(t-s)\right] \right\}\\
+    = & \inf_{s \in [0,t]} \left[\sigma(s) +  \overline{R}(t-s) \right]\\
+    = & (\sigma \mpc \overline{R})(t)
+  \end{array}
+ $$
+
+
+Thus
+$$\overline{R} \leq \sigma \mpc \overline{R},$$
+which shows the third condition. Note that $\overline{R}$ is
+wide-sense increasing. \qed
+
+%If $x$ is a solution, then it is straightforward to show by
+%induction on $i$ that $x(t) \leq R^{(i)}(t)$ and thus $x \leq
+%\overline{R}$. The difficult part is now to show that
+%$\overline{R}$ is indeed a solution. We need to show that the
+%three conditions in \eref{eq-sp2} hold. Firstly, $R^{(1)}\leq
+%R(t)$ and by induction on $i$, $R^{(i)}\leq R$ for all $i$; thus
+%$\overline{R}\leq R$.
+%
+%Secondly, $R^{(i)}$ is clearly $L$-packetized, thus takes values
+%in the set $\calS=\{L(0), L(1), L(2), ...\}$. Now $\calS$ has no
+%finite accumulation point, by hypothesis. Thus, for any $t$,
+%$\overline{R}(t)$, which is the infimum of elements in $\calS$,
+%has to be one of the $L(k)$ for some $k$, which shows that
+%$\overline{R}$ is $L$-packetized.
+%
+%Thirdly, we have, for all $i$
+%$$\overline{R}(t) \leq R^{(i+1)}(t) = P^L ((\sigma \mpc R^{(i)})(t)) \leq (\sigma \mpc
+%R^{(i)})(t)$$
+% thus
+% $$\overline{R} \leq \inf_{i} (\sigma \mpc
+%R^{(i)})$$
+
+
+
+%\paragraph{Does packetized greedy shaping increase the delay bound ?}
+%To be done. Je crois que la r\'{e}ponse est non, mais donner des
+%bornes.
+
+\paragraph{Does a packetized greedy shaper keep arrival constraints ?}
+
+\fref{fig:ctxshk} shows a counter-example, namely, a variable
+length packet flow that has lost its initial arrival curve
+constraint after traversing a packetized greedy shaper.
+
+\begin{figure}[!htbp]
+  \insfig{ctxshk}{0.7}
+  \mycaption{The input flow is shown above; it consists of 3 packets
+  of size 10 data units and one of size 5 data units,
+   spaced by one time unit. It is
+  $\alpha$-smooth with $\alpha=10 v_{1,0}$. The bottom flow is the
+  output of the packetized greedy shaper with $\sigma=25 v_{3,0}$.
+  The output has a burst of $15$ data units packets at time $3$. It
+  is $\sigma$-smooth but \emph{not} $\alpha$-smooth.}
+  \mylabel{fig:ctxshk}
+\end{figure}
+
+
+However, if arrival curves are defined by leaky buckets, we have a
+positive result.
+
+\begin{theorem}[Conservation of concave arrival constraints]
+Assume an $L$-packetized flow with arrival curve $\alpha$ is input
+to a packetized greedy shaper with cumulative packet length $L$
+and shaping curve $\sigma$. Assume that $\alpha$ and $\sigma$ are
+concave with $\alpha_r(0) \geq l_{\max}$ and $\sigma_r(0) \geq
+l_{\max}$. Then the output flow is still constrained by the
+original arrival curve $\alpha$.
+ \mylabel{theo-pshkparc}
+\end{theorem}
+ \pr
+%We use the notation in \thref{theo:iopshapers}.
+ Since $\sigma$
+ satisfies \eref{eq:condsigma}, it follows from
+ \thref{theo-iopshprime} that
+ $
+ \overline{R} = P^L(\sigma \mpc R)$.
+Now $R$ is $\alpha$-smooth thus it is not modified by a bit-by-bit
+greedy shaper with shaping curve $\alpha$, thus
+    $R= \alpha \mpc R$.
+Combining the two and using the associativity of $\mpc$ gives
+    $
+    \overline{R}=
+     P^L [(\sigma \mpc \alpha) \mpc
+    R]$.
+From our hypothesis, $\sigma \mpc \alpha= \min(\sigma, \alpha) $
+(see \thref{thm:rule8-9} on \pgref{thm:rule8-9})
+    and thus $\sigma \mpc \alpha$ satisfies
+    \eref{eq:condsigma}. Thus, by \thref{theo-psps}, $\overline{R}$ is
+    $\sigma \mpc \alpha$-smooth, and thus $\alpha$-smooth.
+    \qed
+
+%    We use the notation in \thref{theo-psps}.
+%    Call $R(t)$ the input to the packetized greedy shaper.
+%    By applying \thref{theo-iopshprime}, since $\alpha$
+%    satisfies \eref{eq:condsigma}, there is some $R_0$ such
+%    that
+%    $$R=
+%      \calP_L \circ \calC_{\alpha} \circ \calP_L (R_0)
+%    $$
+%    By the same token, the output $\overline{R}$
+%    of the
+%    packetized greedy shaper satisfies
+%    $$
+%\overline{R}=   \calP_L \circ \calC_{\sigma} \circ \calP_L \circ
+%\calP_L \circ \calC_{\alpha} \circ \calP_L
+%    (R_0)
+%    $$
+%    Now $\calP_L$ is idempotent, thus
+%    $$
+%    \overline{R}= \calP_L \circ \calC_{\sigma} \circ \calP_L \circ \calC_{\alpha} \circ \calP_L (R_0)
+%    $$
+%    From \thref{theo-psps}, we have
+%    $\calP_L \circ \calC_{\alpha} \circ \calP_L= \calC_{\alpha}\circ \calP_L \circ \calC_{\alpha} \circ \calP_L $, thus
+%    $$
+%\overline{R} = \calP_L \circ \calC_{\sigma} \circ \calC_{\alpha}
+%\circ \calP_L \circ \calC_{\alpha} \circ \calP_L
+%    (R_0)
+%    $$
+%    Note that $\calC_{\sigma} \circ \calC_{\alpha}= \calC_{\alpha \mpc \sigma}$, thus
+%    $$
+%\overline{R} =\calP_L \circ \calC_{\alpha \mpc \sigma} \circ
+%\calP_L  \circ \calC_{\alpha} \circ \calP_L(R_0)
+%    $$
+%    Now from our hypothesis, $\alpha \mpc \sigma= \alpha \wedge \sigma$
+%    and thus $\alpha \mpc \sigma$ satisfies
+%    \eref{eq:condsigma}. Thus
+%    $$
+%   \overline{R}=
+%     \calC_{\alpha \mpc \sigma}
+%     \circ \calP_L \circ \calC_{\alpha \mpc \sigma} \circ \calP_L \circ \calC_{\alpha}
+%     \circ \calP_L( R_0 )
+%    $$
+%    which shows that $\overline{R}$ is $\alpha \mpc
+%    \sigma$-smooth, and thus $\alpha$-smooth.
+%
+% \qed
+%
+
+\paragraph{Series decomposition of shapers}
+\begin{theorem}
+Consider a tandem of $M$ packetized greedy shapers in series;
+assume that the shaping curve $\sigma^m$ of the $m$th shaper is
+concave with $\sigma^m_r(0) \geq l_{\max}$. For $L$-packetized
+inputs, the tandem is equivalent to the packetized greedy shaper
+with shaping curve $\sigma= \min_m \sigma^m$.
+ \mylabel{theo-pshserdec}
+\end{theorem}
+\pr We do the proof for $M=2$ as it extends without difficulty to
+larger values of $M$. Call $R(t)$ the packetized input, $R'(t)$
+the output of the tandem of shapers, and $\overline{R}(t)$ the
+output of the packetized greedy shaper with input $R(t)$ and shaping curve $\sigma$.
+
+Firstly, by \thref{theo-iopshprime}
+$$R' = P^L [\sigma^2 \mpc P^L (\sigma^1 \mpc R)]$$
+Now $\sigma^m \geq \sigma$ for all $m$ thus
+$$R' \geq  P^L [\sigma \mpc P^L (\sigma \mpc R)]$$
+Again by \thref{theo-iopshprime}, we have $\overline{R} = P^L
+(\sigma \mpc R)$. Moreover  $\overline{R}$ is $L$-packetized and
+$\sigma$-smooth, thus $\overline{R}=P^L(\overline{R})$ and
+$\overline{R}= \sigma \mpc \overline{R}$. Thus finally
+\begin{equation}\mylabel{eq-prl-ks8}
+ R' \geq  \overline{R}
+\end{equation}
+
+Secondly, $R'$ is $L$-packetized and by \thref{theo-pshkparc}, it
+is $\sigma$-smooth. Thus the tandem is a packetized (possibly non
+greedy) shaper. Since $\overline{R}(t)$ is the output of the
+packetized greedy shaper, we must have $R' \leq \overline{R}$.
+Combining with \eref{eq-prl-ks8} ends the proof. \qed
+
+It follows that a shaper with shaping curve $\sigma(t)=
+\min_{m=1,...,M} (r_m t+b_m)$, where $b_m \geq l_{\max}$ for all
+$m$, can be implemented by a tandem of $M$ individual leaky
+buckets, in any order. Furthermore, by \coref{corol-234}, every
+individual leaky bucket may independently be based either on
+virtual finish times or on bucket replenishment.
+
+If the condition in the theorem is not satisfied, then the
+conclusion may not hold. Indeed, for the example in
+\fref{fig:ctxshk}, the tandem of packetized greedy shapers with
+curves $\alpha$ and $\sigma$ does not have an $\alpha$-smooth
+output, therefore it cannot be equivalent to the packetized greedy
+shaper with curve $\min (\alpha, \sigma)$.
+
+
+
+Unfortunately, the other shaper properties seen in \sref{shapers}
+do not generally hold. For shaping curves that satisfy
+\eref{eq:condsigma}, and when a packetized greedy shaper is
+introduced, we need to compute the end-to-end service curve by applying \thref{theo-delvlp}.%
+%
+% the end-to-end service g a packettizer
+%
+%To do: show that reshaping adds $2 l_{\max}$ to arrival curve (is
+%it true ?) .
+%
+%
+%Comparer concatenation ($\sigma_0$ + $L$-packetizer) avec sigma
+%prime packetized greedy shaper.
+%
+%Reponse: cela diff\`{e}re d'au plus $2 l_{\max}$ (voir
+%propri\'{e}t\'{e} S2).
+
+
+\section[Effective Bandwidth and Equivalent Capacity]{Lossless Effective Bandwidth and Equivalent Capacity}
+\mylabel{sec-effbw}
+\subsection{Effective Bandwidth of a Flow}
+
+We can apply the results in this chapter to define a function of a
+flow called the effective bandwidth. This function characterizes
+the bit rate required for a given flow. More precisely, consider a
+flow with cumulative function $R$; for a fixed, but arbitrary
+delay $D$, we define the \emph{effective bandwidth} $e_D(R)$ of
+the flow as the bit rate required to serve the flow in a work
+conserving manner, with a virtual delay $\leq D$.
+\begin{proposition}
+\mylabel{prop-efb-def} The effective bandwidth of a flow is given
+by
+\begin{equation}
+    e_{D}(R) = \sup_{0\leq s \leq t} \frac{R(t)-R(s)}{t-s+D}
+    \mylabel{eq-effBw}
+\end{equation}
+\end{proposition}
+For an arrival curve $\alpha$ we define the effective bandwidth
+$e_D(\alpha)$ as the effective bandwidth of the greedy flow
+$R=\alpha$. By a simple manipulation of Equation~\ref{eq-effBw},
+the following comes.
+\begin{proposition}
+\mylabel{prop-efb-def2} The effective bandwidth of a ``good"
+arrival curve is given by
+\begin{equation}
+    e_{D}(\alpha) = \sup_{0\leq s } \frac{\alpha(s)}{s+D}
+    \mylabel{eq-effBw2}
+\end{equation}
+\end{proposition}
+The alert reader will check that the effective bandwidth of a flow
+$R$ is also the effective bandwidth of its minimum arrival curve
+$R \mpd R$. For example, for a flow with T-SPEC $(p,M,r,b)$, the
+effective bandwidth is the maximum of $r$ and the slopes of lines
+$(QA_{0})$ and $(QA_{1})$ in Figure \ref{fig-2784}; it is thus
+equal to:
+\begin{equation}
+    e_{D} = \max \left\{ \frac{M}{D}, r, p \left(1 -
+\frac{D-\frac{M}{p}}{\frac{b-M}{p-r}+D}\right) \right\}
+    \mylabel{eq-cac2-11}
+\end{equation}
+\begin{figure}[!htbp]
+\insfig{vbrefb1}{0.8}
+    \mycaption{Computation of Effective Bandwidth for a VBR flow (left); example
+     for $r=20$ packets/second, $M=10$ packets, $p=200$ packets per second and
+     $b=26$ packets (right). }
+    \mylabel{fig-2784}
+\end{figure}
+Assume $\alpha$ is sub-additive. We define the sustainable rate
+$m$ as $m=\liminf_{s\rightarrow +\infty} \frac{\alpha(s)}{s}$ and
+the peak rate by $p = \sup_{s>0}\frac{\alpha(s)}{s}$.  Then $m
+\leq e_{D}(\alpha) \leq p$ for all $D$.  Moreover, if $\alpha $ is
+concave, then $\lim_{D \rightarrow + \infty} e_{D}(\alpha) = m$.If
+$\alpha$ is differentiable, $e(D)$ is the slope of the tangent to
+the arrival curve, drawn from the time axis at $t=-D$ (Figure
+\ref{fig-effBw}).
+\begin{figure}[!htbp]
+\insfig{F12}{0.9}
+    \mycaption{Effective Bandwidth for a delay constraint $D$ and
+    Equivalent Capacity for a buffer size $B$}
+    \mylabel{fig-effBw}
+\end{figure}
+It follows also directly from the definition in (\ref{eq-effBw})
+that
+\begin{equation}
+    e_{D}(\sum_{i} \alpha_{i})  \leq \sum_{i}e_{D}(\alpha_{i})
+    \mylabel{eq-netcal-y<nmjjkwe889237834hj}
+\end{equation}
+In other words, the effective bandwidth for an aggregate flow is
+less than or equal to the sum of effective bandwidths.  If the
+flows have all \emph{identical} arrival curves, then the aggregate
+effective bandwidth is simply $ I\times e_{D}(\alpha_{1})$.  It is
+this latter relation that is the origin of the term ``effective
+bandwidth''. The difference $\sum_{i}e_{D}(\alpha_{i}) -
+e_{D}(\sum_{i} \alpha_{i})$ is a buffering gain; it tells us how
+much capacity is saved by sharing a buffer between the flows.
+
+\subsection{Equivalent Capacity}
+ Similar results hold if we replace delay constraints by the
+requirement that a fixed buffer size is not exceeded. Indeed, the
+queue with constant rate $C$, guarantees a maximum backlog of $B$
+(in bits) for a flow $R$ if $C \geq f_{B}(R)$, with
+\begin{equation}
+f_{B}(R) = \sup_{0 \leq s < t} \frac{R(t)-R(s)-B}{t-s}
+\mylabel{eq-eqCapa}
+\end{equation}
+Similarly, for a ``good" function $\alpha$, we have:
+\begin{equation}
+f_{B}(\alpha) = \sup_{s > 0} \frac{\alpha(s)-B}{s}
+\mylabel{eq-eqCapa2}
+\end{equation}
+We call $f_{B}(\alpha)$ the \emph{equivalent capacity}, by analogy
+to \cite{autobahn}.  Similar to effective bandwidth, the
+equivalent capacity of a heterogeneous mix of flows is less than
+or equal to the sum of equivalent capacities of the flows,
+provided that the buffers are also added up; in other words,
+$f_{B}(\alpha)  \leq \sum_{i}f_{B_{i}}(\alpha_{i})$, with $\alpha
+= \sum_{i} \alpha_{i}$ and $B= \sum_{i}B_{i}$. Figure
+\ref{fig-effBw} gives a graphical interpretation.
+
+For example, for a flow with T-SPEC $(p,M,r,b)$, using the same
+method as above, we find the following equivalent capacity:
+\begin{equation}
+    f_{B} = \bracket{
+    \mif B < M \mthen +\infty\\
+    \melse r + \frac{(p-r)(b-B)^+}{b-M}
+    }
+    \mylabel{eq-cac2-111}
+\end{equation}
+
+An immediate computation shows that $f_b(\gamma_{r,b})=r$. In
+other words, if we allocate to a flow, constrained by an affine
+function $\gamma_{r,b}$, a capacity equal to its sustainable rate
+$r$, then a buffer equal to its burst tolerance $b$ is sufficient
+to ensure loss-free operation.
+
+Consider now a mixture of Intserv flows (or VBR connections), with
+T-SPECs ($M_i, p_i, r_i, b_i$). If we allocate to this aggregate
+of flows the sum of their sustainable rates $\sum_i r_i$, then the
+buffer requirement is the sum of the burst tolerances $\sum_i
+b_i$, regardless of other parameters such as peak rate.
+Conversely, Equation~\ref{eq-cac2-111} also illustrates that there
+is no point allocating more buffer than the burst tolerance: if
+$B>b$, then the equivalent capacity is still $r$.
+
+The above has illustrated that it is possible to reduce the
+required buffer or delay by allocating a rate larger than the
+sustainable rate. In Section~\ref{sec-L20-fcs}, we described how
+this may be done with a protocol such as RSVP.
+
+Note that formulas (\ref{eq-effBw}) or (\ref{eq-eqCapa}), or both,
+can be used to estimate the capacity required for a flow, based on
+a measured arrival curve. We can view them as low-pass filters on
+the flow function $R$.
+
+\subsection{Example: Acceptance Region for a FIFO Multiplexer}
+
+Consider a node multiplexing $n_1$ flows of type 1 and $n_2$ flows
+of type 2, where every flow is defined by a T-SPEC $(p_i, M_i,
+r_i, b_i)$. The node has a constant output rate $C$. We wonder how
+many flows the node can accept.
+
+
+If the only condition for flow acceptance is that the delay for
+all flows is bounded by some value $D$, then the set of acceptable
+values of $(n_1, n_2)$ is defined by
+ $$
+ e_D(n_1 \alpha_1+ n_2 \alpha_2) \leq C
+ $$
+We can use the same convexity arguments as for the derivation of
+formula~(\ref{eq-cac2-11}), applied to the function $n_1 \alpha_1+
+n_2 \alpha_2$. Define $\theta_i=\frac{b_i-M}{p_i-r_i}$ and assume
+$\theta_1 \leq \theta_2$. The result is:
+ $$
+   e_D(n_1 \alpha_1+ n_2 \alpha_2) = \max \bracket{
+   \frac{n_1 M_1+n_2 M_2}{D},\\
+   \frac{n_1 M_1+n_2 M_2 + (n_1 p_1 + n_2 p_2)\theta_1}{\theta_1 +
+   D},\\
+   \frac{n_1 b_1 +n_2 M_2 + (n_1 r_1 + n_2 p_2)\theta_2}{\theta_2 +
+   D},\\
+   n_1 r_1 +n_2 r_2
+   }
+ $$
+The set of feasible $(n_1, n_2)$ derives directly from the
+previous equation; it is the convex part shown in
+Figure~\ref{fig-cacefb-0599}. The alert reader will enjoy
+performing the computation of the equivalent capacity for the case
+where the acceptance condition bears on a buffer size $B$.
+\begin{figure}[!htbp]
+\begin{center}
+%\insfig{cacefb}{0.7}
+ \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        $i$ &  $p_{i}$ & $M_i$ & $r_{i}$ & $b_{i}$ & $\theta_{i}$  \\
+        \hline
+        \hline
+        1 & 20'000 packets/s & 1 packet & 500 packets/s & 26 packets & 1.3 ms  \\
+        \hline
+         2 & 5'000 packets/s & 1 packet & 500 packets/s & 251 packets & 55.5 ms \\
+        \hline
+    \end{tabular}
+\end{center}
+ \mycaption{Acceptance region for a mix of type 1 and type 2 flows. Maximum delay
+  $D=xx$.
+  The parameters for types 1 and 2 are shown in the table, together with the resulting values of
+  $\theta_i$.}
+  \mylabel{fig-cacefb-0599}
+\end{figure}
+
+Coming back to equation \ref{eq-netcal-y<nmjjkwe889237834hj}, we
+can state in more general terms that the effective bandwidth is a
+convex function of function $\alpha$, namely:
+$$ e_{D}(a\alpha_{1} + (1-a) \alpha_{2}) \leq
+a e_{D}(\alpha_{1}) + (1-a) e_{D}(\alpha_{2}) $$ for all $a \in
+[0,1]$. The same is true for the equivalent capacity function.
+
+
+Consider now a call acceptance criterion based solely on a delay
+bound, or based on a maximum buffer constraint, or both. Consider
+further that there are $I$ types of connections, and define the
+acceptance region $\cal{A}$ as the set of values
+$(n_{1},\ldots,n_{I})$ that satisfy the call acceptance criterion,
+where $n_{i}$ is the number of connections of class $i$. From the
+convexity of the effective bandwidth and equivalent capacity
+functions, it follows that the acceptance region $\cal{A}$ is
+\emph{convex}. In chapter~\ref{L30} we compare this to acceptance
+regions for systems with some positive loss probability.
+
+
+\paragraph{Sustainable Rate Allocation}
+
+If we are interested only in course results, then we can
+reconsider the previous solution and take into account only the
+sustainable rate of the connection mix. The aggregate flow is
+constrained (among others) by $\alpha(s) = b + rs$, with
+$b=\sum_{i}n_i b_{i}$ and $r=\sum_{i}n_{i}r_i$. Theorem
+\ref{theo-backlog} shows that the maximum aggregate buffer
+occupancy is bounded by $b$ as long as $C \geq r$. In other words,
+allocating the sustainable rate guarantees a loss-free operation,
+as long as the total buffer is equal to the burstiness.
+
+In a more general setting, assume an aggregate flow has $\alpha$
+as minimum arrival curve, and assume that some parameters $r$ and
+$b$ are such that
+    $$\lim_{s \rightarrow + \infty} \alpha(s) - rs - b = 0
+    $$
+so that the sustainable rate $r$ with burstiness $b$ is a tight
+bound. It can easily be shown that if we allocate a rate $C=r$,
+then the maximum buffer occupancy is $b$.
+
+
+Consider now multiplexing a number of VBR connections. If no
+buffer is available, then it is necessary for a loss-free
+operation to allocate the sum of the peak rates. In contrast,
+using a buffer of size $b$ makes it possible to allocate only the
+sustainable rate. This is what we call the \emph{buffering gain},
+namely, the gain on the peak rate obtained by adding some buffer.
+The buffering gain comes at the expense of increased delay, as can
+easily be seen from Theorem~\ref{theo-delay}.
+
+\section{Proof of Theorem~\ref{theo-outworst}}
+\paragraph{Step 1:} Consider a fixed time $t_0$ and assume, in this
+step, that there is some time $u_0$ that achieves the supremum in
+the definition of $\alpha \mpd \beta$. We construct some input and
+output functions $R$ and $R^*$ such that $R$ is constrained by
+$\alpha$, the system $(R, R^*)$ is causal, and $\alpha^*(t_0) =
+(R^*\mpd R^*)(t_0)$. $R$ and $R^*$ are given by
+(Figure~\ref{fig-stepq1})
+\begin{figure}[htbp]
+  \insfig{stepq1}{0.4}
+  \mycaption{Step 1 of the proof of Theorem~\ref{theo-outworst}:
+   a system that attains
+   the output bound at one value $t_0$.}
+   \mylabel{fig-stepq1}
+\end{figure}
+$$
+\bracket{ R(t)=\alpha(t) \mif t < u_0 + t_0\\
+ R(t)=\alpha(u_0 + t_0) \mif t \geq u_0 + t_0 \\
+ R^*(t)=\inf[\alpha(t),\beta(t)] \mif t < u_0 + t_0  \\
+ R^*(t)=R(t) \mif t \geq u_0 + t_0
+ }
+$$
+It is easy to see, as in the proof of Theorem~\ref{theo-bist} that
+$R$ and $R^*$ are wide-sense increasing, that $R^* \leq R$ and
+that $\beta$ is a service curve for the flow. Now
+ $$
+ R^*(u_0+t_0)-R^*(u_0)=\alpha(u_0+t_0)-R^*(u_0)
+  \geq \alpha(u_0+t_0)-\beta(u_0) = \alpha^*(t_0)
+ $$
+
+\paragraph{Step 2:} Consider now a sequence of times
+$t_0, t_1, ..., t_n, ...$ (not necessarily increasing). Assume, in
+this step, that for all $n$ there is a value $u_n$ that achieves
+the supremum in the definition of $(\alpha \mpd \beta)(t_n)$. We
+prove that there are some functions $R$ and $R^*$ such that $R$ is
+constrained by $\alpha$, the system $(R, R^*)$ is causal, has
+$\beta$ as a service curve, and $\alpha^*(t_n) = (R^*\mpd
+R^*)(t_n)$ for all $n \geq 0$.
+
+We build $R$ and $R^*$ by induction on a set of increasing
+intervals $[0,s_0]$,  $[0,s_1]$,..., $[0,s_n] ...$. The induction
+property is that the system restricted to time interval $[0,s_n]$
+is causal, has $\alpha$ as an arrival curve for the input, has
+$\beta$ as a service curve, and satisfies $\alpha^*(t_i) =
+(R^*\mpd R^*)(t_i)$ for $i \leq n$.
+
+The first interval is defined by $s_0= u_0+t_0$; $R$ and $R^*$ are
+built on $[0,s_0]$ as in step 1 above. Clearly, the induction
+property is true for $n=0$. Assume we have built the system on
+interval $[0,s_n]$. Define now $s_{n+1}= s_n + u_n + t_n +
+\delta_{n+1}$. We chose $\delta_{n+1}$ such that
+\begin{equation}\mylabel{eq-delta}
+  \alpha(s+\delta_{n+1}) - \alpha(s) \geq R(s_n) \mfa s \geq 0
+\end{equation}
+This is possible from the last condition in the Theorem. The
+system is defined on $]s_n, s_{n+1}]$ by (Figure~\ref{fig-stepq2})
+ $$
+ \bracket{
+ R(t) = R^*(t) = R(s_n) \mf s_n < t \leq s_n + \delta_{n+1}\\
+ R(t) = R(s_n) + \alpha(t- s_n - \delta_{n+1}) \mf s_n + \delta_{n+1} < t \leq s_{n+1}\\
+ R^*(t) = R(s_n) + (\alpha \wedge \beta) (t- s_n - \delta_{n+1}) \mf s_n + \delta_{n+1} < t <
+ s_{n+1}\\
+ R^*(s_{n+1}) = R(s_{n+1})
+ }
+ $$
+\begin{figure}[htbp]
+  \insfig{stepq2}{0.7}
+  \mycaption{Step 2 of the proof of Theorem~\ref{theo-outworst}:
+   a system that attains
+   the output bound for all values $t_n$, $n \in \Nats$.}
+   \mylabel{fig-stepq2}
+\end{figure}
+We show now that the arrival curve constraint is satisfied for the
+system defined on $[0,s_{n+1}]$. Consider $R(t)-R(v)$ for $t$ and
+$v$ in $[0,s_{n+1}]$. If both $t \leq s_n$ and $v \leq s_n$, or if
+both $t
+> s_n$ and $v > s_n$ then the arrival curve property holds from
+our construction and the induction property. We can thus assume
+that $t>s_n$ and $v\leq s_n$. Clearly, we can even assume that $t
+\geq s_n + \delta_{n+1}$, otherwise the property is trivially
+true. Let us rewrite $t=s_n + \delta_{n+1} + s$. We have, from our
+construction:
+ $$
+ R(t) -R(v)= R(s_n + \delta_{n+1} + s) - R(v) = R(s_n) + \alpha(s) -R(v)
+ \leq R(s_n) + \alpha(s)
+ $$
+Now from Equation~(\ref{eq-delta}), we have:
+ $$
+ R(s_n) + \alpha(s)\leq \alpha(s+\delta_{n+1}) \leq \alpha(s+\delta_{n+1} +
+ s_n - v) = \alpha(t-v)
+ $$
+which shows the arrival curve property.
+
+Using the same arguments as in step 1, it is simple to show that
+the system is causal, has $\beta$ as a service curve, and that
+ $$
+ R^*(u_{n+1}+t_{n+1})-R^*(u_{n+1})= \alpha^*(t_{n+1})
+ $$
+which ends the proof that the induction property is also true for
+$n+1$.
+
+
+\paragraph{Step 3: }
+Consider, as in step 2, a sequence of times $t_0, t_1, ..., t_n,
+...$ (not necessarily increasing). We now extend the result in
+step 2 to the case where the supremum in the definition of
+$\alpha^*=(\alpha \mpd \beta)(t_n)$ is not necessarily attained.
+Assume first that $\alpha^*(t_n)$ is finite for all $n$. For all
+$n$ and all $m \in \Nats^*$ there is some $u_{m,n}$ such that
+\begin{equation}\mylabel{eq-umn}
+  \alpha(t_n + u_{m,n}) - \beta(u_{m,n}) \geq \alpha^*(t_n) -
+ \frac{1}{m}
+\end{equation}
+Now the set of all couples $(m,n)$ is enumerable. Consider some
+numbering $(M(i), N(i))$, $i \in \Nats$ for that set. Using the
+same construction as in step 2, we can build by induction on $i$ a
+sequence of increasing intervals $[0, s_i]$ and a system $(R,R^*)$
+that is causal, has $\alpha$ as an arrival curve for the input,
+has $\beta$ as a service curve, and such that
+ $$
+ R^*(s_i)- R^*(s_i- t_{N(i)}) \geq \alpha^*(t_{N(i)})- \frac{1}{M(i)}
+ $$
+Now consider an arbitrary, but fixed $n$. By applying the previous
+equations to all $i$ such that $N(i)=n$, we obtain
+$$
+  \begin{array}{rl}
+    (R^* \mpd R^*)(t_n)
+     \geq & \sup_{i \mst N(i)=n} \left\{
+    \alpha^*(t_{N(i)}) - \frac{1}{M(i)}\right\}\\
+    =  & \alpha^*(t_n) - \inf_{i \mst N(i)=n}
+  \left\{\frac{1}{M(i)}\right\}
+  \end{array}
+ $$
+Now the set of all $\frac{1}{M(i)}$ for $i$ such that $N(i)=n$ is
+$\Nats^*$, thus
+ $$\inf_{i \mst N(i)=n}\left\{\frac{1}{M(i)}\right\}=0$$
+and thus $(R^* \mpd R^*)(t_n)= \alpha^*(t_n)$, which ends the
+proof of step 3 in the case where $\alpha^*(t_n)$ is finite for
+all $n$.
+
+A similar reasoning can be used if $\alpha^*(t_n)$ is infinite for
+some $t_n$. In that case replace Equation~(\ref{eq-umn}) by
+$\alpha(t_n + u_{m,n}) - \beta(u_{m,n}) \geq m $.
+
+\paragraph{Step 4:} Now we conclude the proof. If time is
+discrete, then step 3 proves the theorem. Otherwise we use a
+density argument. The set of nonnegative rational numbers
+$\Rats^+$ is enumerable; we can thus apply step 3 to the sequence
+of all elements of $\Rats^+$, and obtain system $(R,R^*)$, with
+ $$
+ (R^* \mpd R^*)(q)= \alpha^*(q) \mfa q \in \Rats^+
+ $$
+Function $R^*$ is right-continuous, thus, from the discussion at
+the end of Theorem~\ref{theo-mac}, it follows that $R^* \mpd R^*$
+is left-continuous. We now show that $\alpha^*$ is also
+left-continuous. For all $t \geq 0$ we have:
+ $$
+ \sup_{s < t} \alpha^*(s) =
+ \sup_{(s,v) \mst s < t \mand v \geq 0} \{ \alpha(s+v) -\beta(v)\}
+ =
+ \sup_{v \geq 0} \{
+   \sup_{s < t} [\alpha(s+v) -\beta(v)]\}
+ $$
+Now
+ $$\sup_{s < t} \alpha(s+v)= \alpha(t+v)$$
+because $\alpha$ is left-continuous. Thus
+ $$
+  \sup_{s < t} \alpha^*(s)= \sup_{v \geq 0} \{
+   \alpha(t+v) -\beta(v)]\} =  \alpha^*(t)
+ $$
+which shows that $\alpha$ is left-continuous.
+
+Back to the main argument of step 4, consider some arbitrary $t
+\geq 0$. The set $\Rats^+$ is dense in the set of nonnegative real
+numbers, thus there is a sequence of rational numbers $q_n \in
+\Rats^+$, with $n \in \Nats$, such that $q_n \leq t$ and $\lim_{n
+\rightarrow +\infty }q_n = t$. From the left-continuity of $R^*
+\mpd R^*$ and $\alpha^*$ we have:
+ $$
+ (R^* \mpd R^*)(t)=
+ \lim_{n\rightarrow +\infty }(R^* \mpd R^*)(q_n)=
+ \lim_{n\rightarrow +\infty }\alpha^*(q_n)= \alpha^*(t)
+ $$
+ \qed
+
+\section{Bibliographic Notes}
+
+Network calculus as has been applied to dimensioning ATM switches
+in \cite{naudts96}. A practical algorithm for the determination of
+the minimum arrival curve for ATM system is described in
+\cite{naudts99}. It uses the burstiness function of a flow,
+defined in \cite{LV91} as  follows. For any $r$, $B(r)$ is the
+minimum $b$ such that the flow is $\gamma_{r,b}$-smooth, and is
+thus the required buffer if the flow is served at a constant rate
+$r$. Note that $B(r)$ is the Legendre transform of the minimum
+arrival curve $\sigma$ of the flow, namely, $B(r)= \sup_{t \geq
+0}(\sigma(t)-rt)$ \cite{naudts99} gives a fast algorithm for
+computing $B(r)$. Interestingly, the concept is applied also to
+the distribution of symbols in a text.
+
+In \cite{thiele98}, the concepts of arrival and service curve are
+used to analyze real time processing systems. It is shown that the
+service curve for a variable capacity node must be super-additive,
+and conversely, any super-additive function is a service curve for
+a variable capacity node. Compare to greedy shapers, which have a
+sub-additive service curve. This shows that, except for constant
+bit rate trunks, a greedy shaper cannot be modeled as a variable
+capacity node, and conversely.
+
+In \cite{chang99}, the authors consider a crossbar switch, and
+call $r_{i, j}$ the rate assigned to the traffic from input port
+$i$ to output port $j$. Assume that $\sum_i r_{i,j} \leq 1$ for
+all $j$ and $\sum_j r_{i,j} \leq 1$ for all $i$. Using properties
+of doubly-stochastic matrices (such as $(r_{i,j})$ is), they give
+a simple scheduling algorithm that guarantees that the flow from
+port $i$ to port $j$ is allocated a variable capacity $C$
+satisfying $C_{i,j}(t) - C_{i,j}(s) \geq r_{i,j}(t-s) - s_{i,j}$
+for some $s_{i,j}$ defined by the algorithm. Thus, the node offers
+a service curve equal to the rate-latency function
+$\beta_{r_{i,j}, s_{i,j}}$.
+
+A dual approach to account for variable length packets is
+introduced in \cite{Changbook}. It consists in replacing the
+definition of arrival curve (or $\sigma$-smoothness) by the
+concept of $g$-regularity. Consider a flow of variable length
+packets, with cumulative packet length $L$ and call $T_i$ the
+arrival epoch for the $i$th packet. The flow is said to be
+$g$-regular if $T(j)-T(i) \geq g(L(j)-L(i))$ for all packet
+numbers $i\leq j$. A theory is then developed with concepts
+similar to the greedy shaper. The theory uses max-plus convolution
+instead of min-plus convolution. The $(b, r)$ regulator originally
+introduced by Cruz \cite{cru91a} is a shaper in this theory, whose
+output is $g$-regular, with $g(x)=\frac{(x-b)}{r}^+$. This theory
+does not exactly correspond to the usual concept of leaky bucket
+controllers. More specifically, there is not an exact
+correspondence between the set of flows that are $g$-regular on
+one hand, and that are $\sigma$-smooth on the other. We explain
+why with an example. Consider the set of flows that are
+$g$-regular, with $g(x)=\frac{x}{r}$. The minimum arrival curve we
+can put on this set of flows is $\sigma(t)= r t + l_{\max}$
+\cite{Changbook}. But conversely, if a flow is $\sigma$-smooth, we
+cannot guarantee that it is $g$-regular. Indeed, the following
+sequence of packets is a flow that is $\sigma$-smooth but not
+$g$-regular: the flow has a short packet (length $l_1<l_{\max}$)
+at time $T_1=0$, followed by a packet of maximum size $l_{\max}$
+at time $T_2=\frac{l_1}{r}$. In fact, if a flow is
+$\sigma$-smooth, then it is $g'$-regular, with $g'(x)=
+\frac{(x-l_{\max})}{r}^+$.
+
+The strict service curve in \dref{def-ssc} is called ``strong"
+service curve in \cite{CO96}.
+
+\section{Exercises}
+%
+% put below the list of exercises you want to see in the document
+% you must have imported the database in the preamble, with commands
+% such as \input{L20.bdx.tex}
+%
+% there is also an automatic mechanism to print all exercises, ask the author
+%
+\input{temp/L20-1}
+\input{temp/L20-2}
+\input{temp/L20-3}
+\input{temp/L20-4}
+\input{temp/L20-5}
+\input{temp/L20-6}
+\input{temp/L20-7}
+\input{temp/L20-8}
+\input{temp/L20-9}
+\input{temp/L20-10}
+\input{temp/L20-11}
+\input{temp/L20-11a}
+\input{temp/L20-12}
+\input{temp/L20-13}
+\input{temp/L20-14}
+\input{temp/L20-15}
+\input{temp/L20-16}
+\input{temp/L20-17}
+\input{temp/L20-18}
+\input{temp/L20-19}
+\input{temp/L20-20}
+\input{temp/L20-21}
+\input{temp/L20-22}
+\input{temp/L20-23}
+\input{temp/L20-24}
+\input{temp/L20-25}
+\input{temp/L20-26}
+\input{temp/L20-27}
+\input{temp/L20-28}
+\input{temp/L20-29}
+%\input{temp/L20-30} %replaced by L21-11 in chapter L21
+\input{temp/L20-31}
+\input{temp/L20-32}
+\input{temp/L20-33}
+\input{temp/L20-34}
+\input{temp/L20-35}
+\input{temp/L21-1}
+\input{temp/L21-2}
+\input{temp/L21-3}
+\input{temp/L21-4}

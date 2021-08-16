@@ -1,0 +1,1607 @@
+\chapter{Min-plus and Max-Plus System Theory} \mylabel{L11}
+
+In Chapter~\ref{L10} we have introduced the basic operations to
+manipulate functions and sequences in Min-Plus or Max-Plus
+algebra.  We have studied in detail the operations of convolution,
+deconvolution and sub-additive closure. These notions form the
+mathematical cornerstone on which a first course of network
+calculus has to be built.
+
+In this chapter, we move one step further, and introduce the
+theoretical tools to solve more advanced problems in network
+calculus developed in the second half of the book. The core object
+in Chapter~\ref{L10} were {\em functions and sequences} on which
+operations could be performed. We will now place ourselves at the
+level of {\em operators} mapping an input function (or sequence)
+to an output function or sequence. Max-plus system theory is
+developed in detail in \cite{maxPlus}, here we focus on the
+results that are needed for the remaining chapters of the book. As
+in Chapter~\ref{L10}, we focus here Min-Plus System Theory, as
+Max-Plus System Theory follows easily by replacing minimum by
+maximum, and infimum by supremum.
+
+\section{Min-Plus and Max-Plus Operators}
+\mylabel{sec:systems}
+
+\subsection{Vector Notations}
+\mylabel{sec:vectornotations}
+
+Up to now, we have only worked with scalar operations on scalar functions in $\calF$ or $\calG$. In this chapter, we will also work with vectors and matrices. The operations are extended in a straightforward manner.
+
+Let $J$ be a finite, positive integer. For vectors $\vec{z},
+\vec{z'} \in \Reals^{+ \, J}$, we define $\vec{z} \wedge \vec{z}'$
+as the coordinate-wise minimum of $\vec{z}$ and $\vec{z}'$, and
+similarly for the $+$ operator.  We write $\vec{z} \leq \vec{z'}$
+with the meaning that $z_{j} \leq z'_{j}$ for $1 \leq j \leq J$.
+Note that the comparison so defined is not a total order, that is,
+we cannot guarantee that either $\vec{z} \leq \vec{z'}$ or
+$\vec{z'} \leq \vec{z}$ holds.  For a constant $K$, we note
+$\vec{z} + K $ the vector defined by adding $K$ to \emph{all}
+elements of $\vec{z}$.
+
+We denote by $\calG^J$ the set of $J$-dimensional wide-sense
+increasing real-valued functions or sequences of parameter $t$,
+and $\calF^J$ the subset of functions that are zero for $t < 0$.
+
+For sequences or functions $\vec{x}(t)$, we note similarly $(\vec{x} \wedge
+\vec{y})(t) = \vec{x}(t)\wedge \vec{y}(t)$ and $(\vec{x} +K)(t)=\vec{x}(t) +
+K$ for all $t \geq 0$, and write $ \vec{x} \leq \vec{y}$ with the
+meaning that $\vec{x}(t) \leq \vec{y}(t)$ for all $t$.
+
+For matrices $A, B \in \Reals^{+ \, J} \times  \Reals^{+ \, J}$,
+we define $A \wedge B$ as the entry-wise minimum of $A$ and $B$. For vector $\vec{z} \in \Reals^{+ \: J}$,
+the `multiplication' of  vector $\vec{z} \in \Reals^{+ \: J}$  by matrix $A$ is -- remember that in min-plus algebra, multiplication is the $+$ operation -- by
+$$  A + \vec{z}, $$
+and has entries $\min_{1 \leq j \leq J} (a_{ij} + z_j)$.
+Likewise, the `product' of two matrices $A$ and  $B$ is denoted by $A + B$ and has entries $\min_{1 \leq j \leq J} (a_{ij} + b_{jk}) $ for $1 \leq i,k \leq J$.
+
+Here is an example of a  `multiplication' of a vector by a matrix, when $J=2$
+$$ \left[ \begin{array}{cc} 5 & 3 \\ 1 & 3 \end{array} \right] + \left[ \begin{array}{c} 2\\ 1 \end{array} \right]
+= \left[ \begin{array}{c} 4 \\ 3 \end{array} \right]  $$
+and an example of a matrix `multiplication' is
+$$ \left[ \begin{array}{cc} 5 & 3 \\ 1 & 3 \end{array} \right] + \left[ \begin{array}{cc} 2 & 4 \\ 1 & 0 \end{array} \right]
+= \left[ \begin{array}{cc} 4 & 3 \\ 3 & 3 \end{array} \right].  $$
+
+We denote by $\calF^{J^2}$ the set of $J \times J$ matrices whose entries are
+functions or sequences of $\calF$, and similarly for $\calG^{J^2}$.
+
+The min-plus convolution of a matrix $A  \in \calF^{J^2}$ by a vector $\vec{z} \in \calF^{J}$ is the vector of $\calF^J$ defined by
+$$ (A \otimes \vec{z})(t) = \inf_{0 \leq s \leq t} \{ A(t-s) + \vec{z}(s) \} $$
+and whose $J$ coordinates are thus
+$$ \min_{1 \leq j \leq J} \{ a_{ij} \otimes z_j \}(t) =  \inf_{0 \leq s \leq t} \min_{1 \leq j \leq J} \{ a_{ij}(t-s) + z_j(s) \}. $$
+%If $A \in \calF^{J^2}$, and $\vec{z} \in \calF^{J}$, then the previous realtion can be recast as
+%$$ \min_{1 \leq j \leq J} \{ a_{ij} \otimes z_j \}(t) =  \inf_{0 \leq s \leq t} \min_{1 \leq j \leq J} \{ a_{ij}(t-s) + z_j(s)% \}. $$
+
+Likewise, $A \otimes B$ is defined by
+$$ (A \otimes B)(t) = \inf_{0 \leq s \leq t} \{ A(t-s) + B(s) \} $$
+and has entries
+$\min_{1 \leq j \leq J} (a_{ij} \otimes b_{jk}) $ for $1 \leq i,k \leq J$.
+
+For example, we have
+$$ \left[ \begin{array}{cc} \lambda_r & \infty \\ \infty & \delta_T \end{array} \right] \otimes \left[ \begin{array}{c} \gamma_{r/2,b} \\ \delta_{2T} \end{array} \right]
+= \left[ \begin{array}{c} \lambda_r \wedge \gamma_{r/2,b} \\ \delta_{3T} \end{array} \right]  $$
+and
+$$ \left[ \begin{array}{cc} \lambda_r & \infty \\ \infty & \delta_T \end{array} \right] \otimes \left[ \begin{array}{cc} \gamma_{r/2,b} & \gamma_{r,b} \\ \delta_{2T} & \lambda_r \end{array} \right] =
+\left[ \begin{array}{cc} \lambda_r \wedge \gamma_{r/2,b} & \lambda_r\\ \delta_{3T} & \beta_{r,T} \end{array} \right].  $$
+
+\index{1tildeF@$\tilde{\calF}$ (Set of wide-sense increasing bivariate functions)}
+\index{bivariate function}
+
+Finally, we will also need to extend the set of wide-sense increasing functions $\calG$ to include non decreasing functions of two arguments. We adopt the following definition (a slightly different definition can be found in \cite{Changbook}).
+
+\begin{definition}[Bivariate wide-sense increasing functions]
+We denote by  $\tilde{\calG}$ the set of bivariate functions (or sequences) such that for all $s' \leq s$ and any $t \leq t'$
+\begin{eqnarray*}
+f(t,s) & \leq & f(t,s') \\
+f(t,s) & \leq & f(t',s).
+\end{eqnarray*}
+We call such functions bivariate wide-sense increasing functions.
+\end{definition}
+
+%The subset of $\tilde{\calG}$ of wide-sense increasing bivariate functions or sequences $f(t,s)$ which are infinite for $s < 0$ is denoted by  $\tilde{\calF}$.
+
+In the multi-dimensional case, we denote by  $\tilde{\calG}^J$ the set of $J \times J$ matrices whose entries are wide-sense increasing bivariate functions.
+%An univariate function $f(t) \in \calF$ is a particular case of a bivariate function $f(t,0)$ function
+A matrix of $A(t)  \in \calF^{J^2}$ is a particular case of a matrix $H(t,s) \in \tilde{\calG}^J$,
+with $s$ set to a fixed value.
+
+
+\subsection{Operators}
+%\mylabel{sec:operators}
+
+\index{1Pi@$\Pi$ (Min-plus operator)}
+\index{1Pi@$\Pi$ (Max-plus operator)}
+
+A system is an operator $\Pi$ mapping an
+input function or sequence $\vec{x}$ onto an output function or sequence $\vec{y} = \Pi(\vec{x})$. We will always assume in this book that $\vec{x}, \vec{y} \in \calG^{J}$, where $J$ is a  fixed, finite, positive integer. This means that each
+of the $J$ coordinates $x_j(t)$, $y_j(t)$, $1 \leq j \leq J$, is a wide-sense increasing function (or sequence) of $t$.
+
+It is important to mention that Min-plus system theory applies  to
+more general operators, taking $\Reals^J$ to $\Reals^{J}$, where
+neither the input nor the output functions are required to be
+wide-sense increasing. This requires minor modifications in the
+definitions and properties established in this chapter, see
+\cite{maxPlus} for the theory described in a more general setting.
+In this book, to avoid the unnecessary overhead of new notations
+and definitions, we decided to expose min-plus system theory for
+operators taking $\calG^J$ to $\calG^J$.
+
+Most often, the only operator whose
+output may not be in $\calF^J$ is deconvolution, but all other operators we need will take  $\calF^J$ to $\calF^J$.
+
+Most of the time, the dimension of the input and output is $J =1$, and the operator takes $\calF$ to $\calF$. We will speak of a {\em scalar} operator. In this case, we will drop the arrow on the input and output, and write $y = \Pi(x)$ instead.
+
+We write $\Pi_1 \leq \Pi_2$ with the meaning that $\Pi_1(\vec{x})
+\leq \Pi_2(\vec{x})$ for all $\vec{x}$, which in turn has the
+meaning that $\Pi_1(\vec{x})(t) \leq \Pi_2(\vec{x})(t)$ for all
+$t$.
+
+For a set of operators $\Pi_s$, indexed by $s$ in some set $S$, we
+call $\inf_{s \in S} \Pi_s$ the operator defined by $[\inf_{s \in
+S} \Pi_s](x(t))=\inf_{s \in S} [\Pi_s (x(t))]$. For $S=\{1,2\}$ we
+denote it with $\Pi_1 \wedge \Pi_2$.
+
+We also denote by $\circ$ the composition of two operators:
+$$ (\Pi_1 \circ \Pi_2)(\vec{x}) = \Pi_1(\Pi_2(\vec{x})). $$
+We leave it to the alert reader to check that $\inf_{s \in S}
+\Pi_s$ and $\Pi_1 \circ \Pi_2$ do map functions in $\calG^J$ to
+functions in $\calG^J$.
+
+\subsection{A Catalog of Operators}
+\mylabel{sec:catalogofoperators}
+
+Let us mention a few examples of scalar operators of particular
+interest. The first two have already been studied in detail in
+Chapter~\ref{L10}, whereas the third was introduced in
+Section~\ref{sec-vlp}. The fact that these operators map $\calG^J$
+into $\calG^J$ follows from \cref{L10}.
+
+%JY: ICI IL FAUT METTRE LE NUMERO DE SECTION 1.8.
+
+\index{1Csigma@$\calC_{\sigma}$ (Min-plus convolution)}
+
+\begin{definition}[Min-plus convolution $\calC_{\sigma}$]
+\mylabel{def:minplusconvolutionoperator}
+$$ \begin{array}{ccccl}
+\calC_\sigma & : & \calF & \rightarrow & \calF \\
+        & & x(t) & \rightarrow & y(t) = \calC_\sigma (x)(t) = (\sigma \otimes x)(t) = \inf_{0 \leq s \leq t} \left\{ \sigma(t-s) + x(s) \right\},
+\end{array} $$
+for some $\sigma \in \calF$.
+\end{definition}
+
+\index{1Dsigma@$\calD_{\sigma}$ (Min-plus deconvolution)}
+
+\begin{definition}[Min-plus deconvolution $\calD_{\sigma}$]
+\mylabel{def:minplusdeconvolutionoperator}
+$$ \begin{array}{ccccl}
+\calD_\sigma & : & \calF & \rightarrow & \calG \\
+        & & x(t) & \rightarrow & y(t) = \calD_\sigma (x)(t) = (x \oslash \sigma)(t) = \sup_{u \geq 0} \left\{ x(t+u) - \sigma(u) \right\},
+\end{array} $$
+for some $\sigma \in \calF$.
+\end{definition}
+Note that Min-plus deconvolution produces an output that does not always belong to $\calF$.
+
+\index{1Dsigma@$\calP_{L}$ (Packetization)}
+
+\begin{definition}[Packetization $\calP_{L}$]
+\mylabel{def:packetizationoperator}
+$$ \begin{array}{ccccl}
+\calP_L & : & \calF & \rightarrow & \calF \\
+        & & x(t) & \rightarrow & y(t) = \calP_L (x)(t) = P^L(x(t)) =
+\sup_{i \in \Nats} \left\{ L(i) 1_{L(i) \leq  x(t)} \right\},
+\end{array} $$
+for some wide-sense increasing sequence $L$ (defined by Definition~\ref{def-L}).
+\end{definition}
+
+
+We will also need later on the following operator, whose name will be justified later in this chapter.
+\index{1hsigma@$h_{\sigma}$ (Linear idempotent operator)}
+\index{linear idempotent operator}
+
+\begin{definition}[Linear idempotent operator $h_{\sigma}$]
+\mylabel{def:minplusidempotentoperator}
+$$ \begin{array}{ccccl}
+h_\sigma & : & \calF & \rightarrow & \calF \\
+        & & x(t) & \rightarrow & y(t) = h_\sigma (x)(t) = \inf_{0 \leq s \leq t} \left\{ \sigma(t) - \sigma(s) + x(s) \right\},
+\end{array}$$
+for some $\sigma \in \calF$.
+\end{definition}
+
+%\begin{definition}[Shift operator $\calS_{T}$]
+%\mylabel{def:shiftoperator}
+%$$ \begin{array}{ccccl}
+%\calS_T & : & \calF & \rightarrow & \calG \\
+%       & & x(t) & \rightarrow & y(t) = \calS_T(x)(t) =  x(t-T), $$
+%for some $T \in \Reals$.
+%\end{definition}
+
+%Let us now introduce some notation that is helpful to describe {\em vector} operators ($J > 1$).
+
+%For vectors $\vec{z}, \vec{z'} \in \Reals^{+ \, J}$, we
+%define $\vec{z} \wedge \vec{z}'$ as the coordinate-wise minimum of
+%$\vec{z}$ and $\vec{z}'$, and similarly for the $+$ operator.  We
+%write $\vec{z} \leq \vec{z'}$ with the meaning that $z_{j} \leq
+%z'_{j}$ for $1 \leq j \leq J$.  Note that the comparison so defined
+%is not a total order, namely, we cannot guarantee that either
+%$\vec{z} \leq \vec{z'}$ or $\vec{z'} \leq \vec{z}$ holds.  For a
+%constant $K$, we note $\vec{z} + K $ the vector defined by adding $K$
+%to \emph{all} elements of $\vec{z}$.
+%
+%For sequences or functions, we note similarly $(\vec{x} \wedge
+%\vec{y})(t) = \vec{x}(t)\wedge \vec{y}(t)$ and $(\vec{x} +K)(t)=\vec{x}(t) +
+%K$ for all $t \geq 0$, and write $ \vec{x} \leq \vec{y}$ with the
+%meaning that $\vec{x}(t) \leq \vec{y}(t)$ for all $t$.
+%
+%For matrices $A, B \in \Reals^{+ \, J} \times  \Reals^{+ \, J}$,
+%we define $A \wedge B$ as the entry-wise minimum of $A$ and $B$. For vector $\vec{z} \in \Reals^{+ \: J}$,
+%the `multiplication' of  vector $\vec{z} \in \Reals^{+ \: J}$  by matrix $A$ is denoted by
+%$$  A \ast \vec{z}, $$
+%and has entries $\min_{1 \leq j \leq J} (a_{ij} + z_j)$.
+%Likewise, the `product' of two matrices $A$ and  $B$ is denoted by $A \ast B$ and
+% has entries $\min_{1 \leq j \leq J} (a_{ij} + b_{jk}) $ for $1 \leq i,k \leq J$.
+%
+%Here is an example of a  `multiplication' of a vector by a matrix, when $J=2$
+%$$ \left[ \begin{array}{cc} 5 & 3 \\ 1 & 3 \end{array} \right] \ast \left[ \begin{array}{c} 2\\ 1 \end{array} \right]
+%= \left[ \begin{array}{c} 7 \\ 4 \end{array} \right]  $$
+%and an example of a matrix `multiplication' is
+%$$ \left[ \begin{array}{cc} 5 & 3 \\ 1 & 3 \end{array} \right] \ast \left[ \begin{array}{cc} 2 & 4 \\ 1 & 0 \end{array} \right]
+%= \left[ \begin{array}{cc} 7 & 9 \\ 4 & 5 \end{array} \right].  $$
+%
+%Finally, for matrices $A, B \in \calF^{J} \times  \calF^{J}$ and vector $\vec{z}(t) \in \calF^{J}$ for each $t$,
+%$(A \otimes \vec{z})(t)$ has entries
+%$$ \min_{1 \leq j \leq J} \{ a_{ij} \otimes z_j \}(t) =  \inf_{0 \leq s \leq t} \min_{1 \leq j \leq J} \{ a_{ij}(t-s) + z_j(s) \}, $$
+%and $A \otimes B$ has entries
+%$\min_{1 \leq j \leq J} (a_{ij} \otimes b_{jk}) $ for $1 \leq i,k \leq J$.
+%
+%For example, we have
+%$$ \left[ \begin{array}{cc} \lambda_r & \infty \\ \infty & \delta_T \end{array} \right] \otimes \left[ \begin{array}{c} \gamma_{r/2,b} \\ \delta_{2T} \end{array} \right]
+%= \left[ \begin{array}{c} \lambda_r \wedge \gamma_{r/2,b} \\ \delta_{3T} \end{array} \right]  $$
+%and
+%$$ \left[ \begin{array}{cc} \lambda_r & \infty \\ \infty & \delta_T \end{array} \right] \otimes \left[ \begin{array}{cc} \gamma_{r/2,b} & \gamma_{r,b} \\ \delta_{2T} & \lambda_r \end{array} \right] =
+%\left[ \begin{array}{cc} \lambda_r \wedge \gamma_{r/2,b} & \lambda_r\\ \delta_{3T} & \beta_{r,T} \end{array} \right].  $$
+
+The extension of the scalar operators to the vector case is straightforward.
+The vector extension of the convolution is for instance:
+
+\index{1CA@$\calC_{A}$ (Vector min-plus convolution)}
+
+\begin{definition}[Vector min-plus convolution $\calC_{\Sigma}$]
+\mylabel{def:vectorminplusconvolutionoperator}
+$$ \begin{array}{ccccl}
+\calC_\Sigma & : & \calF^J & \rightarrow & \calF^J \\
+        & & \vec{x}(t) & \rightarrow & \vec{y}(t) = \calC_\Sigma (\vec{x})(t) = (\Sigma \otimes \vec{x})(t) = \inf_{0 \leq s \leq t} \left\{ \Sigma(t-s) + \vec{x}(s) \right\},
+\end{array} $$
+for some $\Sigma \in \calF^{J^2}$.
+\end{definition}
+
+If the $(i,j)$th entry of $\Sigma$ is $\sigma_{ij}$, the $i$th component of $\vec{y}(t)$ reads therefore
+$$ y_i(t) =  \inf_{0 \leq s \leq t} \min_{1 \leq j \leq J} \left\{ \sigma_{ij}(t-s) + x_j(s) \right\} $$
+
+Let us conclude with the shift operator, which we directly introduce in the vector setting:
+\begin{definition}[Shift operator $\calS_{T}$]
+\mylabel{def:vectorshiftoperator}
+$$ \begin{array}{ccccl}
+\calS_T & : & \calG^J & \rightarrow & \calG^J \\
+        & & \vec{x}(t) & \rightarrow & \vec{y}(t) = \calS_T(\vec{x})(t) =  \vec{x}(t-T), \end{array} $$
+for some $T \in \Reals$.
+\end{definition}
+Let us remark that $\calS_0$ is the identity operator: $\calS_0(\vec{x}) = \vec{x}$.
+
+%\index{1CA@$\calC_{A}$ (Vector shift operator)}
+
+%\begin{definition}[Vector shift operator $\calS_{T}$]
+%\mylabel{def:vectorminplusconvolutionoperator}
+%$$ \begin{array}{ccccl}
+%\calC_\Sigma & : & \calF^J & \rightarrow & \calF^J \\
+%       & & \vec{x}(t) & \rightarrow & \vec{y}(t) = \calC_\Sigma (\vec{x})(t) = (\Sigma \otimes \vec{x})(t),
+%\end{array} $$
+%for some $\Sigma \in \calF^J \times \calF^J$.
+%\end{definition}
+
+
+
+\subsection{Upper and Lower Semi-Continuous Operators}
+\mylabel{sec:uppersemicontinuousoperator}
+
+\index{upper semi-continuous}
+
+We now study a number of properties of min-plus linear operators.
+We begin with that of upper-semi continuity.
+
+\begin{definition}[Upper semi-continuous operator]
+\mylabel{def:uppersemi-continuous}
+Operator $\Pi$ is upper semi-continuous if for any (finite or infinite) set of functions or sequences $\{ \vec{x}_n \}$,
+$\vec{x}_n \in \calG^{J}$,
+\begin{equation}
+\mylabel{eq:usc}
+\Pi \left( \inf_n \{ \vec{x}_n \} \right) =  \inf_{n} \left\{ \Pi ( \vec{x}_n) \right\}.
+\end{equation}
+\end{definition}
+
+We can check that $\calC_{\sigma}$, $\calC_{\Sigma}$, $h_\sigma$ and $\calS_T$ are upper semi-continuous.
+For example, for $\calC_{\Sigma}$, we check indeed that
+\begin{eqnarray*}
+ \calC_{\Sigma} \left( \inf_n \{ \vec{x}_n \} \right)(t)
+& = & \inf_{0 \leq s \leq t} \left\{ \Sigma(t-s) +  \inf_n \{ \vec{x}_n(s) \} \right\} \\
+& = & \inf_{0 \leq s \leq t} \inf_n \left\{ \Sigma(t-s) + \vec{x}_n(s) \right\} \\
+& = & \inf_n \inf_{0 \leq s \leq t} \left\{ \Sigma(t-s) + \vec{x}_n(s) \right\} \\
+& = & \inf_n \left\{ \calC_{\Sigma} (\vec{x}_n)(t) \right\}.
+\end{eqnarray*}
+
+To show that  $\calP_L$ is upper semi-continuous, we proceed in two steps.
+Let $x^\star = \inf_n  \{ x_n \}$. We first note that
+$$ \calP_L \left( \inf_n \{ x_n \} \right) =
+\calP_L \left( x^\star \right) \leq \inf_n  \left\{ \calP_L ( x_n ) \right\} $$
+because  $x^\star \leq x_n$ for any $n$ and $P^L$ is a wide-sense increasing
+function.
+We next show that the converse inequality also holds.
+We first assume that there is some $m$ such that $x_m = x^\star$, namely that the infimum is actually a minimum. Then
+$$  \inf_n  \left\{ \calP_L ( x_n ) \right\} \leq  \calP_L ( x_m )
+= \calP_L \left( x^\star \right). $$
+We next suppose that there is no integer $n$ such that $x_n =  x^\star$. Then for any $\varepsilon > 0$, there is an integer $m$
+such that $0 < x_m - x^\star < \varepsilon$. Therefore
+$$  \inf_n  \left\{ \calP_L ( x_n ) \right\} \leq  \calP_L ( x_m ) \leq \calP_L \left( x^\star + \varepsilon \right). $$
+Since the above inequality is true for any $\varepsilon > 0$, and since $P^L$ is a right-continuous function, it implies that
+$$  \inf_n  \left\{ \calP_L ( x_n ) \right\} \leq \calP_L \left( x^\star \right) =   \calP_L \left( \inf_n \{ x_n \} \right). $$
+This concludes the proof.
+
+On the other hand, $\calD_{\sigma}$ is not upper semi-continuous,
+because its application to an inf would involve the three
+operations $\sup$, $\inf$ and $+$, which do not commute, as we
+have seen at the end of the previous chapter.
+
+%Because of $P^L$ is a left-continuous function, but not a right-continuous function, it is not upper semi-continuous. Indeed, take %$x_n(t) = L(1) + 1/(n+1)$ for all $t > 0$ and $x_n(t) = 0$ for $t \leq 0$, with $n \in \Nats$ and $L(2) > L(1) + 1$. Then for all $n$,
+%$$ \calP_L \left( x_n \right\)  = \calP_L \left( L(1) + 1/(n+1) \right\) = L(1) $$
+%and thus
+%$$ \inf_n \left\{ \calP_L \left( x_n \right\) \right\} = L(1) $$
+%which is not equal to
+%$$ \calP_L \left( \inf_n \{ x_n \} \right) & = & \calP_L \left( L(1) \right) = 0 . $$
+%
+
+It is easy to show that if $\Pi_1$ and $\Pi_2$ are upper semi-continuous, so are $\Pi_1 \wedge \Pi_2$ and $\Pi_1 \circ \Pi_2$.
+
+\index{lower semi-continuous}
+
+The dual definition of upper semi-continuity is that of lower semi-continuity, which is defined as follows.
+\begin{definition}[Lower semi-continuous operator]
+\mylabel{def:lowersemi-continuous}
+Operator $\Pi$ is lower semi-continuous if for any (finite or infinite) set of functions or sequences $\{ \vec{x}_n \}$,
+$\vec{x}_n \in \calG^{J}$,
+\begin{equation}
+\mylabel{eq:lsc}
+\Pi \left( \sup_n \{ \vec{x}_n \} \right) =  \sup_{n} \left\{ \Pi ( \vec{x}_n) \right\}.
+\end{equation}
+\end{definition}
+
+It is easy to check that $\calD_{\sigma}$ is lower
+semi-continuous, unlike other operators, except $\calS_T$ which is
+also lower semi-continuous.
+
+
+\subsection{Isotone Operators}
+\mylabel{istoneoperator}
+
+\index{isotone}
+
+\begin{definition}[Isotone operator]
+\mylabel{def:isotoneoperator}
+Operator $\Pi$ is isotone if $\vec{x}_1 \leq  \vec{x}_2$ always implies $\Pi(\vec{x}_1) \leq \Pi(\vec{x}_2)$.
+\end{definition}
+
+All upper semi-continuous operators are isotone. Indeed, if $\vec{x}_1 \leq \vec{x}_2$, then  $\vec{x}_1 \wedge \vec{x}_2 =  \vec{x}_1$ and
+since $\Pi$ is upper semi-continuous,
+$$ \Pi(\vec{x}_1)  =  \Pi(\vec{x}_1 \wedge \vec{x}_2) =  \Pi(\vec{x}_1) \wedge \Pi(\vec{x}_2) \leq \Pi(\vec{x}_2). $$
+
+Likewise, all lower semi-continuous operators are isotone. Indeed, if $\vec{x}_1 \leq \vec{x}_2$, then  $\vec{x}_1 \vee \vec{x}_2 =  \vec{x}_2$ and
+since $\Pi$ is lower semi-continuous,
+$$ \Pi(\vec{x}_1)  \leq  \Pi(\vec{x}_1) \vee \Pi(\vec{x}_2) =  \Pi(\vec{x}_1 \vee \vec{x}_2) = \Pi(\vec{x}_2). $$
+
+
+%One can easily check that all min-plus linear operators are isotone.
+%Indeed, if $\vec{x}_1 \leq \vec{x}_2$, then
+%$$ \calL_{H}(\vec{x}_1)(t)  =  \inf_{0 \leq s \leq t}  \left\{ H(t,s) + \vec{x}_1(s) \right\} \\
+%           \leq  \inf_{0 \leq s \leq t}  \left\{ H(t,s) + \vec{x}_2(s) \right\} =  \calL_{H}(\vec{x}_2)(t). $$
+%One can similarly check that min-plus deconvolution is also isotone.
+
+
+\subsection{Linear Operators}
+\mylabel{sec:linearoperator}
+
+In classical system theory on $(\Reals, +, \times)$, a system $\Pi$ is linear if its output to a linear combination of inputs
+is the linear combination of the outputs to each particular input. In other words, $\Pi$ is linear if
+for any (finite or infinite) set of inputs $\{ x_i \}$, and for any constant $k \in \Reals$,
+$$\Pi \left( \sum_{i} x_i \right) =  \sum_{i} \Pi (x_i) $$
+and for any input $x$ and any constant $k \in \Reals$,
+$$ \Pi \left( k \, \cdot \, x \right)  =  k \, \cdot \, \Pi (x).  $$
+
+The extension to min-plus system theory is straightforward. The first property being replaced by that of upper semi-continuity,
+a min-plus linear operator is thus defined as an upper semi-continuous operator that has
+the following property (``multiplication'' by a constant):
+
+%\index{upper semi-continuous}
+%
+%\begin{definition}[Upper semi-continuous operator]
+%\mylabel{def:uppersemi-continuous}
+%Operator $\Pi$ is upper semi-continuous if for any decreasing set of functions or sequences $\{ \vec{x}_n \}$,
+%$\vec{x}_n \in \calF^{J}$,
+%\begin{equation}
+%\mylabel{eq:usc}
+%\Pi \left( \inf_n \{ \vec{x}_n \} \right) =  \inf_{n} \left\{ \Pi ( \vec{x}_n) \right\}.
+%\end{equation}
+%\end{definition}
+
+%A min-plus linear operator is therefore defined as an upper semi-continuous operator that has
+%the following property (``multiplication'' by a constant):
+
+
+\index{Min-plus linear}
+
+\begin{definition}[Min-plus linear operator]
+\mylabel{def:min-pluslinearoperator}
+Operator $\Pi$ is min-plus linear if it is upper semi-continuous and if for any $\vec{x} \in \calG^J$ and for any $k \geq 0$,
+\begin{equation}
+\mylabel{eq:linearity}
+\Pi \left( \vec{x} + k \right) =  \Pi \left( \vec{x} \right) + k.
+\end{equation}
+\end{definition}
+
+One can easily check that $\calC_{\sigma}$, $\calC_{\Sigma}$,
+$h_\sigma$ and $\calS_T$ are min-plus linear, unlike
+$\calD_{\sigma}$ and $\calP_L$. $\calD_{\sigma}$ is not linear
+because it is not upper semi-continuous,
+and $\calP_L$ is not linear because %it is not upper semi-continuous and
+it fails to verify (\ref{eq:linearity}).
+
+%Indeed
+%\begin{eqnarray*}
+%\calD_{\sigma}(x_1 \wedge x_2)(t) & = & \sup_{u \geq 0} \left\{ x_1(t+u) \wedge x_2(t+u) - \sigma(u) \right\} \\
+%               & \neq &  \sup_{u \geq 0} \left\{ x_1(t+u) \wedge x_2(t+u) - \sigma(u) \right\}
+
+In classical linear theory, a linear system is represented by its impulse response $h(t,s)$, which is defined as the output of the system when the input is the Dirac function. The output of such a system can be expressed as
+$$ \Pi(x)(t) = \int_{-\infty}^{\infty} h(t,s) x(s) ds $$
+Its straightforward extension in Min-plus system theory is
+provided by the following theorem \cite{maxPlus}. To prove this
+theorem in the vector case, we need first to extend the burst
+delay function introduced in Definition~\ref{def:burstdelay}, to
+allow negative values of the delay, namely, the value $T$ in
+$$
+\delta_{T}(t)= \left\{  \begin{array}{ll}  0 & \mbox{ if } t \leq T \\
+                       \infty & \mbox{ if } t > T,
+\end{array}
+\right.
+$$
+is now taking values in $\Reals$. We also introduce the following matrix $D_T \in \calG^J \times \calG^J$.
+
+
+%of the burst delay function introduced in Definition~\ref{def:burstdelay} to allow
+%negative values of the delay, namely the value $T$ in
+%$$
+%\delta_{T}(t)= \left\{  \begin{array}{ll}  0 & \mbox{ if } t = T \\
+%                       & \mbox{ otherwise }
+%\end{array}
+%\right.
+%$$
+%is now taking values in $\Reals$. We also introduce the following matrix $D_T$.
+
+%Then we define the $J \times J$ shift matrix as follows.
+
+\index{Shift matrix}
+
+\begin{definition}[Shift matrix]
+The  shift matrix is defined by
+\mylabel{def:shiftmatrix}
+$$ D_{T}(t) = \left[ \begin{array}{ccccc} \delta_T(t) & \infty & \infty & \hdots & \infty \\
+                              \infty & \delta_T(t) & \infty &  &  \\
+                        \infty & \infty & \delta_T(t) & \ddots & \vdots \\
+                        \vdots & \vdots &  & \ddots & \infty \\
+                        \infty & \hdots & & \infty & \delta_T(t)  \end{array} \right] $$
+for some $T \in \Reals$.
+\end{definition}
+
+%\begin{definition}[Shift matrix]
+%The  $J \times J$ shift matrix is defined by
+%\mylabel{def:shiftmatrix}
+%$$ D_{T}(t) = \left[ \begin{array}{ccccc} \delta_T(t) & \infty & \infty & \hdots & \infty \\
+%                       \infty & \delta_T(t) & \infty &  &  \\
+%                       \infty & \infty & \delta_T(t) & \ddots & \vdots \\
+%                       \vdots & \vdots &  & \ddots & \infty \\
+%                       \infty & \hdots & & \infty & \delta_T(t)  \end{array} \right] $$
+%for some $T \in \Reals$, where
+%$$
+%\delta^{'}_{T}(t)= \left\{  \begin{array}{ll}  0 & \mbox{ if } t = T \\
+%                      \infty  & \mbox{ if } t \neq T.
+%\end{array}
+%\right.
+%$$
+%\end{definition}
+%
+%Function $\delta^{'}_{T}$ does not belong to $\calG$, because it is not wide-sense increasing.
+%Its min-plus convolution with any function $f(t) \in \Reals$ is
+%$$ (f \otimes \delta^{'}_{T})(t) = \inf_{s \in \Reals} \{f(t-s) + \delta^{'}_{T}(s) \} = f(t-T). $$
+%Note that here we need to apply Defintion~\ref{def:minplusdefintioninreals}. Note alos that if $f \in \calF$, then replacing $\delta^{'}_{T}$ by the burst delay function introduced in Definition~\ref{def:burstdelay}  $\delta^{'}_{T}$ in the above min-plus convolution will produce the same result. However, if $f \notin \calF$, this is no longer true.
+\index{1LH@$\calL_{H}$ (Min-plus linear operator)}
+
+
+\index{impulse response}
+\begin{theorem}[Min-plus impulse response]
+\mylabel{thm:impulseresponse} $\Pi$ is a min-plus linear operator
+if and only if there is a unique matrix $H \in \tilde{\calG}^J$
+(called the {\em impulse response}), such that for any $\vec{x}
+\in \calG^J$ and any $t \in \Reals$,
+\begin{equation}
+\mylabel{eq:impulseresponse}
+\Pi(\vec{x})(t) = \inf_{s \in \Reals} \left\{ H(t,s) + \vec{x}(s) \right\}.
+\end{equation}
+
+
+%%% IF IN REALS:
+%\index{impulse response}
+%\begin{theorem}[Impulse response]
+%\mylabel{thm:impulseresponse}
+%$\Pi$ is a min-plus linear operator if and only if there is a unique $J \times J$ matrix $H(t,s)$ (called the {\em impulse response} such that for any $\vec{x} \in \calF^J$ and any $t \geq 0$,
+%\begin{equation}
+%\mylabel{eq:impulseresponse}
+%\Pi(\vec{x})(t) = \inf_{s \in \Reals} \left\{ H(t,s) + \vec{x}(s) \right\}.
+%\end{equation}
+
+%the components of $\vec{y}(t) =  \Pi(\vec{x})(t) $ can be written as
+%\begin{equation}
+%\mylabel{eq:impulseresponse}
+%y_i(t) = \inf_{s \in \Reals}  \min_{1 \leq j \leq J} \left\{ H_{ij}(t,s) + x_j(s) \right\}
+%\end{equation}
+%for all $1 \leq j \leq J$.
+\end{theorem}
+
+\pr If (\ref{eq:impulseresponse}) holds, one immediately sees that
+$\Pi$ is upper semi-continuous and verifies (\ref{eq:linearity}),
+and therefore is min-plus linear. $\Pi$ maps $\calG^J$ to
+$\calG^J$ because $H\in  \tilde{\calG}^J$.
+
+Suppose next that $\Pi$ is min-plus linear, and let us prove that there is a unique matrix $H(t,s) \in \tilde{\calG}^J$ such that (\ref{eq:impulseresponse}) holds.
+
+Let us first note that $D_s (t) + \vec{x}(s)= \vec{x}(s)$ for any $s \geq t$. Since $\vec{x} \in \calG^J$, we have
+$$ \inf_{s \geq t}  \left\{ D_s (t) + \vec{x}(s) \right\} = \inf_{s \geq t}  \left\{ \vec{x}(s) \right\} = \vec{x}(t). $$
+On the other hand, all entries of $D_s (t)$ are infinite for $s < t$.  We have therefore that
+$$ \inf_{s < t}  \left\{ D_s (t) + \vec{x}(s) \right\} = \infty $$
+We can combine these two expressions as
+$$ \vec{x}(t) = \inf_{s \in \Reals}  \left\{ D_s(t) + \vec{x}(s) \right\}, $$
+or, dropping  explicit dependence on $t$,
+$$ \vec{x} = \inf_{s \in \Reals}  \left\{ D_s + \vec{x}(s) \right\}. $$
+
+% where we have dropped explicit dependence on $t$.
+
+%Let us observe that since $\vec{x} \in \calF^J$, we can express $\vec{x}(t)$ as
+%
+%\begin{eqnarray*}
+% \vec{x}(t) & = & (D_{0} \otimes \vec{x})(t)  =  \inf_{0 \leq s \leq t} \left\{ D_0 (t-s) + \vec{x}(s) \right\} \\
+%       & = &   \inf_{s \in \Reals}   \left\{ D_0 (t-s) + \vec{x}(s) \right\} = \inf_{s \in \Reals}   \left\{ D_s (t) + \vec{x}(s) \right\},
+%\end{eqnarray*}
+%or, dropping  explicit dependence on $t$,
+%$$ \vec{x} = \inf_{s \in \Reals}  \left\{ D_s + \vec{x}(s) \right\}. $$
+Let $\vec{d}_{s,j}$ denote the $j$th column of $D_s$:
+$$ \vec{d}_{s,j} =  \left[ \begin{array}{c} \infty \\ \vdots \\ \infty \\ \delta_s \\ \infty \\ \vdots \\ \infty \end{array} \right] $$
+where $\delta_s$ is located at the $j$th position in this vector.
+Using repeatedly the fact $\Pi$ is min-plus linear, we get that
+\begin{eqnarray*}
+\Pi(\vec{x}) & = & \Pi \left(  \inf_{s \in \Reals} \{ D_s + \vec{x}(s) \} \right) \\
+        & = &  \inf_{s \in \Reals} \left\{ \Pi \left( D_s + \vec{x}(s) \right) \right\}   \\
+        & = &  \inf_{s \in \Reals} \left\{ \Pi \left( \min_{1 \leq j \leq J} \left\{ \vec{d}_{s,j} + x_j(s) \right\}  \right) \right\} \\
+        & = &  \inf_{s \in \Reals} \left\{ \min_{1 \leq j \leq J} \left\{ \Pi \left( \vec{d}_{s,j} + x_j(s) \right) \right\} \right\} \\
+        & = &  \inf_{s \in \Reals} \left\{ \min_{1 \leq j \leq J} \left\{ \Pi \left( \vec{d}_{s,j}  \right) + x_j(s) \right\} \right\} .
+\end{eqnarray*}
+Defining
+\begin{equation}
+\mylabel{eq:impulseresponsecomputed1}
+H(t,s) = \left[ \vec{h}_1(t,s) \;\; \ldots \;\; \vec{h}_j(t,s) \;\; \ldots \;\; \vec{h}_J(t,s) \right]
+\end{equation}
+where
+\begin{equation}
+\mylabel{eq:impulseresponsecomputed2}
+\vec{h}_{j}(t,s) =   \Pi \left( \vec{d}_{s,j}  \right) (t)
+\end{equation}
+for all $t \in \Reals$, we obtain therefore that
+%\begin{eqnarray*}
+$$\Pi(\vec{x})(t)  =  \inf_{s \in \Reals} \left\{ \min_{1 \leq j \leq J} \left\{ \vec{h}_j(t,s) + x_j(s) \right\} \right\}
+         =  \inf_{0s \in \Reals} \left\{ H(t,s) + \vec{x}(s) \right\}. $$
+%\end{eqnarray*}
+We still have to check that $H(t,s) \in \tilde{\calG}^J$.
+Since for any fixed $s$, $\Pi \left( \vec{d}_{s,j}  \right) \in \calG^J$, we have that for any $t \leq t'$
+$$ \vec{h}_{j}(t,s) = \Pi \left( \vec{d}_{s,j}  \right)(t) \leq \Pi \left( \vec{d}_{s,j}  \right)(t') =  \vec{h}_{j}(t',s), $$
+ hence $H(t,s) \leq H(t',s)$.
+On the other hand, if $s' \leq s$, one easily check that $\vec{d}_{s,j} \leq \vec{d}_{s',j}$. Therefore, since $\Pi$ is isotone (because it is linear and thus
+upper semi-continuous),
+$$ \vec{h}_{j}(t,s)  = \Pi \left( \vec{d}_{s,j}  \right)(t)  \leq \Pi \left( \vec{d}_{s',j}  \right)(t)   =  \vec{h}_{j}(t,s') $$
+and therefore  $H(t,s) \leq H(t,s')$ for any $s \geq s'$. This shows that $H(t,s) \in \tilde{\calG}^J$.
+
+To prove uniqueness, suppose that there is another matrix $H' \in
+\tilde{\calG}^J$ that satisfies (\ref{eq:impulseresponse}), and
+let $\vec{h'}_j$ denote its $j$th column. Then for any $u \in
+\Reals$ and any $1 \leq j \leq J$, taking $ \vec{x} =
+\vec{d}_{u,j} $ as the input, we get from
+(\ref{eq:impulseresponsecomputed2}) that for $t \in \Reals$
+\begin{eqnarray*}
+\vec{h}_{j}(t,u) & = & \Pi \left( \vec{d}_{u,j}  \right)(t) =  \inf_{s \in \Reals}  \left\{ H'(t,s) + \vec{d}_{u,j}(s) \right\} \\
+    & = &   \inf_{s \in \Reals}  \left\{ \vec{h'}_j(t,s) + \delta_u(s) \right\}  =  \inf_{s \leq u}  \left\{ \vec{h'}_j(t,s) \right\} =  \vec{h'}_j(t,u).
+\end{eqnarray*}
+Therefore $H'=H$.
+\qed
+
+%Suppose next that $\Pi$ is min-plus linear, and let prove that there is a unique function $H(t,s)$ such that (\ref{eq:impulseresponse}) holds.
+%We prove the theorem for $J=1$, the extension to any $J$ is straightforward.
+%
+%Let us first extend the definition of the burst delay function introduced in Definition~\ref{def:burstdelay} to allow
+%negative values of the delay, namely
+%$$
+%\delta_{T}(t)= \left\{  \begin{array}{ll}  +\infty & \mbox{ if } t > T \\
+%                       0 & \mbox{ otherwise }
+%\end{array}
+%\right.
+%$$
+%for some $T \in \Reals$. Let us then observe that since $x \in \calF$, we can express $x(t)$ as
+%$$ x(t) = \inf_{s \in \Reals} \{ x(s) + \delta_0(t-s) \} =  \inf_{s \in \Reals} \{ x(s) + \delta_s(t) \}, $$
+%or, if we drop explicit dependence on $t$,
+%$$ x = \inf_{s \in \Reals} \{ x(s) + \delta_s \}. $$
+%Therefore, since $\Pi$ is min-plus linear,
+%\begin{eqnarray*}
+% \Pi(x) & = & \Pi \left(  \inf_{s \in \Reals} \{ x(s) + \delta_s \} \right) \\
+%   & = & \inf_{s \in \Reals} \left\{ \Pi (x(s) + \delta_s ) \right\} \\
+%   & = & \inf_{s \in \Reals} \left\{ x(s) + \Pi(\delta_s) \right\} .
+%\end{eqnarray*}
+%Defining
+%\begin{equation}
+%\mylabel{eq:impulseresponsecomputed}
+%H(t,s) =  \Pi(\delta_s)(t)
+%\end{equation}
+%for all $t \in \Reals$, we obtain therefore that
+%$$ \Pi(x)(t) = \inf_{s \in \Reals} \left\{ x(s) + H(t,s) \right\}. $$
+%To prove uniqueness, suppose that there is another function $H'(\cdot, \cdot)$ which satisfies (\ref{eq:impulseresponse}).
+%Then for any $u \in \Reals$, taking $x = \delta_u$ as the input and starting from (\ref{eq:impulseresponsecomputed}) we get
+%\begin{eqnarray*}
+%H(t,u) & = & \Pi(\delta_u)(t)  =  \inf_{s \in \Reals}  \left\{ H'(t,s) + \delta_u(s) \right\} \\
+%   & = &  \inf_{s \in \Reals}  \left\{ H'(t,u) \right\} = H'(t,u).
+%\end{eqnarray*}
+%\qed
+
+We will denote a general min-plus linear operator whose impulse response is $H$ by $\calL_{H}$.
+In other words, we have that
+$$ \calL_{H}(\vec{x})(t) = \inf_{s \in \Reals}  \left\{ H(t,s) + \vec{x}(s) \right\}. $$
+One can compute that the impulse response corresponding to $\calC_{\Sigma}$ is
+$$ H(t,s) =  \left\{ \begin{array}{ll} \Sigma(t-s)   & \mbox{ if }   s \leq t \\
+                                       \Sigma(0)     & \mbox{ if }   s > t      \end{array} \right.  ,      $$
+to $h_{\sigma}$ is
+$$ H(t,s) = \left\{ \begin{array}{ll} \sigma(t) - \sigma(s) & \mbox{ if } s \leq t \\
+                                            0               & \mbox{ if } s > t    \end{array} \right. , $$
+and to $\calS_{T}$ is
+$$ H(t,s) = D_{T}(t-s). $$
+In fact the introduction of the shift matrix allows us to write the shift operator as a min-plus convolution: $\calS_T = \calC_{D_T}$ if $T \geq 0$.
+
+Let us now compute the impulse response of the compostion of two min-plus linear operators.
+%We will denote by $\Pi \circ \Pi' = \Pi (\Pi')$ the composition of two operators $\Pi$ and $\Pi'$.
+
+\begin{theorem}[Composition of min-plus linear operators]
+\mylabel{thm:composition-of-linear}
+Let $\calL_{H}$ and  $\calL_{H'}$ be two  min-plus linear operators. Then their composition
+$ \calL_{H}  \circ \calL_{H'}$ is also min-plus linear, and its impulse repsonse denoted by $H \circ H'$ is given by
+$$ (H \circ H')(t,s) = \inf_{u \in \Reals} \left\{ H(t,u) + H'(u,s) \right\}. $$
+\end{theorem}
+
+\pr The composition $\calL_{H} \circ \calL_{H'}$ applied to some $\vec{x} \in \calG^J$ is
+\begin{eqnarray*}
+\calL_{H} ( \calL_{H'} (\vec{x} ))(t) &  = &  \inf_{u } \left\{ H(t, u) + \inf_{s} \left\{ H'(u,s) + \vec{x}(s) \right\} \right\} \\
+                & = &   \inf_{u} \inf_{s} \left\{ H(t, u) + H'(u,s) + \vec{x}(s) \right\} \\
+                & = &   \inf_{s} \left\{ \inf_{u} \left\{ H(t, s) + H'(u,s) \right\} + \vec{x}(s) \right\}.
+\end{eqnarray*}
+\qed
+
+We can therefore write
+$$ \calL_H \circ \calL_{H'} = \calL_{H \circ H'}.$$
+Likewise, one easily shows that
+$$ \calL_H \wedge \calL_{H'} = \calL_{H \wedge H'}.$$
+
+
+Finally, let us mention the dual definition of a max-plus linear operator.
+
+\index{Min-plus linear}
+
+\begin{definition}[Max-plus linear operator]
+\mylabel{def:max-pluslinearoperator}
+Operator $\Pi$ is max-plus linear if it is lower semi-continuous and if for any $\vec{x} \in \calG^J$ and for any $k \geq 0$,
+\begin{equation}
+\mylabel{eq:linearityagain}
+\Pi \left( \vec{x} + k \right) =  \Pi \left( \vec{x} \right) + k.
+\end{equation}
+\end{definition}
+
+
+Max-plus linear operators can also be represented by their impulse response.
+
+\index{impulse response}
+\begin{theorem}[Max-plus impulse response]
+\mylabel{thm:maximpulseresponse} $\Pi$ is a max-plus linear
+operator if and only if there is a unique matrix $H \in
+\tilde{\calG}^J$ (called the {\em impulse response}), such that
+for any $\vec{x} \in \calG^J$ and any $t \in \Reals$,
+\begin{equation}
+\mylabel{eq:maximpulseresponse}
+\Pi(\vec{x})(t) = \sup_{s \in \Reals} \left\{ H(t,s) + \vec{x}(s) \right\}.
+\end{equation}
+\end{theorem}
+
+One can easily check that $\calD_{\sigma}$ and $\calS_T$ are
+max-plus linear, unlike  $\calC_{\Sigma}$, $h_\sigma$ and
+$\calP_L$.
+
+For example, $\calD_{\sigma}(x)(t)$ can be written as
+$$ \calD_{\sigma}(x)(t) =  \sup_{u \geq 0} \{ x(t+u) - \sigma(u) \} = \sup_{s \geq t} \{ x(s) - \sigma(s-t) \} = \sup_{s \in \Reals} \{ x(s) - \sigma(s-t) \} $$
+which has the form (\ref{eq:maximpulseresponse}) if $H(t,s) = - \sigma(s-t)$.
+
+Likewise, $\calS_T(x)(t)$ can be written as
+$$ \calS_{T}\left( \vec{x} \right) (t) = \vec{x}(t-T) = \sup_{s \in \Reals} \{ \vec{x}(s) - D_{-T}(s-t) \} $$
+which has the form (\ref{eq:maximpulseresponse}) if $H(t,s) = - D_{-T}(s-t)$.
+
+
+%Finally, let us mention that min-plus linear operators can also be defined for operators mapping other spaces than $\calG^J$. This requires some changes in the above expressions, see \cite{maxPlus}.
+
+
+\subsection{Causal Operators}
+\mylabel{causaloperator}
+
+\index{causal}
+
+A system is causal if its output at time $t$ only depends on its input before time $t$.
+
+\begin{definition}[Causal operator]
+\mylabel{def:causaloperator}
+Operator $\Pi$ is causal if for any $t$, $\vec{x}_1(s) = \vec{x}_2(s)$ for all $s \leq t$ always implies $\Pi(\vec{x}_1)(t) = \Pi(\vec{x}_2)(t) $.
+\end{definition}
+
+%Since they are defined on $\calF^J$, all min-plus linear operators are causal.
+%Indeed, if $\vec{x}_1(s) = \vec{x}_2(s)$ for all $s \leq t$ then
+%\begin{eqnarray*}
+%\calL_{H}(\vec{x}_1)(t) & = & \inf_{0 \leq s \leq t}  \left\{ H(t,s) + \vec{x}_1(s) \right\} \\
+%               & = & \inf_{0 \leq s \leq t}  \left\{ H(t,s) + \vec{x}_2(s) \right\} \\
+%           & = &  \calL_{H}(\vec{x}_2)(t).
+%\end{eqnarray*}
+
+%If linear operators were defined on more general sets than $\calF$, they would not necessarily be causal \cite{maxPlus}.
+
+\begin{theorem}[Min-plus causal linear operator]
+\mylabel{thm:causallinear}
+A min-plus linear system with impulse response $H$ is causal if $H(t,s) = H(t,t)$ for $s > t$.
+\end{theorem}
+
+\pr If  $H(t,s) = 0$ for $s > t$  and if $\vec{x}_1(s) = \vec{x}_2(s)$ for all $s \leq t$ then since $\vec{x}_1,\vec{x}_2 \in \calG^J$,
+\begin{eqnarray*}
+\calL_{H}(\vec{x}_1)(t) & = & \inf_{s \in \Reals}  \left\{ H(t,s) + \vec{x}_1(s) \right\} \\
+                & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_1(s) \right\} \wedge
+                \inf_{s > t} \left\{ H(t,s) + \vec{x}_1(s) \right\} \\
+            & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_1(s) \right\} \wedge
+                \inf_{s > t} \left\{ H(t,t) + \vec{x}_1(s) \right\} \\
+            & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_1(s) \right\} \\
+            & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_2(s) \right\} \\
+            & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_2(s) \right\} \wedge
+                \inf_{s > t} \left\{ H(t,t) + \vec{x}_2(s) \right\} \\
+            & = & \inf_{s \leq t} \left\{ H(t,s) + \vec{x}_2(s) \right\} \wedge
+                \inf_{s > t} \left\{ H(t,s) + \vec{x}_2(s) \right\} \\
+            & = & \inf_{s \in \Reals}  \left\{ H(t,s) + \vec{x}_2(s) \right\} = \calL_{H}(\vec{x}_2)(t).
+\end{eqnarray*}
+\qed
+
+$\calC_{\sigma}$, $\calC_{\Sigma}$, $h_\sigma$ and  $\calP_L$ are causal. $\calS_T$ is causal if and only if $T \geq 0$. $\calD_{\sigma}$ is not causal.
+ Indeed if $\vec{x}_1(s) = \vec{x}_2(s)$ for all $s \leq t$, but that $\vec{x}_1(s) \neq \vec{x}_2(s)$ for all $s > t$, then
+\begin{eqnarray*}
+\calD_{\sigma}(\vec{x}_1)(t) & = & \sup_{u \geq 0} \left\{ \vec{x}_1(t+u) - \sigma(u) \right\} \\
+                 & \neq & \sup_{u \geq 0} \left\{ \vec{x}_2(t+u) - \sigma(u) \right\} \\
+                & = & \calD_{\sigma}(\vec{x}_2)(t)
+\end{eqnarray*}
+
+%$\calC_{\sigma}$, $\calC_{\Sigma}$, $h_\sigma$ and $\calS_T$ are causal, contrary to $\calD_{\sigma}$.
+
+\subsection{Shift-Invariant Operators}
+\mylabel{shiftinvariantoperator}
+
+\index{shift invariant}
+
+A system is shift-invariant, or time-invariant, if a shift of the input of $T$ time units yields a shift of the output of $T$ time units too.
+
+\begin{definition}[Shift-invariant operator]
+\mylabel{def:shiftinvariantoperator}
+Operator $\Pi$ is shift-invariant if it commutes with all shift operators, i.e. if for any $\vec{x} \in \calG$ and for any $T \in \Reals$
+$$ \Pi(\calS_T(\vec{x})) = \calS_T (\Pi(\vec{x})). $$
+\end{definition}
+
+\begin{theorem}[Shift-invariant min-plus linear operator]
+\mylabel{thm:shiftinvariantlinear}
+
+Let $\calL_{H}$ and  $\calL_{H'}$ be two  min-plus linear, shift-invariant operators.
+
+(i) A min-plus linear operator $\calL_{H}$ is shift-invariant if and only if its impulse response $H(t,s)$ depends only on the difference $(t-s)$.
+
+%(ii) Two min-plus linear, shift-invariant operators $\calL_{H}$ and $\calL_{H'}$ commute.
+%The impulse response of their composition is
+%$$ (H \circ H')(t,s) = \inf_{0 \leq u \leq t-s} \left\{ H(t-s-u) + H'(u) \right\} =  (H \otimes H')(t-s) . $$
+
+(ii) Two min-plus linear, shift-invariant operators $\calL_{H}$ and $\calL_{H'}$ commute. If they are also causal,
+the impulse response of their composition is
+$$ (H \circ H')(t,s) = \inf_{0 \leq u \leq t-s} \left\{ H(t-s-u) + H'(u) \right\} =  (H \otimes H')(t-s) . $$
+
+\end{theorem}
+
+\pr (i) Let $\vec{h}_j(t,s)$ and $\vec{d}_{s,j}(t)$ denote (respectively) the $j$th column of $H(t,s)$ and of $D_s(t)$.
+Note that $\vec{d}_{s,j}(t) =  \calS_s(\vec{d}_{0,j})(t)$. Then (\ref{eq:impulseresponsecomputed2}) yields that
+\begin{eqnarray*}
+\vec{h}_{j}(t,s) & = & \Pi \left( \vec{d}_{s,j} \right)(t) =  \Pi \left( \calS_s( \vec{d}_{0,j} ) \right)(t) \\
+        & = & \calS_s \left( \Pi ( \vec{d}_{0,j} ) \right)(t) = \left( \Pi ( \vec{d}_{0,j} ) \right)(t-s) = \vec{h}_{j}(t-s,0)
+\end{eqnarray*}
+Therefore $H(t,s)$ can be written as a function of a single variable $H(t-s)$.
+
+\vspace{1ex}
+\noindent
+(ii) Because of Theorem~\ref{thm:composition-of-linear}, the impulse response of $\calL_{H} \circ \calL_{H'}$ is
+$$ (H \circ H')(t,s)  = \inf_{u} \left\{ H(t,u) + H'(u,s) \right\}. $$
+Since $H(t,u) = H(t-u)$ and $H'(u,s) = H'(u-s)$, and setting $v = u-s$, the latter can be written as
+$$ (H \circ H')(t,s)  =   \inf_{u} \left\{ H(t-u) + H'(u-s) \right\} =  \inf_{v} \left\{ H(t-s-v) + H'(v) \right\}. $$
+Similarly, the impulse response of $\calL_{H'} \circ \calL_{H}$ can be written as
+$$ (H' \circ H)(t,s)  =   \inf_{u} \left\{ H'(t-u) + H(u-s) \right\} =  \inf_{v} \left\{ H(v) + H'(t-s-v) \right\} $$
+where this time we have set $v = t-u$. Both impulse responses are identical, which shows that the two operators commute.
+%and can be written as $(H' \circ H)(t,s) =  (H \otimes H')(t-s) $.
+
+If they are causal, then their impulse response is infinite for $t > s$ and the two previous relations become
+$$ (H \circ H')(t,s) =  (H' \circ H)(t,s) = \inf_{0 \leq v \leq t} \left\{ H(t-s-v) + H'(v) \right\} = (H \otimes H')(t-s) . $$
+\qed
+
+Min-plus convolution $\calC_{\Sigma}$ (including of course $\calC_{\sigma}$ and $\calS_T$) is therefore shift-invariant.
+In fact, it follows from this theorem that the only min-plus linear, causal and shift-invariant operator is min-plus convolution.
+Therefore $h_{\sigma}$ is not shift-invariant.
+
+Min-plus deconvolution is shift-invariant, as
+\begin{eqnarray*}
+\calD_{\sigma}(\calS_T(x))(t) & = & \sup_{u \geq 0} \{ \calS_T(x)(t+u) - \sigma(u) \} =  \sup_{u \geq 0} \{ x(t+u-T) - \sigma(u) \} \\
+            & = & (x \oslash \sigma) (t-T) = \calD_{\sigma}(x)(t-T) = \calS_T \left( \calD_{\sigma}  \right)(x)(t).
+\end{eqnarray*}
+Finally let us mention that $\calP_L$ is not shift-invariant.
+
+
+\subsection{Idempotent Operators}
+\mylabel{idempotentoperator}
+
+\index{idempotent}
+
+An idempotent operator is an operator whose composition with itself produces the same operator.
+
+\begin{definition}[Idempotent operator]
+\mylabel{def:idempotentoperator}
+Operator $\Pi$ is idempotent if its self-composition is $\Pi$, i.e. if
+$$ \Pi \circ \Pi = \Pi .$$
+\end{definition}
+
+We can easily check that $h_{\sigma}$ and $\calP_L$ are
+idempotent. If $\sigma$ is sub-additive, with $\sigma(0) = 0$,
+then $\calC_{\sigma} \circ \calC_{\sigma} = \calC_{\sigma}$, which
+shows that in this case,
+ $\calC_{\sigma}$ is idempotent too. The same applies to $\calD_{\sigma}$.
+
+
+
+\section{Closure of an Operator}
+\mylabel{operatorclosure}
+
+By repeatedly composing a min-plus operator with itself, we obtain the closure of this operator.
+The formal definition is as follows.
+\begin{definition}[Sub-additive closure of an operator]
+\mylabel{def:operatorclosure}
+Let $\Pi$ be a min-plus operator taking $\calG^J \rightarrow \calG^J$. Denote $\Pi^{(n)}$ the operator obtained
+by composing $\Pi$ $(n-1)$ times with itself. By convention, $\Pi^{(0)} = \calS_0 = \calC_{D_0}$,
+so $\Pi^{(1)} = \Pi$, $\Pi^{(2)} = \Pi \circ \Pi$, etc.
+Then the sub-additive closure of $\Pi$,  denoted by $\overline{\Pi}$, is defined by
+\begin{equation}
+\mylabel{eq:operatorclosure}
+\overline{\Pi} = \calS_0 \wedge \Pi \wedge (\Pi \circ \Pi) \wedge (\Pi \circ \Pi \circ \Pi) \wedge \ldots = \inf_{n \geq 0} \left\{ \Pi^{(n)} \right\}.
+\end{equation}
+\end{definition}
+
+In other words, $$ \overline{\Pi}(\vec{x}) = \vec{x} \wedge  \Pi(
+\vec{x}) \wedge  \Pi( \Pi ( \vec{x}) ) \wedge \ldots $$ It is
+immediate to check that $\overline{\Pi}$ does map functions in
+$\calG^J$ to functions in $\calG^J$.
+
+The next theorem provides the impulse response of the sub-additive
+closure of a min-plus linear operator. It follows immediately from
+applying recursively Theorem~\ref{thm:composition-of-linear}.
+
+
+\begin{theorem}[Sub-additive closure of a linear operator]
+\mylabel{thm:linearoperatorclosure}
+The impulse response of $\overline{\calL}_{H}$ is
+\begin{equation}
+\label{eq:closurelinearoperator}
+\overline{H}(t,s) = \inf_{n \in \Nats} \inf_{u_n, \ldots , u_2, u_1} \left\{ H(t,u_1) + H(u_1,u_2) + \ldots + H(u_n,s) \right\}.
+\end{equation}
+and $\overline{\calL}_{H} =\calL_{\overline{H}}$.
+\end{theorem}
+
+For a min-plus linear, shift-invariant and causal operator, (\ref{eq:closurelinearoperator}) becomes
+\begin{eqnarray}
+\label{eq:closureltioperator}
+ \lefteqn{\overline{H}(t-s) \nonumber} \\
+  & & = \inf_{n \in \Nats} \inf_{s \leq u_n  \leq \ldots \leq u_2 \leq
+u_1 \leq t} \left\{ H(t-u_1) + H(u_1-u_2) + \ldots + H(u_n-s)
+\right\} \nonumber \\
+ & & = \inf_{n \in \Nats} \inf_{0 \leq v_n
+\leq \ldots \leq v_2 \leq v_1 \leq t-s} \left\{ H(t-s-v_1) +
+H(v_1-v_2) + \ldots + H(v_n) \right\} \nonumber \\
+ &  & = \inf_{n
+\in \Nats} \{ H^{(n)} \}(t-s)
+\end{eqnarray}
+where $H^{(n)} = H \otimes H \otimes \ldots \otimes H$ ($n$ times, $n \geq 1$) and  $H^{(0)} = S_0$.
+
+In particular, if all entries $\sigma_{ij}(t)$ of $\Sigma(t)$ are sub-additive functions, we find that
+$$ \overline{\calC}_\Sigma = \calC_\Sigma . $$
+
+In the scalar case, the closure of the min-plus convolution operator $\calC_\sigma$ reduces to the min-plus convolution of the sub-additive closure of $\sigma$:
+$$ \overline{\calC}_\sigma = \calC_{\overline{\sigma}}. $$
+If $\sigma$ is a ``good'' function (i.e., a sub-additive function with $\sigma(0) = 0$), then $ \overline{\calC}_\sigma = \calC_{\sigma}$.
+
+The sub-additive closure of the idempotent operators $h_{\sigma}$ and $\calP_L$ are easy to compute too.
+Indeed, since $h_{\sigma}(x) \leq x$ and $\calP_{L}(x) \leq x$,
+$$ \overline{h_{\sigma}} = h_{\sigma} $$
+and
+$$ \overline{\calP}_{L} = \calP_{L}. $$
+
+%Indeed, one easily checks that
+%\begin{equation}
+%\mylabel{eq:compositionidempotent}
+%h_{\sigma} \circ h_{\sigma}= h_{\sigma}
+%\end{equation}
+%and since $h_{\sigma}(x) \leq x$
+%\begin{equation}
+%\mylabel{eq:compositionclosure}
+%\overline{h_{\sigma}} = h_{\sigma}
+%\end{equation}
+%This justifies the name {\em idempotent} given to this operator. The same property holds for $\calP_L$.
+
+The following result is easy to prove. We write $\Pi \leq \Pi'$ to express that $\Pi(\vec{x}) \leq
+\Pi'(\vec{x})$ for all $\vec{x} \in \calG^{J}$.
+
+\begin{theorem}[Sub-additive closure of an isotone operator]
+\mylabel{thm:isotoneoperatorclosure}
+If $\Pi$ and $\Pi'$ are two isotone operators, and $\Pi \leq \Pi'$, then $\overline{\Pi} \leq \overline{\Pi'}$.
+\end{theorem}
+
+Finally, let us conclude this section by computing the closure of the minimum between two operators.
+
+\begin{theorem}[Sub-additive closure of $\Pi_1 \wedge \Pi_2$]
+\mylabel{thm:minimumoperatorclosure}
+Let $\Pi_1, \Pi_2$ be two isotone operators taking $\calG^J \rightarrow \calG^J$. Then
+\begin{equation}
+\mylabel{eq:closure-min-pi1}
+  \overline{\Pi_1 \wedge \Pi_2}= \overline{(\Pi_1 \wedge \calS_0) \circ (\Pi_2 \wedge \calS_0)}.
+\end{equation}
+\end{theorem}
+
+\pr (i) Since $\calS_0$ is the identity operator,
+\begin{eqnarray*}
+\Pi_1 \wedge \Pi_2 & = &  (\Pi_1 \circ \calS_0) \wedge (\calS_0 \circ \Pi_2) \\
+          & \geq & ( (\Pi_1 \wedge \calS_0) \circ \calS_0) \wedge (\calS_0 \circ (\Pi_2 \wedge \calS_0)) \\
+      & \geq & ( (\Pi_1 \wedge \calS_0) \circ (\Pi_2 \wedge \calS_0)) \wedge ( (\Pi_1 \wedge \calS_0) \circ (\Pi_2 \wedge \calS_0)) \\
+        & = &  (\Pi_1 \wedge \calS_0) \circ (\Pi_2 \wedge \calS_0).
+\end{eqnarray*}
+Since $\Pi_1$ and $\Pi_2$ are isotone, so are $\Pi_1 \wedge \Pi_2$ and $(\Pi_1 \wedge \calS_0) \circ (\Pi_2 \wedge \calS_0)$.
+Consequently, Theorem~\ref{thm:isotoneoperatorclosure} yields that
+ \begin{equation}
+\mylabel{eq:intermediatestepi}
+ \overline{\Pi_1 \wedge \Pi_2} \geq \overline{(\Pi_1 \wedge \calS_0) \circ (\Pi_1 \wedge \calS_0)}.
+\end{equation}
+
+(ii) Combining the two inequalities
+\begin{eqnarray*}
+\Pi_1 \wedge \calS_0 & \geq & \Pi_1 \wedge  \Pi_2 \wedge \calS_0 \\
+\Pi_2 \wedge \calS_0 & \geq & \Pi_1 \wedge  \Pi_2 \wedge \calS_0
+\end{eqnarray*}
+we get that
+\begin{equation}
+\mylabel{eq:intermediatestepii}
+ \overline{(\Pi_1 \wedge \calS_0) \circ (\Pi_1 \wedge \calS_0)} \geq \overline{(\Pi_1 \wedge  \Pi_2 \wedge \calS_0) \circ
+(\Pi_1 \wedge  \Pi_2 \wedge \calS_0)}.
+\end{equation}
+
+Let us show by induction that
+$$ \left( (\Pi_1 \wedge \Pi_2)
+\wedge \calS_0 \right)^{(n)} = \min_{0 \leq k \leq n} \left\{
+(\Pi_1 \wedge \Pi_2)^{(k)} \right\} . $$
+
+Clearly, the claim holds for $n =0,1$. Suppose it is true up to
+some $n \in \Nats$. Then
+\begin{eqnarray*}
+  \lefteqn{\left((\Pi_1 \wedge \Pi_2) \wedge \calS_0
+  \right)^{(n+1)}} \\
+    & & =  \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right) \circ \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right)^{(n)} \\
+   & & = \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right) \circ  \left( \min_{0 \leq k \leq n} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \right) \\
+    & & =  \left( (\Pi_1 \wedge \Pi_2) \circ \min_{0 \leq k \leq n} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \right) \wedge
+            \left( \calS_0  \circ \min_{0 \leq k \leq n} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \right) \\
+    & & =  \min_{1 \leq k \leq n+1} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\}  \wedge  \min_{0 \leq k \leq n} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \\
+   & & =  \min_{0 \leq k \leq n+1} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} .
+\end{eqnarray*}
+Therefore the claim holds for all $n \in \Nats$, and
+\begin{eqnarray*}
+ \left( \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right)  \circ \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right)\right)^{(n)}
+    & = & \left( (\Pi_1 \wedge \Pi_2) \wedge \calS_0 \right)^{(2n)} \\
+    & = & \min_{0 \leq k \leq 2n}  \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\}.
+\end{eqnarray*}
+Consequently,
+\begin{eqnarray*}
+\overline{(\Pi_1 \wedge  \Pi_2 \wedge \calS_0) \circ
+(\Pi_1 \wedge  \Pi_2 \wedge \calS_0)} & = & \inf_{n \in \Nats} \min_{0 \leq k \leq 2n}  \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \\
+& = & \inf_{k \in \Nats} \left\{ (\Pi_1 \wedge \Pi_2)^{(k)} \right\} \\
+& = & \overline{\Pi_1 \wedge \Pi_2}
+\end{eqnarray*}
+and combining this result with (\ref{eq:intermediatestepi}) and (\ref{eq:intermediatestepii}), we get (\ref{eq:closure-min-pi1}).
+\qed
+
+If one of the two operators is an idempotent operator, we can simplify the previous result a bit more.
+We will use the following corollary in Chapter~\ref{L30}.
+
+\begin{corollary}[Sub-additive closure of $\Pi_1 \wedge h_{M}$]
+\mylabel{cor:minimumoperatorclosure}
+Let $\Pi_1$ be an isotone operator taking $\calF \rightarrow \calF$, and let $M \in \calF$. Then
+\begin{equation}
+\mylabel{eq:closure-min-pihM}
+  \overline{\Pi_1 \wedge h_M}= \overline{(h_M \circ \Pi_1)} \circ h_M.
+\end{equation}
+\end{corollary}
+
+\pr Theorem~\ref{thm:minimumoperatorclosure} yields that
+\begin{equation}
+\mylabel{eq:proofthemhmpi}
+\overline{\Pi_1 \wedge h_M} = \overline{(\Pi_1 \wedge \calS_0) \circ h_M}
+\end{equation}
+because $h_M \leq \calS_0$. The right hand side of (\ref{eq:proofthemhmpi}) is the inf over all integers $n$ of
+$$ \left( \{ \Pi_1 \wedge \calS_0 \} \circ h_{M} \right)^{(n)} $$
+which we can expand as
+$$ \{ \Pi_1 \wedge \calS_0 \} \circ h_{M} \circ  \{ \Pi_1 \wedge \calS_0 \} \circ h_{M} \circ \ldots \circ  \{ \Pi_1 \wedge \calS_0 \} \circ h_{M}. $$
+Since
+\begin{eqnarray*}
+h_{M} \circ  \{ \Pi_1 \wedge \calS_0 \} \circ h_{M} & = & \left\{ h_{M} \circ  \Pi_1 \circ h_{M} \right\} \wedge  h_M \\
+& = &  \left( \{ h_{M} \circ  \Pi_1 \} \wedge \calS_0 \right)  \circ h_{M}  \\
+& = & \min_{0 \leq q \leq 1} \left\{ \left(  h_{M} \circ \Pi_1  \right)^{(q)} \right\} \circ h_{M},
+\end{eqnarray*}
+the previous expression is equal to
+$$ \min_{0 \leq q \leq n} \left\{ \left(  h_{M} \circ  \Pi_1 \right)^{(q)} \right\} \circ h_{M}. $$
+Therefore we can rewrite the right hand side of
+(\ref{eq:proofthemhmpi}) as
+\begin{eqnarray*}
+\overline{(\Pi_1 \wedge \calS_0) \circ h_M} & = & \inf_{n \in
+\Nats} \left\{\min_{0 \leq q \leq n} \left\{ \left(  h_{M} \circ
+\Pi_1  \right)^{(q)} \right\}  \circ h_{M} \right\} \\ & = &
+\inf_{q \in \Nats} \left\{ \left(  h_{M} \circ \Pi_1 \right)^{(q)}
+\right\}  \circ h_{M} = \overline{ ( h_{M} \circ \Pi_1  ) }  \circ
+h_{M},
+\end{eqnarray*}
+which establishes (\ref{eq:closure-min-pihM}).
+
+
+
+Therefore we can rewrite the right hand side of
+(\ref{eq:proofthemhmpi}) as
+\begin{eqnarray*}
+\overline{(\Pi_1 \wedge \calS_0) \circ h_M} & = & \inf_{n \in \Nats} \left\{\min_{0 \leq q \leq n} \left\{ \left(  h_{M} \circ \Pi_1  \right)^{(q)} \right\}  \circ h_{M} \right\} \\
+& = &  h_M \circ \inf_{q \in \Nats} \left\{ \left(  h_{M} \circ \Pi_1  \right)^{(q)}  \right\}  \circ h_{M} = h_{M} \circ \overline{ ( h_{M} \circ \Pi_1  ) }  \circ h_{M},
+\end{eqnarray*}
+which establishes (\ref{eq:closure-min-pihM}).
+\qed
+
+%Finally, let us conclude this section by computing the closure of the minimum between two operators.
+%\begin{theorem}[Closure of $\Pi_1 \wedge \Pi_2$]
+%\mylabel{thm:minimumoperatorclosure}
+%Let $\Pi_1, \Pi_2$ be two isotone operators. Then
+%\begin{equation}
+%\mylabel{eq:closure-min-pi1}
+%  \overline{\Pi_1 \wedge \Pi_2}= \overline{\Pi_1} \circ \overline{\Pi_2}
+%
+%=   \inf_{n \geq 0} \left\{ \inf_{ l_1, \ldots, l_{n} \in \Nats} \left\{ \overline{\Pi}_1^{ \circ \Pi_2^{(l_{n})} \circ \ldots
+%\circ  h_{\sigma} \circ \Pi^{(l_1)} \circ  h_{\sigma} \right\} \right\} \right\}.
+%\end{equation}
+%\end{theorem}
+%
+%\pr (i) Let us first show by induction that for any  $n \in \Nats$
+%\begin{equation}
+%\mylabel{eq:inductionproofclosure}
+%(\Pi_1 \wedge \Pi_2)^{(n)} \geq (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n)} \circ \overline{\Pi_1}.
+%\end{equation}
+%The assumption is clearly valid for $n =0$, because  $\overline{\Pi_1} \leq \calS_0$, and for $n=1$, because
+%\begin{eqnarray}
+%\mylabel{eq:inductionproofclosurestep1}
+%\Pi_1 \wedge  \Pi_2 & = & (\Pi_1 \circ \calS_0 \circ \calS_0) \wedge (\calS_0 \circ \Pi_2 \circ \calS_0)
+%\geq  (\overline{\Pi_1} \circ \calS_0 \circ \overline{\Pi_1}) \wedge (\overline{\Pi_1} \circ \Pi_2 \circ \overline{\Pi_1}) = \overline{\Pi_1} \circ (\calS_0 \wedge \Pi_2) \circ \overline{\Pi_1} \geq
+% \overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1}.
+%\end{eqnarray}
+%Suppose that (\ref{eq:inductionproofclosure}) holds until $n$. Then combining this relation with (\ref~{eq:inductionproofclosurestep1}), we get
+%\begin{eqnarray*}
+%(\Pi_1 \wedge \Pi_2)^{(n+1)} & = & (\Pi_1 \wedge \Pi_2) \circ (\Pi_1 \wedge \Pi_2)^{(n)}
+%           & \geq & (\overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1}) \circ (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n)} \circ \overline{\Pi_1} \\
+%           & = &  \overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1} \circ \overline{\Pi_1} \circ \overline{\Pi_2} \circ (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n-1)} \circ \overline{\Pi_1} \\
+%           & = & (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n+1)} \circ \overline{\Pi_1},
+%\end{eqnarray*}
+%which establishes the induction.
+%
+%(i) Let us first show by induction that for any  $n \in \Nats$, there exist $l_1, \ldots l_{2n+1} \in \Nats$ such that
+%\begin{equation}
+%\mylabel{eq:inductionproofclosure}
+%(\Pi_1 \wedge \Pi_2)^{(n)} \geq \inf{l_1, \ldots l_{2n+1} \in \Nats} \{ \Pi_1^{(l_{2n+1})} \circ \Pi_2^{(l_{2n})} \circ \ldots \circ  Pi_1^{(l_3)} \circ \Pi_2^{(l_{2})} \circ \Pi_1^{(l_{1})}
+%.
+%\end{equation}
+%The assumption is clearly valid for $n =0$ (take $l_1 = 0$) and for $n=1$, because
+%\begin{eqnarray}
+%\mylabel{eq:inductionproofclosurestep1}
+%\Pi_1 \wedge  \Pi_2 & = & (\Pi_1 \circ \calS_0 \circ \calS_0) \wedge (\calS_0 \circ \Pi_2 \circ \calS_0) =
+%           (\Pi_1 \circ \calS_0 \circ \calS_0) \wedge (\calS_0 \circ \Pi_2 \circ \calS_0)
+%
+%
+%\geq  (\overline{\Pi_1} \circ \calS_0 \circ \overline{\Pi_1}) \wedge (\overline{\Pi_1} \circ \Pi_2 \circ \overline{\Pi_1}) = \overline{\Pi_1} \circ (\calS_0 \wedge \Pi_2) \circ \overline{\Pi_1} \geq
+% \overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1}.
+%\end{eqnarray}
+%Suppose that (\ref{eq:inductionproofclosure}) holds until $n$. Then combining this relation with (\ref~{eq:inductionproofclosurestep1}), we get
+%\begin{eqnarray*}
+%(\Pi_1 \wedge \Pi_2)^{(n+1)} & = & (\Pi_1 \wedge \Pi_2) \circ (\Pi_1 \wedge \Pi_2)^{(n)}
+%           & \geq & (\overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1}) \circ (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n)} \circ \overline{\Pi_1} \\
+%           & = &  \overline{\Pi_1} \circ \overline{\Pi_2} \circ \overline{\Pi_1} \circ \overline{\Pi_1} \circ \overline{\Pi_2} \circ (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n-1)} \circ \overline{\Pi_1} \\
+%           & = & (\overline{\Pi_1} \circ \overline{\Pi_2})^{(n+1)} \circ \overline{\Pi_1},
+%\end{eqnarray*}
+%which establishes the induction.
+%(ii) Let us next show that for any $n \in \Nats$, there is some $m \in Nats$ such that
+%(\overline{\Pi_1} \circ \overline{\Pi_2})^{(n)} \circ \overline{\Pi_1} \geq (\Pi_1 \wedge \Pi_2)^{(m)}
+
+
+
+%Finally, let us conclude this section with a result proven in \cite{TimeSpac} and that will be useful in Chapter~\ref{Loss}.
+%\begin{theorem}[Closure of $\Pi \wedge h_{\sigma}$]
+%\mylabel{thm:minimumoperatorclosure}
+%\begin{equation}
+%\mylabel{eq:closure-min-pi1}
+%  \overline{\Pi \wedge h_{\sigma}}=  \inf_{n \geq 1} \left\{ \inf_{1 \leq q \leq
+%(n-1)/2} \left\{ \inf_{ l_1 + \ldots + l_{q} =n-q-1, \; l_1, \ldots,
+%l_{q} \geq 1} \left\{ h_{\sigma} \circ \Pi^{(l_{q})} \circ \ldots
+%\circ  h_{\sigma} \circ \Pi^{(l_1)} \circ  h_{\sigma} \right\} \right\} \right\}.
+%\end{equation}
+%\end{theorem}
+
+The dual of sub-additive closure is that of super-additive closure, defined as follows.
+
+\begin{definition}[Super-additive closure of an operator]
+\mylabel{def:superoperatorclosure}
+Let $\Pi$ be an operator taking $\calG^J \rightarrow \calG^J$.
+The super-additive closure of $\Pi$,  denoted by $\underline{\Pi}$, is defined by
+\begin{equation}
+\mylabel{eq:superoperatorclosure}
+\underline{\Pi} = \calS_0 \vee \Pi \vee (\Pi \circ \Pi) \vee (\Pi \circ \Pi \circ \Pi) \vee \ldots = \sup_{n \geq 0} \left\{ \Pi^{(n)} \right\}.
+\end{equation}
+\end{definition}
+
+
+\section{Fixed Point Equation (Space Method)}
+\mylabel{sec:fixedpointequation}
+
+\subsection{Main Theorem}
+\mylabel{sec:fixedpointequationmain}
+
+We now have the tools to solve an important problem of network
+calculus, which has some analogy with ordinary differential
+equations in conventional system theory.
+
+The latter problem reads as follows: let $\Pi$ be an operator from $\Reals^J$ to $\Reals^J$, and let $\vec{a} \in \Reals^J$.
+What is then the solution $\vec{x}(t)$ to the differential equation %(if time $t \in \Reals$)
+\begin{equation}
+\mylabel{eq:ode}
+\frac{d\vec{x}}{dt}(t) = \Pi(\vec{x})(t)
+\end{equation}
+%or the recurrence equation
+%\begin{equation}
+%\mylabel{eq:recurrence}
+%\vec{x}(t+1) = \Pi(\vec{x})(t)
+%\end{equation}
+with the inital condition
+\begin{equation}
+\mylabel{eq:odeinit}
+\vec{x}(0) = \vec{a}.
+\end{equation}
+
+Here $\Pi$ is an operator taking $\calG^J \rightarrow \calG^J$, and $\vec{a} \in \calG^J$. The problem is now to find the largest function
+$\vec{x}(t) \in \calG^J$, which verifies the recursive inequality
+\begin{equation}
+\mylabel{eq:recursive-inequality}
+\vec{x}(t) \leq \Pi(\vec{x})(t)
+\end{equation}
+and the initial condition
+\begin{equation}
+\mylabel{eq:recursive-init}
+\vec{x}(t) \leq \vec{a}(t) .
+\end{equation}
+
+The differences are however important: first we have inequalities instead of equalities, and second, contrary to (\ref{eq:ode}), (\ref{eq:recursive-inequality}) does not describe the evolution of the trajectory $\vec{x}(t)$ with time~$t$, starting from a fixed point $\vec{a}$, but the successive iteration of $\Pi$ on the whole trajectory $\vec{x}(t)$, starting from a fixed, given function $\vec{a}(t) \in \calG^J$.
+
+The following theorem provides the solution this problem, under
+weak, technical assumptions that are almost always met.
+\begin{theorem}[Space method]
+\mylabel{thm:spacemethod}
+Let $\Pi$ be an upper semi-continuous and isotone operator taking $\calG^J \rightarrow \calG^J$. For any fixed function $\vec{a} \in \calG^{J}$, the problem
+\begin{equation}
+\mylabel{eq:fixedpoint}
+\vec{x} \leq \vec{a} \wedge \Pi(\vec{x})
+\end{equation}
+has one maximum solution in $\calG^J$, given by
+$\vec{x}^{\star}=\overline{\Pi}(\vec{a})$.
+\end{theorem}
+
+The theorem is proven in \cite{maxPlus}. We give here a direct
+proof that does not have the pre-requisites in \cite{maxPlus}. It
+is based on a fixed point argument. We call the application of
+this theorem ``Space method'', because the iterated variable is
+not time $t$ (as in the ``Time method'' described shortly later)
+but the full sequence $\vec{x}$ itself. The theorem applies
+therefore indifferently whether $t \in \Ints$ or $t \in \Reals$.
+
+\pr
+\noindent
+(i) Let us first show that $\overline{\Pi}(\vec{a})$
+is a solution of (\ref{eq:fixedpoint}). Consider the sequence $\{ \vec{x}^n \} $
+of decreasing sequences defined by
+\begin{eqnarray*}
+\vec{x}_0 & = & \vec{a} \\
+\vec{x}_{n+1} & = &  \vec{x}_{n} \wedge \Pi(\vec{x}_{n}), \;\;\;\;\;\;\;\; n\geq
+0.
+\end{eqnarray*}
+Then one checks that
+\[ \vec{x}^{\star} = \inf_{n \geq 0} \{ \vec{x}_{n} \} \]
+is a solution to (\ref{eq:fixedpoint}) because $\vec{x}^{\star} \leq
+\vec{x}_0=\vec{a}$
+and because  $\Pi$ is upper-semi-continuous so that
+\[ \Pi(\vec{x}^{\star})  =  \Pi( \inf_{n \geq 0} \{ \vec{x}_{n} \} ) =
+\inf_{n \geq 0} \{ \Pi( \vec{x}_{n} ) \}
+         \geq  \inf_{n \geq 0} \{ \vec{x}_{n+1}  \} \geq \inf_{n \geq
+0} \{ \vec{x}_{n}  \} = \vec{x}^{\star}. \]
+Now, one easily checks that $ \vec{x}_{n} = \inf_{0 \leq m \leq n} \{
+\Pi^{(m)} ( \vec{a} ) \} $,
+so
+\[ \vec{x}^{\star} = \inf_{n \geq 0} \{ \vec{x}_{n} \} = \inf_{n \geq 0}
+\inf_{0 \leq m \leq n} \{ \Pi^{(m)} ( \vec{a} ) \} = \inf_{n \geq
+0} \{ \Pi^{(n)} ( \vec{a} ) \} = \overline{\Pi}(\vec{a}). \] This
+also shows that $\vec{x}^{\star} \in \calG^J$.
+
+ \vspace{0.5ex} \noindent (ii) Let $\vec{x}$ be a
+solution of (\ref{eq:fixedpoint}). Then $\vec{x} \leq \vec{a}$ and
+since $\Pi $ is isotone, $\Pi (\vec{x} ) \leq \Pi (\vec{a})$. From
+(\ref{eq:fixedpoint}), $\vec{x} \leq \Pi ( \vec{x} ) $, so that
+$\vec{x} \leq \Pi ( \vec{a}) $. Suppose that for some $n \geq 1$,
+we have shown that $\vec{x} \leq \Pi^{(n-1)} ( \vec{a}) $. Then as
+$\vec{x} \leq \Pi ( \vec{x} ) $ and as $\Pi $ is isotone, it
+yields that $\vec{x} \leq \Pi^{(n)} ( \vec{a}) $. Therefore
+$\vec{x} \leq \inf_{n \geq 0} \{ \Pi^{(n)} ( \vec{a}) \} =
+\overline{\Pi}(\vec{a}) $, which shows that $\vec{x}^{\star} =
+\overline{\Pi}(\vec{a})$ is the maximal solution. \qed
+
+Similarly, we have the following result in Max-plus algebra.
+\begin{theorem}[Dual space method]
+\mylabel{thm:spacemethodmax}
+Let $\Pi$ be a lower semi-continuous operator taking $\calG^J \rightarrow \calG^J$. For any fixed function $\vec{a} \in \calG^{J}$, the problem
+\begin{equation}
+\mylabel{eq:dualfixedpoint}
+\vec{x} \geq \vec{a} \vee \Pi(\vec{x})
+\end{equation}
+has one minimum solution, given by $\vec{x}^{\star}=\underline{\Pi}(\vec{a})$.
+\end{theorem}
+
+\subsection{Examples of Application}
+\mylabel{sec:exapplicationsmain}
+
+Let us now apply this theorem to five particular examples. We will
+first revisit the input-output characterization of the greedy
+shaper of Section~\ref{ioshaper}, and of the variable capacity
+node described at the end of Section~\ref{sec-clasc}. Next we will
+apply it to two window flow control problems (with a fixed length
+window). Finally, we will revisit the variable length packet
+greedy shaper of Section~\ref{sec-pgs}.
+
+
+\subsubsection{Input-Output Characterization of Greedy Shapers}
+\mylabel{sec:ioshaperbis}
+
+Remember that a greedy shaper is a system that delays input bits in a buffer, whenever sending a bit would violate the constraint $\sigma$,
+but outputs them as soon as possible otherwise. If $R$ is the input flow, the output is thus the maximal function $x \in \calF$ satisfying the set of inequalities (\ref{eq-netcal-dkcnqlfenq9}), which we can recast as
+$$ x \leq R \wedge \calC_{\sigma}(x). $$
+It is thus given by $R^* = \overline{\calC_{\sigma}} = \calC_{\overline{\sigma}}(x) = \overline{\sigma} \otimes x $. If $\sigma$ is
+a ``good'' function, one therefore retrieves the main result of Theorem~\ref{theo-gen-shaper}.
+
+\subsubsection{Input-Output Characterization of Variable Capacity Nodes}
+\mylabel{sec:variablecapacitynode}
+
+The variable capacity node was introduced at the end of Section~\ref{sec-clasc}, where
+the variable capacity is modeled by a cumulative function $M(t)$, where $M(t)$ is the total
+capacity available to the flow between times $0$ and $t$. If $m(t)$ is the instantaneous
+capacity available to the flow at time~$t$, then  $M(t)$ is the primitive of this function.
+In other words, if $t \in \Reals$,
+\begin{equation}
+\mylabel{eq:rateprimitivereals}
+M(t) = \int_0^t m(s) ds
+\end{equation}
+and if $t \in \Ints$ the integral is replaced by a sum on $s$. If $R$ is the input flow and $x$
+is the output flow of the variable capacity node, then the variable capacity constraint imposes that
+for all $0 \leq s \leq t$
+%\begin{equation}
+%\mylabel{eq:rateconstraint}
+$$x(t) - x(s) \leq M(t) - M(s), $$
+%\end{equation}
+which we can recast using the idempotent operator $h_M$ as
+\begin{equation}
+\mylabel{eq:rateconstraint-operator}
+x \leq h_{M}(x).
+\end{equation}
+On the other hand, the system is causal, so that
+\begin{equation}
+\mylabel{eq:causalrateconstraint}
+x \leq R.
+\end{equation}
+The output of the variable capacity node is therefore the maximal solution of system (\ref{eq:rateconstraint-operator}) and  (\ref{eq:causalrateconstraint}). It is thus given by
+$$ R^*(t) = \overline{h}_{M}(R)(t) = h_M(R)(t) = \inf_{0 \leq s \leq t} \{M(t) - M(s) + R(s)\} $$
+because the sub-additive closure of an idempotent operator is the
+operator itself, as we have seen in the previous section.
+
+
+\subsubsection{Static window flow control -- example 1}
+\mylabel{sec:windowflowcontrol1}
+
+Let us now consider an example of a feedback system. This example
+is found independently in \cite{cha96} and \cite{AR96,cru99}. A
+data flow $a(t)$ is fed via a window flow controller to a network
+offering a service curve $\beta$. The window flow controller
+limits the amount of data admitted into the network in such a way
+that the total backlog is less than or equal to $W$, where $W > 0$
+(the window size) is a fixed number (Figure~\ref{fig-examp1}).
+
+\begin{figure}[!h]
+\insfig{FTS1}{0.7}
+    \mycaption{Static window flow control, from \protect\cite{cha96} or \protect\cite{AR96}}
+    \protect\mylabel{fig-examp1}
+\end{figure}
+
+Call $x(t)$ the flow admitted to the network, and $y(t)$ the output. The definition of the controller means that $x(t)$ is the maximum solution to
+ \begin{equation}
+    \left \{
+    \begin{array}{l}
+          x(t) \leq a(t) \\
+          x(t) \leq y(t) + W
+    \end{array}
+    \right.
+    \mylabel{eq-examp1}
+ \end{equation}
+We do not know the mapping $\Pi : x  \rightarrow y = \Pi(x)$, but we assume that $\Pi$ is isotone, and we assume that
+$ y(t) \geq (\beta \otimes x)(t)$, which can be recast as
+\begin{equation}
+\mylabel{eq:Pigeqbeta}
+\Pi(x) \geq \calC_\beta(x).
+\end{equation}
+We also recast System (\ref{eq-examp1}) as
+\begin{equation}
+\mylabel{eq:windowflowcontrol1}
+x \leq a \wedge \left\{ \Pi(x) + W \right\},
+\end{equation}
+and direclty apply Theorem~\ref{thm:spacemethod} to derive that the maximum solution is
+$$ x = \overline{ (\Pi + W) } (a). $$
+
+Since $\Pi$ is isotone, so is $\Pi + W$. Therefore, because of (\ref{eq:Pigeqbeta}) and
+ applying Theorem~\ref{thm:isotoneoperatorclosure}, we get that
+\begin{equation}
+\mylabel{eq:windowflowcontrol1a}
+ x = \overline{ (\Pi + W) } (a) \geq \overline{ (\calC_\beta + W) }(a) .
+\end{equation}
+
+Because of Theorem~\ref{thm:linearoperatorclosure},
+$$  \overline{ (\calC_\beta + W) }(a)  =  \overline{ \calC}_{\beta + W }(a)  = \calC_{\overline{\beta + W }}(a) =  \overline{(\beta + W)} \otimes a. $$
+Combining this relationship with (\ref{eq:windowflowcontrol1a}) we have that
+$$ y \geq \beta \otimes x \geq \beta \otimes \left( \overline{(\beta + W)} \otimes a \right) = \left( \beta \otimes \overline{(\beta + W)} \right) (a), $$
+which shows that the complete, closed-loop system of Figure~\ref{fig-examp1} offers to
+flow $a $ a service curve \cite{cha96}
+\begin{equation}
+\mylabel{eq:servicecurvetrafficcontrol1}
+\beta_{\mbox{wfc}1} = \beta \otimes \overline{(\beta + W)}.
+\end{equation}
+
+%Therefore
+%$$((\calC_\beta + W) \circ (\calC_\beta + W))(a) =  \left(\beta \otimes ((\beta \otimes a) + W) + W \right) = ((\beta \otimes \beta) \otimes a) + 2W.$$
+%By induction, we get that
+%$$ ((\calC_\beta + W)^{(n)})(a) = \beta^{(n)} \otimes a + nW = (\beta^{(n)} + nW) \otimes a $$
+%and therefore
+%$$ \overline{ (\calC_\beta + W) }(a)  = \overline{(\beta + W)} \otimes a. $$
+%Combining this relationship with (\ref{eq:windowflowcontrol1a}) we see that the complete, closed-loop system of Figure~\ref{fig-examp1} offers to
+%the flow $a $ a service curve \cite{cha96}
+%\begin{equation}
+%\mylabel{eq:servicecurvetrafficcontrol1}
+%\beta \otimes \overline{(\beta + W)}.
+%\end{equation}
+
+For example, if $\beta = \beta_{R,T}$ then the service curve of the closed-loop system is the function represented on
+Figure~\ref{fig:wfc1}. When $RT \leq W$, the window does not add any restriction on the service guarantee offered by the open-loop system, as in this case $\beta_{\mbox{wfc}1} = \beta$. If $RT > W$ on the other hand, the service curve is smaller than the open-loop service curve.
+
+\begin{figure}[!h]
+\insfig{wfc1}{0.7}
+    \mycaption{The service curve $\beta_{\mbox{wfc}1}$ of the closed-loop system with static window flow control, when the service curve of the open loop system is $\beta_{R,T}$ with $RT \leq W$ (left) and $RT > W$ (right).}
+    \protect\mylabel{fig:wfc1}
+\end{figure}
+
+
+
+\subsubsection{Static window flow control -- example 2}
+\mylabel{sec:windowflowcontrol2}
+
+Let us extend the window flow control model to account for the existence of background traffic,
+which constraints the input traffic rate at time $t$,
+$dx/dt(t)$ (if $t \in \Reals$) or $x(t) - x(t-1)$ (if $t \in \Ints$), to be less that some given rate $m(t)$. Let $M(t)$ denote the primitive of this
+prescribed rate function.
+Then the rate constraint on $x$ becomes (\ref{eq:rateconstraint-operator}).
+Function $M(t)$ is not known, but we assume that there is some function $\gamma \in \calF$ such that
+%\begin{equation}
+%\mylabel{eq:ratelowerbound}
+$$M(t) - M(s) \geq \gamma(t - s) $$
+%\end{equation}
+for any $0 \leq s \leq t$, which we can recast as
+\begin{equation}
+\mylabel{eq:ratelowerbound}
+ h_{M} \geq \calC_{\gamma}.
+\end{equation}
+ This is used in \cite{CO96} to derive a service curve offered by the complete system to the incoming flow $x$,
+which we shall also compute now by applying
+Theorem~\ref{thm:spacemethod}.
+
+With the additional constraint (\ref{eq:rateconstraint-operator}), one has to compute the maximal solution of
+\begin{equation}
+\mylabel{eq:windowflowcontrol2}
+x \leq a \wedge \left\{ \Pi(x) + W \right\}  \wedge h_{M}(x),
+\end{equation}
+which is
+\begin{equation}
+\mylabel{eq:windowflowcontrol2a}
+x = \overline{ \left( \left\{ \Pi + W \right\}  \wedge h_{M} \right) } (a).
+\end{equation}
+
+
+
+%To compute this closure, we apply Theorem~\ref{thm:minimumoperatorclosure}, and we obtain, since $h_M \leq \calS_0$,
+%\begin{equation}
+%\mylabel{eq:closure-min-pi2}
+% \overline{ \left\{  \Pi + W \right\}  \wedge h_{M}} =  \overline{ \left\{ \{\Pi + W \} \wedge \calS_0 \right\}  \circ h_{M} }.
+%\end{equation}
+As in the previous subsection, we do not know $\Pi$ but we assume that it is isotone and that $\Pi \geq \calC_{\beta}$. We also know that $h_{M} \geq \calC_{\gamma}$. A first approach to get a service curve for $y$, is to compute a lower bound of the right hand side of (\ref{eq:windowflowcontrol2a}) by time-invariant linear operators, which commute as we have seen earlier in this chapter. We get
+$$  \{ \Pi + W \} \wedge h_{M} \geq  \{ \calC_{\beta} + W \} \wedge \calC_{\gamma}  = \calC_{ \{\beta + W \} \wedge \gamma}, $$
+and therefore (\ref{eq:windowflowcontrol2a}) becomes
+$$ x \geq \overline{\calC}_{\{\beta + W \} \wedge \gamma}(a) = \calC_{\overline{\{\beta + W \} \wedge \gamma}}(a) = \overline{(\{\beta + W \} \wedge \gamma)} \otimes a. $$
+Because of Theorem~\ref{thm:propertiessub-additiveclosure},
+$$ \overline{ \{ \beta + W \} \wedge \gamma } = \overline {( \beta + W )} \otimes \overline{\gamma} $$
+so that
+$$ y \geq \beta \otimes x \geq \left( \beta \otimes \overline { (\beta + W) } \otimes \overline{\gamma} \right) \otimes a $$
+and thus a service curve for flow $a$ is
+\begin{equation}
+\mylabel{eq:firstservicecurve}
+ \beta \otimes \overline { (\beta + W) } \otimes \overline{\gamma} .
+\end{equation}
+Unfortunately, this service curve can be quite useless. For example, if for some $T > 0$, $\gamma (t) = 0$ for $0 \leq t \leq T$,
+then $\overline{\gamma}(t) = 0$ for all $t \geq 0$, and so the service curve is zero.
+
+A better bound is obtained by differing the lower bounding of $h_{M}$ by the time-invariant operator $\calC_{\gamma}$ after having used the idempotency property in the
+computation of the sub-additive closure of the right hand side of (\ref{eq:windowflowcontrol2a}),
+via Corollary~\ref{cor:minimumoperatorclosure}. Indeed, this corollary allows us to replace
+(\ref{eq:windowflowcontrol2a}) by
+$$ x = \left( \overline{ \left(  h_{M} \circ \left( \Pi + W \right) \right) } \circ h_M \right) (a). $$
+Now we can bound $h_M$ below by $\calC_\gamma$ to obtain
+\begin{eqnarray*}
+ \overline{ \left(  h_{M} \circ \left( \Pi + W \right) \right) } \circ h_M
+  & \geq &  \overline{ (\calC_{\gamma} \circ \calC_{\beta + W})}  \circ \calC_{\gamma} \\
+     & = &  \overline{ \calC }_{ \gamma \otimes (\beta + W) }   \circ \calC_{\gamma} \\
+  & = & \calC_{ \overline{\beta \otimes \gamma + W } } \circ \calC_{\gamma} \\
+  & = & \calC_{ \gamma \otimes \overline{(\beta \otimes \gamma + W) } }.
+%\mylabel{eq:windowflowcontrol2d}
+\end{eqnarray*}
+We obtain a better service curve than by our initial approach, where we had directly replaced $h_M$ by $\calC_{gamma}$:
+\begin{equation}
+\mylabel{eq:secondservicecurve}
+ \beta_{\mbox{wfc}2} = \beta \otimes \gamma \otimes \overline { (\beta \otimes \gamma + W)  }.
+\end{equation}
+is a better service curve than (\ref{eq:firstservicecurve}).
+
+For example, if $\beta = \beta_{R,T}$ and $\gamma = \beta_{R',T'}$, with $R > R'$ and $W < R'(T+T')$, then the service curve of the closed-loop system is the function represented on Figure~\ref{fig:wfc2}.
+
+\begin{figure}[!h]
+\insfig{wfc2}{0.7}
+    \mycaption{The service curve $\beta_{\mbox{wfc}2}$ of the closed-loop system with window flow control (bottom right), when the service curve of the open loop system is $\beta = \beta_{R,T}$ (top left) and when $\gamma = \beta_{R',T'}$ (top right), with $R > R'$ and $W < R'(T+T')$.}
+    \protect\mylabel{fig:wfc2}
+\end{figure}
+
+\subsubsection{Packetized greedy shaper}
+\mylabel{sec:iopacketizedgreedyshaper}
+
+Our last example in this chapter is the packetized greedy shaper
+introduced in Section~\ref{sec-pgs}. It amounts to computing the
+maximum solution to the problem
+$$ x \leq R  \wedge \calP_L(x) \wedge \calC_{\sigma}(x) $$
+where $R$ is the input flow,  $\sigma$ is a ``good'' function and $L$ is a given sequence of cumulative packet lengths.
+
+%Unfortunatly, we cannot apply Theorem~\ref{thm:spacemethod} as such, because $ \calP_L$ is not upper semi-continuous. However, we can avoid having to use it,  because we can circumvent the property of upper-semi continuity as follows.
+
+We can apply Theorem~\ref{thm:spacemethod} and next Theorem~\ref{thm:isotoneoperatorclosure}
+to obtain
+$$ x = \overline{ \calP_L \wedge \calC_{\sigma} }(R) =  \overline{ \calP_L \circ \calC_{\sigma} }(R)$$
+which is precisely the result of Theorem~\ref{theo:iopshapers}.
+
+\section{Fixed Point Equation (Time Method)}
+\mylabel{sec:timemethod}
+
+We conclude this chapter by another version of
+Theorem~\ref{thm:spacemethod} that applies only to the
+disrete-time setting. It amounts to compute the maximum solution
+$\vec{x}=\overline{\Pi}(\vec{a})$ of (\ref{eq:fixedpoint}) by
+iterating on time $t$ instead of interatively applying operator
+$\Pi$ to the full trajectory $\vec{a}(t)$. We call this method the
+``time method'' (see also \cite{Changbook}). It is valid under
+stronger assumptions than the space method, as we require here
+that operator $\Pi$ be min-plus linear.
+
+\begin{theorem}
+\mylabel{thm:timemethod}
+Let $\Pi = \calL_H$ be a min-plus linear operator taking $\calF^J \rightarrow \calF^J$, with impulse response $H \in \tilde{\calF}^J$.
+For any fixed function $\vec{a} \in \calF^{J}$, the problem
+\begin{equation}
+\mylabel{eq:fixedpointtime}
+\vec{x} \leq \vec{a} \wedge \calL_H (\vec{x})
+\end{equation}
+has one maximum solution, given by
+\begin{eqnarray*}
+\vec{x}^{\star}(0) & = &  \vec{a}(0) \\
+\vec{x}^{\star}(t) & = & \vec{a}(t)  \wedge \inf_{0 \leq u \leq t-1} \{ H(t,u) + \vec{x}^{\star}(u) \}.
+\end{eqnarray*}
+\end{theorem}
+
+%
+\pr
+Note that the existence of a maximum solution is given by Theorem~\ref{thm:spacemethod}.
+%By considering each of the $J$ coordinates of $\vec{x}$, we
+%see that it is sufficient to consider the case $J=1$, which we do
+%now (and consequently drop the arrows).
+Define $\vec{x}^{\star}$ by the recursion in the Theorem. As $H \in \tilde{\calF}^J$ it
+follows easily by induction that
+$\vec{x}^{\star}$ is a solution to problem (\ref{eq:fixedpointtime}).
+Conversely, for any solution $\vec{x}$, $\vec{x}(0) \leq a(0) = \vec{x}^{\star}(0)$ and if
+$\vec{x}(u) \leq \vec{x}^{\star}(u)$ for all $0 \leq u \leq t-1$, it follows that
+$\vec{x}(t) \leq \vec{x}^{\star}(t)$ which shows that $\vec{x}^{\star}$ is the maximal solution.
+\qed
+
+\section{Conclusion}
+
+This chapter has introduced min-plus and max-plus operators, and discussed their properties, which are summarized in Table~\ref{table:operators}. The central result of this chapter, which will be applied in the next chapters, is Theorem~\ref{thm:spacemethod}, which enables us to compute the maximal solution of a set of inqualities involving the iterative application of an upper semi-continuous operator.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{||c||c|c|c|c|c||}
+\hline\hline
+Operator    & $\calC_{\sigma}$ & $\calD_{\sigma}$ & $\calS_T$ & $h_{\sigma}$ & $\calP_L$ \\
+\hline
+Upper semi-continuous & yes &       no  &   yes     & yes    & yes  \\
+Lower semi-continuous & no &        yes &   yes     & no     & no   \\
+Isotone         & yes &     yes &   yes     & yes    & yes   \\
+Min-plus linear     & yes &     no  &   yes     & yes    & no  \\
+Max-plus linear     & no &      yes     &   yes     & no     & no  \\
+Causal          & yes &     no  &   yes (1) & yes    & yes \\
+Shift-invariant     & yes &     yes     &   yes     & no     & no \\
+Idempotent              & no (2) &         no (2)     &       no (3) & yes & yes  \\
+\hline \hline
+\end{tabular}
+
+\vspace{2ex}
+
+\begin{tabular}{l}
+(1) (if $T \geq 0$) \\
+(2) (unless $\sigma$ is a `good' function) \\
+(3) (unless $T=0$) \\
+\end{tabular}
+\end{center}
+
+%\mylabel{table:operators}
+\mycaption{A summary of properties of some common operators\label{table:operators}}
+\end{table}

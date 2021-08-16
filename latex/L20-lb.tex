@@ -1,0 +1,100 @@
+\begin{definition} [Leaky Bucket Controller]
+A Leaky Bucket Controller is a device that analyzes the data on a
+flow $R(t)$ as follows. There is a pool (bucket) of fluid of size
+$b$. The bucket is initially empty. The bucket has a hole and
+leaks at a rate of $r$ units of fluid per second when it is not
+empty.
+
+Data from the flow $R(t)$ has to pour into the bucket an amount of
+fluid equal to the amount of data. Data that would cause the
+bucket to overflow is declared non-conformant, otherwise the data
+is declared conformant.
+\end{definition}
+Figure~\ref{leabu} illustrates the definition.  Fluid in the leaky
+bucket does not represent data, however, it is counted in the same
+unit as data.
+
+Data that is not able to pour fluid into the bucket is said to be
+``non-conformant'' data. In ATM systems, non-conformant data is
+either discarded, tagged with a low priority for loss (``red''
+cells), or can be put in a buffer (buffered leaky bucket
+controller). With the Integrated Services Internet, non-conformant
+data is in principle not marked, but simply passed as best effort
+traffic (namely, normal IP traffic).
+\begin{figure}[!htbp]
+\mylabel{leabu}
+  \insfig{leabu}{0.8}
+  \mycaption{A Leaky Bucket Controller. The second part of the figure shows (in grey) the
+  level of the bucket $x(t)$ for a sample input, with $r=0.4$ kbits per time
+  unit and $b=1.5$ kbits. The packet arriving at time $t=8.6$ is not
+  conformant, and no fluid is added to the bucket. If $b$ would be
+  equal to $2$ kbits, then all packets would be conformant.}
+\end{figure}
+
+We want now to show that a leaky bucket controller enforces an
+arrival curve constraint equal to $\gamma_{r,b}$. We need the
+following lemma.
+\begin{lemma}
+        \mylabel{lem-buf-simple}
+        Consider a buffer served at a constant rate $r$. Assume that the
+        buffer is empty at time $0$. The input is described by the cumulative
+        function $R(t)$. If there is no overflow during $[0,t]$, the buffer
+        content at time $t$ is given by
+        $$
+        x(t)=\sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\}
+        $$
+\end{lemma}
+\pr The lemma can be obtained as a special case of
+Corollary~\ref{coro-shaper-buffer-occupancy} on
+page~\pageref{coro-shaper-buffer-occupancy}, however we give here
+a direct proof. First note that for all $s$ such that $s\leq t$,
+$(t-s)r$ is an upper bound on the number of bits output in
+$]s,t]$, therefore:
+$$
+R(t)-R(s) - x(t) +x(s) \leq (t-s)r
+$$
+
+Thus
+$$
+x(t) \geq R(t)-R(s) + x(s) - (t-s)r \geq R(t)-R(s) - (t-s)r
+$$
+
+which proves that $x(t) \geq \sup_{s : s \leq t} \{ R(t) - R(s) -r
+(t-s)\}$.
+
+Conversely, call $t_{0}$ the latest time at which the buffer was
+empty before time $t$: $$t_{0} = \sup \{s: s\leq t, x(s) = 0\}$$
+(If $x(t)  > 0$ then $t_{0}$ is the beginning of the busy period
+at time $t$). During $]t_{0}, t]$, the queue is never empty,
+therefore it outputs bit at rate $r$, and thus
+\begin{equation} \mylabel{eq-d4-37443}
+        x(t)=x(t_{0 })+R(t)-R(t_{0 }) - (t-t_{0 })r
+\end{equation}
+
+We assume that $R$ is left-continuous (otherwise the proof is a
+little more complex); thus $x(t_{0 })=0$ and thus $x(t) \leq
+\sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\}$ %\qed
+
+Now the content of a leaky bucket behaves exactly like a buffer
+served at rate $r$, and with capacity $b$. Thus, a flow $R(t)$ is
+conformant if and only if the bucket content $x(t)$ never exceeds
+$b$. From Lemma~\ref{lem-buf-simple}, this means that
+$$
+\sup_{s : s \leq t} \{ R(t) - R(s) -r (t-s)\} \leq b
+$$
+which is equivalent to
+$$
+R(t)-R(s) \leq r(t-s) +b
+$$
+for all $s \leq t$. We have thus shown the following.
+\begin{proposition}
+A leaky bucket controller with leak rate $r$ and bucket size $b$
+forces a flow to be constrained by the arrival curve
+$\gamma_{r,b}$, namely:
+\begin{enumerate}
+        \item  the flow of conformant data has $\gamma_{r,b}$ as an arrival
+        curve;
+\item  if the input already has $\gamma_{r,b}$ as an arrival
+        curve, then all data is conformant.
+\end{enumerate}
+\end{proposition}

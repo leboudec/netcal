@@ -1,0 +1,96 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-1}
+\begin{problem}
+\begin{enumerate}
+        \item Compute $\alpha \otimes \delta$ for any function $\alpha$
+        \item Express the rate-latency function by means of $\delta$ and
+        $\lambda$ functions.
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-2}
+\begin{problem}
+\begin{enumerate}
+        \item Compute $\bigotimes_{i}\beta_{i}$ when $\beta_{i}$ is
+        a rate-latency function
+\sol{$\oplus_{i}\beta_{i}=min(R_i)(t-\sum_iT_i)^+$}
+        \item Compute $\beta_{1} \otimes \beta_{2}$ with
+        $\beta_{1}(t)=R(t-T)^{+}$ and $\beta_{2}(t)=(rt+b) 1_{\{t >0 \}}$\\
+\sol{This result is derived assuming that $\beta_2(0)=0$.
+\[ \beta_1 \oplus \beta_2 = \left\{ \begin{array}{lll}
+                R(t-T)^+ & \mbox{if $R<r$}\\
+                R(t-T)^+ & \mbox{if $0 \leq t \leq (T+\frac{b}{R-r})$ and $R>r$}\\
+                b+r(t-T)^+ & \mbox{otherwise}\\
+                \end{array}
+                \right. \]
+%\}
+}
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-3}
+\begin{problem}
+\begin{enumerate}
+        \item Is $\otimes$ distributive with respect to the $\min$ operator~?
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-4}
+\begin{problem}
+        \begin{enumerate}
+                \item Compute $\gamma_{r,b} \oslash \lambda_{c}$
+                \item Compute $\alpha \oslash \delta_{T}$ for any $\alpha \in \calF$
+        \end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-5}
+\begin{problem}
+\begin{enumerate}
+        \item  Consider the discrete
+time function defined by
+\begin{itemize}
+        \item  $f(0)=0$
+        \item  $f(1)=f(2)=a$
+        \item  $f(i)=b$ for $i \geq 3$.
+\end{itemize}
+
+For which values of $a$ and $b$ is $f$ sub-additive~? \sol{$f$ is
+subadditive iff $0 \leq b \leq 2a$.}
+        \item  Is there equivalence between being concave and sub-additive~?
+\sol{We have seen that if $f$ is concave and $f(0)=0$ then $f$ is
+subadditive. The converse is not true: the function $f$ given
+above is not concave.}
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L10-6}
+\begin{problem}
+\begin{enumerate}
+     \item If $\alpha$ and $\beta$ are sub-additive and
+     $\alpha(0)=\beta(0)=0$ then show that $\alpha\otimes\beta$ is
+     sub-additive.
+        \item For a sub-additive $\alpha$, compare $\alpha$ and $\alpha
+        \oslash \alpha$. Is the reciprocal true~?
+\sol{$\alpha \ominus \alpha \leq \alpha$ The reciprocal is true}
+        %\item If $\alpha$ and $\beta$ are sub-additive, show that $\alpha
+%        \otimes \beta$ is sub-additive.
+%\sol{$\alpha$ sub-additive $\Rightarrow$ $\alpha \leq \alpha
+%\oplus \alpha$
+%\\
+%$\beta$ sub-additive $\Rightarrow$ $\beta \leq \beta \oplus
+%\beta$\\ by using the properties of the $\oplus$ convolution, it
+%can be demonstrated easily that $\alpha \oplus \beta$ is
+%sub-additive too.}
+        \item Is there a neutral function for the $\otimes$ operator on $\calF$, namely
+        a function $e$ such that $e \otimes \alpha = \alpha$ for all
+        $\alpha \in \calF$~?
+\sol{Yes, $e=\delta_{0}$}
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

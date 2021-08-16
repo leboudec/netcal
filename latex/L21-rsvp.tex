@@ -1,0 +1,292 @@
+\subsection{The Integrated Services Model for Internet Routers}
+
+The reservation phase assumes that all routers can export their
+characteristics using a very simple model. The model is based on
+the view that an integrated services router implements a practical
+approximation of GPS, such as PGPS, or more generally, a GR node.
+We have shown in \sref{sec-gr} that the service curve offered to a
+flow by a router implementing GR is a rate-latency function, with
+rate $R$ and latency $T$ connected by the relationship
+\begin{equation}\mylabel{eq-rtltc}
+  T = \frac{C}{R} + D
+\end{equation}
+with $C=$ the maximum packet size for the flow and
+$D=\frac{L}{c}$, where $L$ is the maximum packet size in the
+router across all flows, and $c$ the total rate of the scheduler.
+This is the model defined for an Internet node \cite{SV96}.
+
+\begin{fact}
+The Integrated Services model for a router is that the service
+curve offered to a flow is always a rate-latency function, with
+parameters related by a relation of the form~(\ref{eq-rtltc}).
+\end{fact}
+
+The values of $C$ and $D$ depend on the specific implementation of
+a router, see \coref{cor-gr-sercur} in the case of GR nodes. Note
+that a router does not necessarily implement a scheduling method
+that approximates GPS. In fact, we discuss in
+Section~\ref{sec-sced} a family of schedulers that has many
+advantages above GPS. If a router implements a method that largely
+differs from GPS, then we must find a service curve that
+lower-bounds the best service curve guarantee offered by the
+router. In some cases, this may mean loosing important information
+about the router. For example, it is \emph{not} possible to
+implement a network offering constant delay to flows by means of a
+system like SCED+, discussed in Section~\ref{sec-sced+}, with the
+Integrated Services router model.
+% a VBR scheduler is another example
+\subsection{Reservation Setup with RSVP}
+
+Consider a flow defined by TSPEC $(M, p, r, b)$, that traverses
+nodes $1, \ldots, N$. Usually, nodes 1 and $N$ are end-systems
+while nodes $n$ for $1<n<N$ are routers. The Integrated Services
+model assumes that node $n$ on the path of the flow offers a rate
+latency service curve $\beta_{R_n,T_n}$, and further assumes that
+$T_{n}$ has the form
+ $$T_{n}=\frac{C_{n}}{R} +D_{n}$$
+where $C_{n}$ and $D_{n}$ are constants that depend on the
+characteristics of node $n$.
+
+The reservation is actually put in place by means of a flow setup
+procedure such as the resource reservation protocol (RSVP)%
+\index{RSVP}. At the end of the procedure, node $n$ on the path
+has allocated to the flow a value $ R_{n}\geq r$. This is
+equivalent to allocating a service curve $\beta_{R_n,T_n}$. From
+Theorem~\ref{theo-netSerCur} on page~\pageref{theo-netSerCur}, the
+end-to-end service curve offered to the flow is the rate-latency
+function with rate $R$ and latency $T$ given by
+$$
+\bracket{
+ R = \min_{n=1...N}R_{n} \\
+ T = \sum_{n=1}^N \left(\frac{C_n}{R_n} + D_n\right)
+ }
+$$
+ Let
+$C_{\mbox{tot}}=\sum_{n=1}^{N} C_n$ and
+$D_{\mbox{tot}}=\sum_{n=1}^{N} D_n$. We can re-write the last
+equation as
+\begin{equation}\mylabel{eq-rtlcnete1}
+ T = \frac{C_{\mbox{tot}}}{R} + D_{\mbox{tot}} -
+ \sum_{n=1}^N S_n
+\end{equation}
+with
+\begin{equation}\mylabel{eq-rtlcnete2}
+ S_n =C_n \left(\frac{1}{R}- \frac{1}{R_n}\right)
+\end{equation}
+The term $S_n$ is called the ``local slack" term at node $n$.
+
+
+From Proposition~\ref{theo-vbr-ratlat} we deduce immediately:
+\begin{proposition}
+    If $R \geq r$, the bound on the end-to-end delay,
+    under the conditions described above is
+    \begin{equation}
+        \frac{b-M}{R} \left(
+                  \frac{p-R}{p-r}
+                  \right)^{+}
+    + \frac{M + C_{tot}}{R}  +  D_{tot}  - \sum_{n=1}^N S_n
+        \mylabel{eq-tot-del-1}
+    \end{equation}
+\end{proposition}
+
+We can now describe the reservation setup with RSVP. Some details
+of flow setup with RSVP are illustrated on
+Figure~\ref{fig-rsvp-1}. It shows that two RSVP flows are
+involved: an advertisement (\texttt{PATH}) flow and a reservation
+(\texttt{RESV}) flow. We describe first the point-to-point case.
+\begin{itemize}
+   \item A \texttt{PATH} message is sent by the source; it
+   contains
+    the T-SPEC of the flow (source T-SPEC), which is not modified in
+    transit, and another field, the ADSPEC, which is accumulated along
+    the path.  At a destination, the ADSPEC field contains, among
+    others,  the values of
+   $C_{\mbox{tot}}, D_{\mbox{tot}}$ used in Equation \ref{eq-tot-del-1}.
+    \texttt{PATH} messages do not cause any reservation to be made.
+    \item  \texttt{RESV} messages are sent by the destination and cause
+    the actual reservations to be made. They follow the reverse path
+    marked by
+    PATH messages. The \texttt{RESV} message contains a value, $R'$, (as part of the
+    so-called R-SPEC), which is a lower bound on the rate parameters $R_n$ that routers
+    along the path will have to reserve. The value of $R'$ is
+    determined by the destination based on the end-to-end delay objective
+    $d_{\mbox{obj}}$, following the procedure described below. It
+    is normally not changed by the intermediate nodes.
+\end{itemize}
+
+\begin{figure}[!htbp]
+\insfig{D2RSVP1}{0.8}
+    \mycaption{Setup of Reservations, showing the PATH and RESV flows}
+    \mylabel{fig-rsvp-1}
+\end{figure}
+
+Define function $f$ by
+    $$
+    f(R') :=
+    \frac{b-M}{R'} \left(
+                  \frac{p-R'}{p-r}
+                  \right)^{+}
+    + \frac{M + C_{tot}}{R'}  +  D_{tot}
+    $$
+In other words, $f$ is the function that defines the end-to-end
+delay bound, assuming all nodes along the path would reserve $R_n=
+R'$. The destination computes $R'$ as the smallest value $\geq r$
+for which $f(R') \leq d_{\mbox{obj}}$. Such a value exists only if
+$D_{tot} < d_{\mbox{obj}}$.
+
+In the figure, the destination requires a delay variation
+objective of 600 ms, which imposes a minimum value of $R'=$622
+kb/s.  The value of $R'$ is sent to the next upstream node in the
+R-SPEC field of the \texttt{PATH} message.  The intermediate nodes
+do not know the complete values $C_{\mbox{tot}}$ and
+$D_{\mbox{tot}}$, nor do they know the total delay variation
+objective. Consider the simple case where all intermediate nodes
+are true PGPS schedulers. Node $n$ simply checks whether it is
+able to reserve $R_n=R'$ to the flow; this involves verifying that
+the sum of reserved rates is less than the scheduler total rate,
+and that there is enough buffer available (see below). If so, it
+passes the RESV message upstream, up to the destination if all
+intermediate nodes accept the reservation. If the reservation is
+rejected, then the node discards it and normally informs the
+source. In this simple case, all nodes should set their rate to
+$R_n=R'$ thus $R=R'$, and Equation~(\ref{eq-tot-del-1}) guarantees
+that the end-to-end delay bound is guaranteed.
+
+In practice, there is a small additional element (use of the slack
+term), due to the fact that the designers of RSVP also wanted to
+support other schedulers. It works as follows.
+
+\begin{figure}[!htbp]
+\insfig{D2RSVP2}{0.8}
+    \mycaption{Use of the slack term}
+    \mylabel{fig-rsvp-2}
+\end{figure}
+
+There is another term in the R-SPEC, called the \emph{slack} term.
+Its use is illustrated on Figure \ref{fig-rsvp-2}. In the figure,
+we see that the end-to-end delay variation requirement, set by the
+destination, is 1000 ms. In that case, the destination reserves
+the minimum rate, namely, 512~kb/s. Even so, the delay variation
+objective $D_{obj}$ is larger than the bound $D_{max}$ given by
+Formula (\ref{eq-tot-del-1}). The difference $  D_{obj} - D_{max}$
+is written in the slack term $S$ and passed to the upstream node
+in the RESV message. The upstream node is not able to compute
+Formula (\ref{eq-tot-del-1}) because it does not have the value of
+the end-to-end parameters. However, it can use the slack term to
+increase its internal delay objective, on top of what it had
+advertised. For example, a guaranteed rate node may increase its
+value of $v$ (Theorem \ref{theo-GR}) and thus reduce the internal
+resources required to perform the reservation. The figure shows
+that R1 reduces the slack term by 100 ms. This is equivalent to
+increasing the $D_{tot}$ parameter by $100ms$, but without
+modifying the advertised $D_{tot}$.
+
+The delays considered here are the total (fixed plus variable)
+delays. RSVP also contains a field used for advertising the fixed
+delay part, which can be used to compute the end-to-end fixed
+delay. The variable part of the delay (called delay jitter) is
+then obtained by subtraction.
+
+\subsection{A Flow Setup Algorithm}
+
+There are many different ways for nodes to decide which parameter
+they should allocate. We present here one possible algorithm. A
+destination computes the worst case delay variation, obtained if
+all nodes reserve the sustainable rate $r$. If the resulting delay
+variation is acceptable, then the destination sets $R=r$ and the
+resulting slack may be used by intermediate nodes to add a local
+delay on top of their advertised delay variation defined by $C$
+and $D$. Otherwise, the destination sets $R$ to the minimum value
+$R_{min}$ that supports the end-to-end delay variation objective
+and sets the slack to $0$. As a result, all nodes along the path
+have to reserve $R_{min}$. As in the previous cases, nodes may
+allocate a rate larger than the value of $R$ they pass upstream,
+as a means to reduce their buffer requirement.
+
+\begin{definition}[A Flow Setup Algorithm]
+
+\begin{itemize}
+    \item At a destination system $I$, compute
+    $$
+    D_{max}= f_{T}(r) +\frac{C_{tot}}{r}+ D_{tot}
+    $$
+
+    If $D_{obj}> D_{max}$ then assign to the flow a rate $R_{I}= r$
+    and an additional delay variation $d_{I} \leq D_{obj}-D_{max}$; set
+    $S_{I}= D_{obj}-D_{max} -d_{I}$ and
+    send reservation request $R_{I}, S_{I}$ to
+    station $I-1$.
+
+    Else ($D_{obj}\leq D_{max}$) find the minimum $R_{min}$ such that
+    $f_{T}(R_{min}) +\frac{C_{tot}}{R_{min}} \leq D_{obj} - D_{tot}$,
+    if it exists.  Send reservation request $R_{I}=R_{min}, S_{I}=0$
+    to station $I-1$.  If $R_{min}$ does not exist, reject the
+    reservation or increase the delay variation objective $D_{obj}$.
+
+    \item At an intermediate system $i$: receive from $i+1$ a
+    reservation request $R_{i+1}, S_{i+1}$.
+
+    If $S_{i}=0$, then perform reservation for rate $R_{i+1}$ and if
+    successful, send reservation request $R_{i}=R_{i+1}, S_{i}=0$
+    to station $i-1$.
+
+    Else ($S_{i}>0$), perform a reservation for rate $R_{i+1}$ with
+    some additional delay variation $d_{i}\leq S_{i+1}$.  if
+    successful, send reservation request $R_{i}=R_{i+1},
+    S_{i}=S_{i+1}-d_{i}$ to station $i-1$.
+\end{itemize}
+\mylabel{def-flowsetup}
+\end{definition}
+
+The algorithm ensures a constant reservation rate. It is easy to
+check that the end to end delay variation is bounded by $D_{obj}$.
+
+\subsection{Multicast Flows}
+
+Consider now a multicast situation. A source $S$ sends to a number
+of destinations, along a multicast tree. \texttt{PATH} messages
+are forwarded along the tree, they are duplicated at splitting
+points; at the same points, \texttt{RESV} messages are merged.
+Consider such a point, call it node $i$, and assume it receives
+reservation requests for the same T-SPEC but with respective
+parameters $R'_{in}, S'_{in}$ and $R''_{in}, S''_{in}$. The node
+performs reservations internally, using the algorithm in Definition~\ref{def-flowsetup}. Then it has to merge the reservation requests it will send to
+node $i-1$. Merging uses the following rules:
+
+\paragraph{R-SPEC Merging Rules} The merged reservation $R,S$ is
+given by
+$$R = \max(R', R'')$$
+$$S= \min(S', S'')$$
+
+Let us consider now a tree where the algorithm in Definition~\ref{def-flowsetup} is applied. We want
+to show that the end-to-end delay bounds at all destinations are
+respected.
+
+The rate along the path from a destination to a source cannot
+decrease with this algorithm. Thus the minimum rate along the tree
+towards the destination is the rate set at the destination, which
+proves the result.
+
+A few more features of RSVP are:
+\begin{itemize}
+    \item  states in nodes need to be refreshed; if they are not
+    refreshed, the reservation is released (``soft states'').
+
+    \item  routing is not coordinated with the reservation of the flow
+
+\end{itemize}
+We have so far looked only at the delay constraints. Buffer
+requirements can be computed using the values in
+Proposition~\ref{theo-vbr-ratlat}.
+%\pointex{ex-bufreqd-1} \pointex{ex-bufreqd-2}
+\subsection{Flow Setup with ATM}
+With ATM, there are the following differences:
+\begin{itemize}
+    \item  The path is determined at the flow setup time only.
+    Different connections may follow different routes depending on their
+    requirements, and once setup, a connection always uses the same path.
+
+    \item  With standard ATM signaling, connection setup is initiated at
+    the source and is confirmed by the destination and all intermediate
+    systems.
+\end{itemize}

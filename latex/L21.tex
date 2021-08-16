@@ -1,0 +1,1986 @@
+\chapter[Application to the Internet]{Application of Network Calculus
+ to the Internet}
+\mylabel{L21}
+
+In this chapter we apply the concepts of \cref{L20} and explain
+the theoretical underpinnings of integrated and differentiated
+services. Integrated services define how reservations can be made
+for flows. We explain in detail how this framework was deeply
+influenced by GPS. In particular, we will see that it assumes that
+every router can be modeled as a node offering a minimum service
+curve that is a rate-latency function. We explain how this is used
+in a protocol such as RSVP. We also analyze  the more efficient
+framework based on service curve scheduling. This allows us to
+address in a simple way the complex issue of schedulability.
+
+We explain the concept of Guaranteed Rate node, which corresponds
+to a service curve element, but with some differences, because it
+uses a max-plus approach instead of min-plus. We analyze the
+relation between the two approaches.
+
+Differentiated services differ radically, in that reservations are
+made per class of service, rather than per flow. We show how the
+bounding results in \cref{L20} can be applied to find delay and
+backlog bounds. We also introduce the ``damper", which is a way of
+enforcing a maximum service curve, and show how it can radically
+reduce the delay bounds.
+
+\nfs{leftover 1:\\
+ Fluid SCED: refaire SCED avec le lemme: si sum of beta < ct alors
+ on peut scheduler; puis se demander quel est le delai et quelle
+ est la sc apres packetisation globale. Devrait generaliser PGPS, voir
+ Section 2.4.4 de Chang et reconcilier avec les resultats EDF de
+ Liebeherr\\
+ }
+\nfs{leftover 2:\\ Reprendre le papier de PG a la lueur de
+netcal\\
+ }
+\nfs{leftover mineur: explique best effort scheduling de SCED+\\}
+\nfs{ papier Guerin ITIT 1997 sur buffer allocation policies\\}
+\section{GPS and Guaranteed Rate Nodes}
+\mylabel{sec-gps}
+In this section we describe GPS and its
+derivatives; they form the basis on which the Internet guaranteed
+model was defined.%
+
+\subsection{Packet Scheduling}
+A guaranteed service network offers delay and throughput
+guarantees to flows, provided that the flows satisfy some arrival
+curve constraints (\sref{sec-L20-fcs}). This requires that network
+nodes implement some form of packet scheduling, also called
+service discipline. Packet scheduling is defined as the function
+that decides, at every buffer inside a network node, the service
+order for different packets.
+
+A simple form of packet scheduling is FIFO: packets are served in
+the order of arrival. The delay bound, and the required buffer,
+depend on the minimum arrival curve of the aggregate flow
+(Section~\ref{sec-effbw} on page~\pageref{sec-effbw}). If one flow
+sends a large amount of traffic, then the delay increases for all
+flows, and packet loss may occur. Thus FIFO scheduling requires
+that arrival curve constraints on all flows be strictly enforced
+at all points in the network. Also, with FIFO scheduling, the
+delay bound is the same for all flows. We study FIFO scheduling in
+more detail in \sref{L24}.
+
+An alternative \cite{dks90,keshav-96} is to use per flow queuing,
+in order to (1) provide isolation to flows and (2) offer different
+guarantees. We consider first the ideal form of per flow queuing
+called ``Generalized Processor Sharing" (GPS) \cite{pg93}, which
+was already mentioned in Chapter~\ref{L20}.
+\input{L21-ps}
+%\subsection{GPS and a Practical Implementation (PGPS)}
+%\mylabel{sec-gpsdet}
+%
+%A GPS node serves several flows in parallel, and has a total
+%output rate equal to $c$ b/s. A flow $i$ is allocated a given
+%weight, say $\phi_i$. Call $R_i(t), R^*_i(t)$ the input and output
+%functions for flow $i$. The guarantee is that at any time $t$, the
+%service rate offered to flow $i$ is 0 is flow $i$ has no backlog
+%(namely, if $R_i(t)=R_i^*(t)$), and otherwise is equal to
+%$\frac{\phi_i}{\sum_{j \in B(t)} \phi_{j}}c$, where $B(t)$ is the
+%set of backlogged flows at time $t$. Thus
+% $$R^*_i(t) = \int_0^t \frac{\phi_i}{\sum_{j \in B(s)} \phi_{j}} 1_{\{i \in B(s)\}}ds
+% $$
+% In the formula, we used the indicator function
+% $1_{\{\mbox{\emph{expr}}\}}$, which is equal to $1$ if $\mbox{\emph{expr}}$ is
+% true, and $0$ otherwise.
+%
+%It follows immediately that the GPS node offers to flow $i$ a
+%service curve equal to $\lambda_{r_i c}$, with $r_i=\frac{\phi_i
+%C}{\sum_{j} \phi_{j}}$. It is shown in \cite{pg94} that a better
+%service curve can be obtained for every flow if we know some
+%arrival curve properties for all flows; however the simple
+%property is sufficient to understand the integrated service model.
+%
+%GPS satisfies the requirement of isolating flows and providing
+%differentiated guarantees. We can compute the delay bound and
+%buffer requirements for every flow if we know its arrival curve,
+%using the results of Chapter~\ref{L20}. However, a GPS node is a
+%theoretical concept, which is not really implementable, because it
+%relies on a fluid model, and assumes that packets are infinitely
+%divisible. How can we make a practical implementation of GPS ? One
+%simple solution would be to use the virtual finish times as we did
+%for the buffered leaky bucket controller in \sref{sec-psps}: for
+%every packet we would compute its finish time $\theta$ under GPS,
+%then at time $\theta$ present the packet to a multiplexer that
+%serves packets at a rate $c$. \fref{fig-pgps} (left) shows the
+%finish times on an example. It also illustrates the main drawback
+%that this method would have: at times 3 and 5, the multiplexer
+%would be idle, whereas at time 6 it would have a burst of 5
+%packets to serve. In particular, such a scheduler would not be
+%work conserving.
+%
+%This is what motivated researchers to find other practical
+%implementations of GPS. We study here one such implementation of
+%GPS, called
+%packet by packet generalized processor sharing (PGPS)~\cite{pg93}. %
+%\index{PGPS: packet generalized processor sharing}%
+%Other implementations of GPS are discussed in
+%Section~\ref{sec-gr}.
+%
+%PGPS emulates GPS as follows. There is one FIFO queue per flow.
+%The scheduler handles packets one at a time, until it is fully
+%transmitted, at the system rate $c$. For every packet, we compute
+%the finish time that it would have under GPS (we call this the
+%``GPS-finish-time"). Then, whenever a packet is finished
+%transmitting, the next packet selected for transmission is the one
+%with the earliest GPS-finish-time, among all packets present.
+%Figure~\ref{fig-pgps} shows one example. We see that, unlike the
+%simple solution discussed earlier, PGPS is work conserving, but
+%does so at the expense of maybe scheduling a packet \emph{before}
+%its finish time under GPS.
+%\begin{figure}[!htbp]
+%  \insfig{pgps}{0.7}
+%  \mycaption{Scheduling with GPS (left) and PGPS (right).
+%  Flow 0 has weight 0.5, flows 1 to 5 have weight 0.1. All packets
+%  have the same transmission time equal to 1 time unit.}
+%  \mylabel{fig-pgps}
+%\end{figure}
+%
+%We can quantify the difference between PGPS and GPS in the
+%following proposition. In \sref{sec-gr}, we will see how to derive
+%a service curve property.
+%\begin{proposition}[\cite{pg93}]
+%The finish time for PGPS is at most the finish time of GPS plus
+%$\frac{L}{c}$, where $c$ is the total rate and $L$ is the maximum
+%packet size.
+% \mylabel{prop-pgps}
+%\end{proposition}
+%\pr
+%Call $D(n)$ the finish time of the $n$th packet for the aggregate
+% input flow under PGPS, in the order of departure, and $\theta(n)$ under GPS.
+% Call $n_0$ the
+% number of the packet that started the busy period in which packet
+% $n$ departs. Note that PGPS and GPS have the same busy periods,
+% since if we observe only the aggregate flows, there is no
+% difference between PGPS and GPS.
+%
+% There may be some packets that
+% depart before packet $n$ in PGPS, but that nonetheless have a
+% later departure time under GPS.
+% Call $m_0 \geq n_0$ the largest packet
+% number for which this occurs, if any; otherwise let $m_0=n_0-1$.
+% In this proposition, we call $l(m)$ the length in bits of packet $m$.
+% Under PGPS, packet $m_0$ started service at
+% $D(m_0)- \frac{l(m_0)}{c}$, which must be earlier than the
+% arrival times of packets $m= m_0+1, ..., n$.
+% Indeed, otherwise, by definition of PGPS, the
+% PGPS scheduler would have scheduled packets $m= m_0+1, ..., n$
+% before packet $m_0$. Now let us observe the GPS system. Packets $m= m_0+1, ...,
+% n$ depart no later than packet $n$, by definition of $m_0$; they
+% have arrived after $D(m_0)- \frac{l(m_0)}{c}$. By expressing the amount of
+% service in the interval $[D(m_0)- \frac{l(m_0)}{c}, \theta(n)]$
+% we find thus
+% $$ \sum_{m=m_0 +1}^n l(m) \leq c \left(\theta(n) - D(m_0)+ \frac{l(m_0)}{c}\right)
+% $$
+%Now since packets $m_0, ..., n$ are in the same busy period, we
+%have
+% $$D(n) = D(m_0) + \frac{\sum_{m=m_0 +1}^n l(m)}{c}$$
+%By combining the two equations above we find $D(n) \leq \theta(n)
+%+ \frac{l(m_0)}{c}$, which shows the proposition in the case where
+%$m_0 \geq n_0$.
+%
+% If $m_0 = n_0-1$, then all packets $n_0,...,n$ depart before packet $n$
+% under GPS and thus the same reasoning shows that
+% $$ \sum_{m=n_0}^n l(m) \leq c \left(\theta(n) - t_0\right) $$
+% where $t_0$ is the beginning of the busy period, and that
+% $$D(n) = t_0 + \frac{\sum_{m=n_0 }^n l(m)}{c}
+% $$
+% Thus $D(n) \leq \theta(n)$ in that case. \qed
+
+\subsection{Guaranteed Rate (GR) Nodes and the Max-Plus Approach}
+\mylabel{sec-gr}
+
+The service curve concept defined earlier can be approached from
+the dual point of view, which consists in studying the packet
+arrival and departure times instead of the functions $R(t)$ (which
+count the bits arrived up to time $t$). This latter approach leads
+to max-plus algebra (which has the same properties as min-plus),
+is often more appropriate to account for details due to variable
+packet sizes, but works well only when the service curves are of
+the rate-latency type. It also useful when nodes cannot be assumed
+to be FIFO per flow, as may be the case with DiffServ
+(Section~\ref{sec-diffserv}).
+
+GR also allows to show that many schedulers have the rate-latency
+service curve property. Indeed, a large number of practical
+implementations of GPS, other than PGSP, have been proposed in the
+literature; let us mention: virtual clock scheduling \cite{zha90},
+packet by packet generalized processor sharing \cite{pg93} and
+self-clocked fair queuing \cite{gol94}(see also \cite{gue96}). For
+a thorough discussion of practical implementations of GPS, see
+\cite{zha96, gue96}). These implementations differ in their
+implementation complexity and in the bounds that can be obtained.
+It is shown in \cite{GLV95} that all of these implementations fit
+in the following framework, called ``Guaranteed Rate", which we
+define now. We will also analyze how it relates to the min-plus
+approach.
+
+\begin{definition}[GR Node\cite{GLV95}]
+Consider a node that serves a flow. Packets are numbered in order
+of arrival. Let $a_n \geq 0, d_n \geq 0$ be the arrival and
+departure times. We say that a node is the a \emph{guaranteed
+rate} (GR) node for this flow, with rate $r$ and delay $e$, if it
+guarantees that $d_n \leq f_n + e$, where $f_n$ is defined by
+\eref{eq-gr-def}.
+\begin{equation}\mylabel{eq-gr-def}
+\bracket{ f_0=0\\
+    f_n= \max \left\{
+                   a_n, f_{n-1}
+                 \right\}
+             + \frac{l_n}{r} \gap \mfa n \geq 1
+            }
+\end{equation}
+\mylabel{def-gr}
+\end{definition}
+\index{Guaranteed Rate node}\index{GR}%
+The variables $f_n$ (``Guaranteed Rate Clocks") can be interpreted
+as the departures times from a FIFO constant rate server, with
+rate $r$. The parameter $e$ expresses how much the node deviates
+from it. Note however that \emph{a GR node need not be FIFO}. A GR
+node is also called ``Rate-Latency server".
+
+\textbf{Example: GPS.} Consider an ideal GPS scheduler, which
+allocates a rate $R_i=\frac{c \phi_i}{\sum_j \phi_j}$ to some flow
+$i$. It is a GR node for flow $i$, with rate $R_i$ and latency
+$=0$ (the proof is left to the reader)
+
+\begin{definition}[One Way Deviation of a scheduler from GPS]
+We say that $S$ deviates from GPS by $e$ if for all packet $n$
+the departure time satisfies
+\begin{equation}\mylabel{eq-gr-eq6}
+d_n\leq g_n + e
+\end{equation}
+where $g_n$ is the departure time from a hypothetical GPS node
+that allocates a rate $r=\frac{c \phi_1}{\sum_j \phi_j}$ to
+this flow (assumed to be flow 1).
+\end{definition}
+
+We interpret this definition as a comparison to a hypothetical
+GPS reference scheduler that would serve the same flows.
+\begin{theorem}
+\label{theo-grgps} If a scheduler satisfies \eref{eq-gr-eq6},
+then it is GR with rate $r$ and latency $e$.
+\end{theorem}
+\pr
+$g_n \leq f_n$ and the rest is immediate.
+
+\qed
+
+\textbf{Example: PGPS.} Consider a PGPS scheduler, which allocates
+a rate $R_i=\frac{c \phi_i}{\sum_j \phi_j}$ to some flow $i$. It
+is a GR node for flow $i$, with rate $R_i$ and latency
+$\frac{L}{c}$, where $L$ is the maximum packet size (among all
+flows present at the scheduler) (this follows from
+\pref{prop-pgps}).
+
+
+\begin{theorem}[Max-Plus Representation of GR]
+\mylabel{theo-grmaxplus} \mylabel{theo-GR} Consider a system where
+packets are numbered $1, 2, ...$ in order of arrival. Call $a_n$,
+$d_n$ the arrival and departure times for packet $n$, and $l_n$
+the size of packet $n$. Define by convention $d_0=0$. The system
+is a GR node with rate $r$ and latency $e$ if and only if for all
+$n$ there is some $k \in \{1, ..., n\} $ such that
+\begin{equation}\mylabel{eq-gr2091}\mylabel{eq-grmaxplus}
+ d_n \leq e + a_k + \frac{l_k + ... + l_n}{r}
+\end{equation}
+\end{theorem}
+\paragraph{Proof: } The recursion \eref{eq-gr-def} can be solved
+iteratively, using the same max-plus method as in the proof of
+\pref{theo-gcra-step}. Define
+$$
+ A^n_j=a_j +  \frac{l_j + ... + l_n}{r} \mfor 1 \leq j\leq n\\
+$$
+Then we obtain
+ $$
+ f_n  = \max(A_n^n , A_{n-1}^n , ... ,
+    A_1^n)$$
+The rest follows immediately. \qed
+
+\eref{eq-gr2091} is the dual of the service curve definition
+(\eref{eq-sercur-d2a} on \pgref{eq-gr2091}), with
+$\beta(t)=r(t-e)^+$. We now elucidate this relationship.
+
+\begin{theorem}[Equivalence with service curve]
+Consider a node with $L$-packetized input.
+\begin{enumerate}
+  \item If the node guarantees a minimum service curve equal to
+  the rate-latency function
+$\beta=\beta_{r,v}$, and if it is FIFO, then it is a GR node with
+rate $r$ and latency $v$.
+  \item Conversely, a GR node with rate $r$ and latency $e$
+is the concatenation of a service curve element, with service
+curve equal to the rate-latency function $\beta_{r,v}$, and an
+$L$-packetizer. If the GR node is FIFO, then so is the service
+curve element.
+\end{enumerate}
+ \mylabel{theo-grcrep}
+\end{theorem}
+The proof is long and is given at the end of this section.
+
+By applying \thref{theo-delvlp}, we obtain
+\begin{corollary}
+A GR node offers a minimum service curve $\beta_{r, v+
+\frac{l_{\max}}{r}}$ \mylabel{cor-gr-sercur}
+\end{corollary}
+The service curve can be used to obtain backlog bounds.
+\begin{theorem}[Delay Bound]
+\mylabel{theo-grcdelaybound}
+For an $\alpha$-smooth flow served in
+a (possibly non FIFO) GR node with rate $r$ and latency $e$, the
+delay for any packet is bounded by
+\begin{equation}\mylabel{eq-psrgnf1}\mylabel{eq-mpdel}
+  \sup_{t > 0} [\frac{\alpha(t)}{r} -  t] + e
+\end{equation}
+\end{theorem}
+\paragraph{Proof: } By \thref{theo-grmaxplus}, for any fixed $n$, we can find a
+$1\leq j\leq n$ such that
+$$
+f_n=a_j + \frac{l_j+...+l_n}{r} $$ The delay for packet $n$ is
+ $$
+ d_n - a_n \leq f_n + e -a_n
+ $$
+Define $t=a_n - a_j$. By hypothesis
+$$l_j+...+l_n \leq \alpha_r(t)$$
+where $\alpha_r(t)$ is the limit from the right of $\alpha$ at $t$.
+Thus
+ $$d_n -a_n \leq -t + \frac{\alpha_r(t)}{r} + e \leq \sup_{t \geq 0} [\frac{\alpha_r(t)}{r} -  t] + e
+ $$
+Now $\sup_{t > 0}[\frac{\alpha(t)}{r} -  t]=\sup_{t \geq
+0}[\frac{\alpha_r(t)}{r} -  t]$.
+ \qed
+\paragraph{Comment: }
+Note that \eref{eq-mpdel} is the horizontal deviation between the
+arrival curve $\alpha$ and the rate-latency service curve with
+rate $r$ and latency $e$. Thus, for FIFO GR nodes,
+\thref{theo-grcdelaybound} follows from \thref{theo-GR} and the
+fact that the packetizer can be ignored for delay computations.
+The information in \thref{theo-grcdelaybound} is that it also
+holds for non-FIFO nodes.
+
+\subsection{Concatenation of GR nodes}
+
+\paragraph{FIFO Nodes} For GR nodes that are FIFO per flow, the concatenation
+result obtained with the service curve approach applies.
+
+\begin{theorem} Specifically, the concatenation of $M$ GR nodes
+(that are FIFO per flow) with rates $r_m$ and latencies $e_m$
+is GR with rate $r= \min_m r_m$ and latency $e=
+\sum_{i=1,...,n} e_i +
+\sum_{i=1,...,n-1}\frac{L_{\max}}{r_i}$, where $L_{\max}$ is
+the maximum packet size for the flow. \mylabel{theo-grconc}
+\end{theorem}If $r_m=r$ for all $m$ then the extra term is $(M-1)\frac{L_{\max}}{r}$; it is due to packetizers.
+\pr
+By \thref{theo-grcrep}--(2), we can decompose system $i$ into
+a concatenation $\calS_i, \calP_i$, where $\calS_i$ offers the
+service curve $\beta_{r_i,e_i}$ and $\calP_i$ is a packetizer.
+
+Call $\calS$ the concatenation
+ $$\calS_1, \calP_1, \calS_2,
+\calP_2,...,\calS_{n-1},\calP_{n-1},\calS_n$$ By
+\thref{theo-grcrep}--(2), $\calS$ is FIFO and provides the
+service curve $\beta_{r,e}$. By \thref{theo-grcrep}--(1), it
+is GR with rate $r$ and latency $e$. Now $\calP_n$ does not
+affect the finish time of the last bit of every packet.
+
+\qed
+
+Note that a slight change if the proof of the theorem shows
+that the theorem is also valid if we replace $e=
+\sum_{i=1,...,n} e_i + \sum_{i=1,...,n-1}\frac{L_{\max}}{r_i}$
+by $e= \sum_{i=1,...,n} e_i +
+\sum_{i=2,...,n}\frac{L_{\max}}{r_i}$.
+
+\textbf{End-to-end Delay Bound.}
+
+A bound on the end-to-end delay through a concatenation of GR
+nodes is thus
+\begin{equation}\mylabel{eq-e2e-dlgr}
+ D=\sum_{m=1}^M v_m + l_{\max}\sum_{m=1}^{M-1} \frac{1}{r_m}+ \frac{\sigma}{\min_m r_m}
+\end{equation}
+which is the formula in \cite{GLV95}. It is a generalization of
+\eref{eq-e2edelvlp} on \pgref{eq-e2edelvlp}.
+
+\textbf{A Composite Node.}We analyze in detail one specific
+example, which often arises in practice when modelling a
+router. We consider a composite node, made of two components.
+The former (``variable delay component") imposes to packets a
+delay in the range $[\delta_{\max}-\delta, \delta_{\max}]$.
+The latter is FIFO and offers to its input the packet scale
+rate guarantee, with rate $r$ and latency $e$. We show that,
+if the variable delay component is known to be FIFO, then we
+have a simple result. We first give the following lemma, which
+has some interest of its own.
+
+\begin{lemma}[Variable Delay as GR]
+\mylabel{lem-vdgrc} Consider a node which is known to
+guarantee a delay $\leq \delta_{\max}$. The node need not be
+FIFO. Call $l_{\min}$ the minimum packet size. For any $r>0$,
+the node is GR with latency
+$e=[\delta_{\max}-\frac{l_{\min}}{r}]^+$ and rate $r$.
+\end{lemma}
+
+\pr With the standard notation in this section, the hypothesis
+implies that $d_n \leq a_n + \delta_{\max}$ for all $n \geq
+1$. Define $f_n$  by \eref{eq-gr-def}. We have $f_n\geq a_n +
+\frac{l_n}{r} \geq a_n + \frac{l_{\min}}{r}$, thus $d_n-f_n
+\leq \delta_{\max} - \frac{l_{\min}}{r}\leq
+[\delta_{\max}-\frac{l_{\min}}{r}]^+$.
+
+\qed
+
+\begin{theorem}(\emph{Composite GR Node with FIFO Variable Delay
+Component}) \mylabel{theo-fgvd} Consider the concatenation of
+two nodes. The former imposes to packets a delay  $\leq
+\delta_{\max}$. The latter is a GR node with rate $r$ and
+latency $e$. Both nodes are FIFO. The concatenation of the two
+nodes, in any order, is GR with rate $r$ and latency $e''=e
++\delta_{\max}$.
+\end{theorem}
+\pr
+The former node is
+GR($r',e'=[\delta_{\max}-\frac{l_{\min}}{r'}]^+$) for any $r'
+>r$. By \thref{theo-grconc} (and the note after it), the concatenation is
+GR($r,e+e'+\frac{l_{\max}}{r'}$). Let $r'$ go to $\infty$.
+
+\qed
+
+\paragraph{GR nodes that are not FIFO per flow} The concatenation
+result is no longer true. We study in detail the composite
+node.
+
+\begin{theorem}
+\mylabel{theo-nfgrvd} Consider the concatenation of two nodes.
+The first imposes to packets a delay in the range
+$[\delta_{\max}-\delta, \delta_{\max}]$. The second is FIFO
+and offers the guaranteed rate clock service to its input,
+with rate $r$ and latency $e$. The first node is not assumed
+to be FIFO, so the order of packet arrivals at the second node
+is not the order of packet arrivals at the first one. Assume
+that the fresh input is constrained by a continuous arrival
+curve $\alpha(\cdot)$. The concatenation of the two nodes, in
+this order,  offers to the fresh input the guaranteed rate
+clock service with rate $r$ and latency $$e''=e+ \delta_{\max}
++
+ \frac{\alpha( \delta) - l_{\min}}{r}
+$$
+\end{theorem}
+The proof is given in the next section.
+
+\textbf{Application: } For $\alpha(t)=\rho t + \sigma$, we
+find
+$$
+ e''=e+ \delta_{\max}+\frac{\rho \delta +
+\sigma -
+   l_{\min}}{r}
+$$
+
+
+\subsection{Proofs}
+
+\textbf{Proof of \thref{theo-grcrep}}
+
+\textbf{Part 1: } Consider a service curve element $\calS$. Assume
+to simplify the demonstration that the input and output functions
+$R$ and $R^*$ are right-continuous. Consider the virtual system
+$\calS^0$ made of a bit-by-bit greedy shaper with shaping curve
+$\lambda_r$, followed by a constant bit-by-bit delay element. The
+bit-by-bit greedy shaper is a constant bit rate server, with rate
+$r$. Thus the last bit of packet $n$ departs from it exactly at
+time $f_n$, defined by \eref{eq-gr-def}, thus the last bit of
+packet $n$ leaves $\calS^0$ at $d^0_n=f_n + e$. The output
+function of $\calS^0$ is $R^0=R \mpc \beta_{r,e}$. By hypothesis,
+$R^* \geq R^0$, and by the FIFO assumption, this shows that the
+delay in $\calS$ is upper bounded by the delay in $\calS'$. Thus
+$d_n \leq f_n +e$.
+
+
+\textbf{Part 2: } Consider the virtual system $\calS$ whose output
+$S(t)$ is defined by
+\begin{equation}\mylabel{eq-pr-defS}
+  \begin{array}{c}
+   \mif d_{i-1} < t \leq d_i\\
+    \; \; \mthen S(t)=\min\{R(t), \max[L(i-1), L(i) -r(d_i-t)]\}
+  \end{array}
+\end{equation}
+See \fref{fig-gr-sched} for an illustration. It follows
+immediately that $R'(t)=P^L(S(t))$.
+
+Also consider the virtual system $\calS^0$ whose output is
+ $$S^0(t) = (\beta_{r,v}\mpc R)(t)$$
+$\calS^0$ is the constant
+ rate server, delayed by $v$. Our goal is now to show that
+ $S \geq S^0$.
+
+Call $d^0_i$ the departure time of the last bit of packet $i$ in
+$\calS_0$ (see \fref{fig-gr-sched} for an example with $i=2$). Let
+$u=d^0_i - d_i$. The definition of GR node means that $u \geq 0$.
+Now since $\calS_0$ is a shifted constant rate server, we have:
+ $$\mif d^0_i-\frac{l_i}{r} <s < d^0_i
+ \mthen
+ S^0(s) = L(i) - r(d^0_i-s)
+ $$
+Also $d^0_{i-1} \leq d^0_i-\frac{l_i}{r}$ thus
+$S^0(d^0_i-\frac{l_i}{r}) = L(i-1)$ and
+ $$\mif s \leq  d^0_i -\frac{l_i}{r}
+ \mthen S^0(s) \leq L(i-1)
+ $$
+It follows that
+\begin{equation}\mylabel{eq-gr-prv2}
+\mif d_{i-1}+u <s < d^0_i
+ \mthen
+ S^0(s) \leq \max[L(i-1), L(i) -r(d^0_i-s)]
+\end{equation}
+Consider now some $t \in (d_{i-1},d_i]$ and let $s=t+u$. If
+$S(t)=R(t)$, since $R \geq  S^0$, we then obviously have $S(t)
+\geq S^0(t)$. Else, from \eref{eq-gr-def}, $S(t)=\max[L(i-1), L(i)
+-r(d_i-t)]$. We have $d^0_i-s=d_i-t$ and thus, combining with
+\eref{eq-gr-prv2}, we derive that $S^0(s) \leq S(t)$. Now $s \geq
+t$, thus finally $S^0(t) \leq S(t)$. One can also readily see that
+$\calS$ is FIFO if $d_{i-1}\leq d_i$ for all $i$. \qed
+\begin{figure}[!htbp]
+\insfig{grsercur2}{0.9}
+    \mycaption{Arrival and departure functions for GR node. The virtual system
+    output is $S(t)$.}
+    \mylabel{fig-gr-sched}
+\end{figure}
+
+
+\textbf{Proof of \thref{theo-nfgrvd}. }
+
+We use the same notation and convention as in the proof of
+\thref{theo-nfvd}. We can also assume that all packet arrivals
+are distinct, using the same type of reduction.
+
+Fix some $n \geq 1$; due to \thref{theo-grmaxplus}, it is
+sufficient to show that  there is some $k \in \{1, ..., n\}$
+ such that
+\begin{equation}\mylabel{eq-gr2091a}
+ d_n \leq e_2 + a_k + \frac{l_k + ... + l_n}{r}
+\end{equation}
+
+By hypothesis, there exists some $j$ such that $b_j \leq b_n$
+and
+\begin{equation}\mylabel{eq-kjsd82}
+  d_n \leq b_j+ e + \frac{B[b_j, b_n]}{r}
+\end{equation}
+We cannot assume that $j \leq n$; thus, define $k$ as the
+oldest packet arrived in the interval $[b_j, b_n]$, in other
+words: $k=\inf\{i \geq 1: b_j \leq b_i \leq b_n \}$.
+Necessarily, we have now $k \leq n$.
+
+Any packet that arrives at the second node in $[b_j, b_n]$
+must have arrived at node $1$ after or with packet $k$, and
+before $b_n$. Thus $B[b_j, b_n] \leq A[a_k, b_n]$. Now $b_n
+\leq a_n + \delta$. Thus by \lref{lem-arrcur} in this
+appendix:
+$$
+  \begin{array}{l}
+   B[b_j, b_n] \leq A[a_k, a_n]+ A(a_n, b_n] \\
+    \leq A[a_k, a_n] + \alpha(\delta) - l_{\min}
+  \end{array}
+$$
+Also, $b_j \leq b_k \leq a_k + \delta$ and by
+\eref{eq-kjsd82}:
+$$
+d_n \leq a_k + e + \delta + \alpha(\delta) + A[a_k, a_n] -
+l_{\min}
+$$
+which shows \eref{eq-gr2091a}.
+
+
+
+
+\section{The Integrated Services Model of the IETF}
+\mylabel{sec-L20-fcs}
+
+\subsection{The Guaranteed Service}
+
+The Internet supports different reservation principles. Two
+services are defined: the ``guaranteed"\index{guaranteed service}
+service, and the `` controlled load"\index{controlled load
+service} service. They differ in that the former provides real
+guarantees, while the latter provides only approximate guarantees.
+We outline the differences in the rest of this section. In both
+cases, the principle is based on ``admission control", which
+operates as follows.
+\begin{itemize}
+  \item In order to receive the guaranteed or
+controlled load service, a flow must first perform a reservation
+during a flow setup phase.
+  \item A flow must confirm to an arrival curve of the form
+  $\alpha(t) = \min(M+pt, rt+b)$, which is called the T-SPEC (see
+  Section~\ref{sec-lbarcur} on page\pageref{eq-tspec}). The T-SPEC
+  is declared during the reservation phase.
+  \item All routers along the path accept or reject the
+  reservation. With the guaranteed service, routers accept
+  the reservation only if they are able to provide a service curve
+  guarantee and enough buffer for loss-free operation. The service
+  curve is expressed during the reservation phase, as explained
+  below.
+
+  For the
+  controlled load service, there is no strict definition of what
+  accepting a reservation means. Most likely, it means that the
+  router has an estimation module that says that, with good
+  probability, the reservation can be accepted and little loss
+  will occur; there is no service curve or delay guarantee.
+\end{itemize}
+
+In the rest of this chapter we focus on the guaranteed service.
+Provision of the controlled load service relies on models with
+loss, which are discussed in Chapter~\ref{L30}.
+
+\input{L21-rsvp}
+\section{Schedulability}
+\mylabel{sec-sced}
+
+So far, we have considered one flow in isolation and assumed that
+a node is able to offer some scheduling, or service curve
+guarantee. In this section we address the global problem of
+resource allocation.
+
+When a node performs a reservation, it is necessary to check
+whether local resources are sufficient. In general, the method for
+this consists in breaking the node down into a network of building
+blocks such as schedulers, shapers, and delay elements. There are
+mainly two resources to account for: bit rate (called
+``bandwidth") and buffer. The main difficulty is the allocation of
+bit rate. Following \cite{scp95}, we will see in this section that
+allocating a rate amounts to allocating a service curve. It is
+also equivalent to the concept of schedulability.
+
+Consider the simple case of a PGPS scheduler, with outgoing rate
+$C$. If we want to allocate rate $r_i$ to flow $i$, for every $i$,
+then we can allocate to flow $i$ the GPS weight
+$\phi_i=\frac{r_i}{C}$. Assume that
+\begin{equation}
+ \sum_i r_i \leq C
+ \mylabel{eq-sched-pgps}
+\end{equation}
+Then we know from \pref{prop-pgps} and \coref{cor-gr-sercur} that
+every flow $i$ is guaranteed the rate-latency service curve with
+rate $r_i$ and latency $\frac{L}{C}$. In other words, the
+schedulability condition for PGPS is simply \eref{eq-sched-pgps}.
+However, we will see now that a schedulability conditions are not
+always as simple. Note also that the end-to-end delay depends not
+only on the service curve allocated to the flow, but also on its
+arrival curve constraints.
+
+Many schedulers have been proposed, and some of them do not fit in
+the GR framework. The most general framework in the context of
+guaranteed service is given by SCED (Service Curve Earliest
+Deadline first)~\cite{scp95},%
+\index{SCED}%
+which we describe now. We give the theory for constant size
+packets and slotted time; some aspects of the general theory for
+variable length packets are known \cite{Changbook}, some others
+remain to be done. We assume without loss of generality that every
+packet is of size 1 data unit.
+
+\subsection{EDF Schedulers}%
+\index{Earliest Deadline First (EDF) scheduler}%
+\index{EDF see Earliest Deadline First}%
+%
+As the name indicates, SCED is based on the concept of Earliest
+Deadline First (EDF) scheduler. An EDF scheduler assigns a
+deadline $D^n_i$ to the $n$th packet of flow $i$, according to
+some method. We assume that deadlines are wide-sense increasing
+within a flow. At every time slot, the scheduler picks at  one of
+the packets with the smallest deadline among all packets present.
+There is a wide variety of methods for computing deadlines. The
+``delay based" schedulers~\cite{LWF96} %
+\index{Delay Based Scheduler}%
+set $D^n_i= A^n + d_i$ where $A^n$ is the arrival time for the
+$n$th packet for flow $i$, and $d_i$ is the delay budget allocated
+to flow $i$. If $d_i$ is independent of $i$, then we have a FIFO
+scheduler. We will see that those are special cases of SCED, which
+we view as a very general method for computing deadlines.
+
+An EDF scheduler is work conserving, that is, it cannot be idle if
+there is at least one packet present in the system. A consequence
+of this is that packets from different flows are not necessarily
+served in the order of their deadlines. Consider for example a
+delay based scheduler, and assume that flow $1$ has a lrage delay
+budget $d_1$, while flow $2$ has a small delay budget $d_2$. It
+may be that a packet of flow $1$ arriving at $t_1$ is served
+before a packet of flow $2$ arriving at $t_2$, even though the
+deadline of packet $1$, $t_1 + d_1$ is larger than the deadline of
+packet $2$.
+
+We will now derive a general schedulability criterion for EDF
+schedulers. Call $R_i(t)$, $t \in \Nats$, the arrival function for
+flow $i$. Call $Z_i(t)$ the number of packets of flow $i$ that
+have deadlines $\leq t$. For example, for a delay based scheduler,
+$Z_i(t)=R_i(t-d_i)$. The following is a modified version of
+\cite{Changbook}.
+
+\begin{proposition}
+ \mylabel{prop-edf21}
+ Consider an EDF scheduler with $I$ flows and outgoing rate $C$.
+ A necessary condition for all packets to be served within their
+ deadlines is
+\begin{equation}\mylabel{eq-edf-cn}
+ \mfa s \leq t : \;   \sum_{i=1}^{I} Z_i(t) - R_i(s) \leq C(t-s)
+\end{equation}
+ A sufficient condition is
+ \begin{equation}\mylabel{eq-edf-cs}
+ \mfa s \leq t  : \;  \sum_{i=1}^{I} [Z_i(t) - R_i(s)]^+ \leq C(t-s)
+\end{equation}
+\end{proposition}
+\pr
+We first prove the necessary condition. Call $R'_i$ the output for
+flow $i$. Since the scheduler is work conserving, we have
+$\sum_{i=1}^{I} R'_i = \lambda_C \mpc(\sum_{i=1}^{I} R_i)$. Now
+$R'_i \geq Z_i$ by hypothesis. Thus
+$$
+\sum_{i=1}^{I} Z_i(t) \leq \inf_{s \in [0,t]} C(t-s) +
+\sum_{i=1}^{I} R_i(s)
+$$
+which is equivalent to \eref{eq-edf-cn}
+
+Now we prove the sufficient condition, by contradiction. Assume
+that at some $t$ a packet with deadline $t$ is not yet served. In
+time slot $t$, the packet served has a deadline $\leq t$,
+otherwise our packet would have been chosen instead. Define $s_0$
+such that the time interval $[s_0+1, t]$ is the maximum time
+interval ending at $t$ that is within a busy period and for which
+all packets served have deadlines $\leq t$.
+
+Now call $\calS$ the set of flows that have a packet with deadline
+$\leq t$ present in the system at some point in the interval
+$[s_0+1, t]$. We show that if
+\begin{equation}\mylabel{eq-proof-edf-2}
+  \mif i \in \calS
+  \mthen
+  R'_i(s_0)=R_i(s_0)
+\end{equation}
+that is, flow $i$ is not backlogged at the end of time slot $s_0$.
+Indeed, if $s_0+1$ is the beginning of the busy period, then the
+property is true for any flow. Otherwise, we proceed by
+contradiction. Assume that $i\in \calS$ and that $i$ would have
+some backlog at the end of time slot $s_0$. At time $s_0$ some
+packet with deadline $>t$ was served; thus the deadline of all
+packets remaining in the queue at the end of time slot $s_0$ must
+have a deadline $>t$. Since deadlines are assumed wide-sense
+increasing within a flow, all deadlines of flow $i$ packets that
+are in the queue at time $s_0$, or will arrive later, have
+deadline $>t$, which contradicts that $i \in \calS$.
+
+Further, it follows from the last argument that if $i \in \calS$,
+then all packets served before or at $t$ must have a deadline
+$\leq t$. Thus
+ $$
+ \mif i \in \calS \mthen R'_i(t) \leq Z_i(t)
+ $$
+
+Now since there is at least one packet with deadline $\leq t$ not
+served at $t$, the previous inequality is strict for at least one
+$i$ in $\calS$. Thus
+\begin{equation}\mylabel{eq-proof-edf-1}
+  \sum_{i \in \calS} R'_i(t) < \sum_{i \in \calS} Z_i(t)
+\end{equation}
+Observe that all packets served in $[s_0+1, t]$ must be from flows
+in $\calS$. Thus
+ $$
+ \sum_{i=1}^I (R'_i(t)-R'_i(s_0)) = \sum_{i \in \calS}(R'_i(t)-R'_i(s_0))
+ $$
+Combining with \eref{eq-proof-edf-2} and \eref{eq-proof-edf-1}
+gives
+ $$
+\sum_{i=1}^I (R'_i(t)-R'_i(s_0)) < \sum_{i \in
+\calS}(Z_i(t)-R_i(s_0))
+$$
+Now $[s_0+1, t]$ is entirely in a busy period thus $\sum_{i=1}^I
+(R'_i(t)-R'_i(s_0))=C(t-s_0)$; thus
+ $$
+C(t-s_0) < \sum_{i \in \calS}(Z_i(t)-R_i(s_0)) = \sum_{i \in
+\calS}(Z_i(t)-R_i(s_0))^+ \leq \sum_{i=1}^{I}(Z_i(t)-R_i(s_0))^+
+ $$
+ which contradicts \eref{eq-edf-cs}.
+ \qed
+
+A consequence of the proposition that if a set of flows is
+schedulable for some deadline allocation algorithm, then it is
+also schedulable for any other deadline allocation method that
+produces later or equal deadlines. Other consequences, of
+immediate practical importance, are drawn in the next section.
+
+\subsection{SCED Schedulers \cite{saro96}}
+Given, for all $i$, a function $\beta_i$, SCED defines a deadline
+allocation algorithm that guarantees, under some conditions, that
+flow $i$ does have $\beta_i$ as a minimum service
+curve\footnote{We use the original work in \cite{saro96}, which is
+called there ``SCED-B". For simplicity, we call it SCED.}. Roughly
+speaking, SCED sets $Z_i(t)$, the number of packets with deadline
+up to $t$, to $(R_i \mpc \beta_i)(t)$.
+\begin{definition}[SCED]
+Call $A^n_i$ the arrival time for packet $n$ of flow $i$. Define
+functions $R^n_i$ by:
+$$
+ R^n_i(t) = \inf_{s \in [0, A^n_i]} [R_i(s) + \beta_i (t-s)]
+$$
+With SCED, the deadline for packet $n$ of flow $i$ is defined by
+$$
+D^n_i = ( R^n_i)^{-1}(n) = \min \{t \in \Nats :  R^n_i(t) \geq n
+\}
+$$
+Function $\beta_i$ is called the ``target service curve" for flow
+$i$. \mylabel{def-sced}
+\end{definition}
+Function $R^n_i$ is similar to the min-plus convolution $R_i \mpc
+\beta_i$, but the minimum is computed over all times up to
+$A^n_i$. This allows to compute a packet deadline as soon as the
+packet arrives; thus SCED can be implemented in real time. The
+deadline is obtained by applying the pseudo-inverse of $R^n_i$, as
+illustrated on \fref{fig-defsced}. If $\beta_i=\delta_{d_i}$, then
+it is easy to see that $D^n_i=A^n_i+d_i$, namely, SCED is the
+delay based scheduler in that case.
+\begin{figure}[!htbp]
+  \insfig{sced1}{0.8}
+  \mycaption{Definition of SCED. Packet $n$ of flow $i$ arrives at time $A^n_i$.
+  Its deadline is $D^n_i$.}
+  \mylabel{fig-defsced}
+\end{figure}
+The following proposition is the main property of SCED. It shows
+that SCED implements a deadline allocation method based on service
+curves.
+\begin{proposition}
+ For the SCED scheduler, the number of packets with deadline
+ $\leq t$ is given by $Z_i(t)=\lfloor (R_i \mpc \beta_i) (t)\rfloor$
+ \mylabel{prop-sced-10}
+\end{proposition}
+\pr
+We drop index $i$ in this demonstration. First, we show that
+$Z(t)\geq \lfloor( R \mpc \beta)(t) \rfloor$. Let $n=\lfloor( R
+\mpc \beta)(t)\rfloor$. Since $R \mpc \beta \leq R$ and $R$ takes
+integer values, we must have $R(t) \geq n$ and thus $A^n \leq t$.
+Now $R^n(t)\geq (R \mpc \beta)(t)$ thus
+$$
+R^n(t) \geq  (R \mpc \beta)(t) \geq n
+$$
+By definition of SCED, $D^n$ this implies that $D^n \leq t$ which
+is equivalent to $Z(t) \geq n$.
+
+Conversely, for some fixed but arbitrary $t$, let now $n=Z(t)$.
+Packet $n$ has a deadline $\leq t$, which implies that $A^n \leq
+t$ and for all  $s \in [0,A^n]$ :
+\begin{equation}\mylabel{eq-sced-sercur}
+R(s) + \beta(t-s) \geq n
+\end{equation}
+Now for $s \in [A^n, t]$ we have  $R(s) \geq n$ thus $R(s) +
+\beta(t-s) \geq n $. Thus \eref{eq-sced-sercur} is true for all $s
+\in [0,t]$, which means that $(R \mpc \beta)(t) \geq n$. \qed
+
+\begin{theorem}[Schedulability of SCED, ATM]
+Consider a SCED scheduler with $I$ flows, total outgoing rate $C$,
+and target service curve $\beta_i$ for flow $i$.
+\begin{enumerate}
+  \item If
+\begin{equation}\mylabel{eq-schedofsced-1}
+ \sum_{i=1}^I \beta_i(t) \leq Ct \mfa t \geq 0
+\end{equation}
+then every packet is served before or at its deadline and every
+flow $i$
+  receives $\lfloor \beta_i \rfloor$ as a service curve.
+  \item Assume that in addition we know that every flow $i$ is constrained
+  by an arrival curve $\alpha_i$. If
+  \begin{equation}\mylabel{eq-schedofsced-2}
+ \sum_{i=1}^I (\alpha_i \mpc \beta_i)(t) \leq Ct \mfa t \geq 0
+\end{equation}
+  then the same conclusion holds
+\end{enumerate}\mylabel{theo-schedofsced}
+\end{theorem}
+\pr
+\begin{enumerate}
+  \item \pref{prop-sced-10} implies that $Z_i(t) \leq R_i(s) +
+  \beta_i(t-s)$ for $0 \leq s \leq t$. Thus $Z_i(t) - R_i(s) \leq
+  \beta_i(t-s)$. Now $0 \leq \beta_i(t-s)$ thus
+  $$
+  [Z_i(t) - R_i(s)]^+ = \max [ Z_i(t) - R_i(s),0] \leq \beta_i(t-s)
+  $$
+  By hypothesis, $\sum_{i=1}^I \beta_i(t-s) \leq C(t-s)$ thus by
+  application of \pref{prop-edf21}, we know that every packet is
+  served before or at its deadline. Thus $R'_i  \geq Z_i$ and from
+  \pref{prop-sced-10}:
+  $$
+  R'_i  \geq Z_i  = \lfloor \beta_i \mpc R_i \rfloor
+  $$
+ Now $R_i$ takes only integer values thus $\lfloor \beta_i \mpc R_i
+ \rfloor= \lfloor \beta_i \rfloor  \mpc R_i$.
+  \item By hypothesis, $R_i = \alpha_i \mpc R_i  $ thus
+  $Z_i=\lfloor \alpha_i \mpc \beta_i  \mpc R_i \rfloor$ and we can
+  apply the same argument, with $ \alpha_i \mpc  \beta_i$ instead of
+$\beta_i$. \qed
+\end{enumerate}
+
+\paragraph{Schedulability of delay based schedulers}
+
+A delay based scheduler assigns a delay objective $d_i$ to all
+packets of flow $i$. A direct application of
+\thref{theo-schedofsced} gives the following schedulability
+condition.
+\begin{theorem}[\cite{LWF96}]
+Consider a delay based scheduler that serves $I$ flows, with delay
+$d_i$ assigned to flow $i$. All packets have the same size and
+time is slotted. Assume flow $i$ is $\alpha_i$-smooth, where
+$\alpha_i$ is sub-additive. Call $C$ the total outgoing bit rate.
+Any mix of flows satisfying these assumptions is schedulable if
+$$
+\sum_i \alpha_i(t - d_i) \leq Ct
+$$
+If $\alpha_i(t) \in \Nats$ then the condition is necessary.
+\mylabel{theo-edf-sched}
+\end{theorem}
+\pr
+A delay based scheduler is a special case of SCED, with target
+service curve $\beta_i=\delta_{d_i}$. This shows that the
+condition in the theorem is sufficient. Conversely, consider the
+greedy flows given by $R_i(t)=\alpha_i(t)$. This is possible
+because $\alpha_i$ is assumed to be sub-additive. Flow $R_i$ must
+be schedulable, thus the output $R'_i$ satisfies $R'_i(t) \geq
+\alpha_i(i- d_i)$. Now $\sum_i R'_i(t) \leq ct$, which proves that
+the condition must hold. \qed
+
+It is shown in \cite{LWF96} that a delay based scheduler has the
+largest schedulability region among all schedulers, given arrival
+curves and delay budgets for every flow. Note however that in a
+network setting, we are interested in the end-to-end delay bound,
+and we know (\sref{sec-concat}) that it is generally less than the
+sum of per hop bounds.
+
+The schedulability of delay based schedulers requires that an
+arrival curve is known and enforced at every node in the network.
+Because arrival curves are modified by network nodes, this
+motivates the principle of Rate Controlled Service Disciplines
+(RCSDs) \cite{chuck90,zf94,gue96}, which implement in every node a
+packet shaper followed by a delay based scheduler. The packet
+shaper guarantees that an arrival curve is known for every flow.
+Note that such a combination is not work conserving.
+
+Because of the "pay bursts only once" phenomenon, RCSD might
+provide end-to-end delay bounds that are worse than guaranteed
+rate nodes. However, it is possible to avoid this by aggressively
+reshaping flows in every node, which, from \thref{theo-edf-sched},
+allows us to set smaller deadlines. If the arrival curves
+constraints on all flows are defined by a single leaky bucket,
+then it is shown in \cite{boyer,peris97} that one should reshape a
+flow to its sustained rate at every node in order to achieve the
+same end-to-end delay bounds as GR nodes would.
+
+
+\paragraph{Schedulability of GR nodes}
+Consider the family of GR nodes, applied to the ATM case. We
+cannot give a general schedulability condition, since the fact
+that a scheduler is of the GR type does not tell us exactly how
+the scheduler operates. However, we show that for any rate $r$ and
+delay $v$ we can implement a GR node with SCED.
+\begin{theorem}[GR node as SCED, ATM case]
+ Consider the SCED scheduler with $I$ flows and outgoing rate $C$.
+ Let the target service curve for flow $i$ be
+ equal to the rate-latency service curve with rate $r_i$ and
+ latency $v_i$. If
+ $$
+ \sum_{i=1}^I r_i \leq C
+ $$
+ then the scheduler is a GR node for each flow $i$, with rate
+$r_i$ and delay $v_i$.
+ \mylabel{theo-grissched}
+\end{theorem}
+\pr
+From \pref{prop-sced-10}:
+$$Z_i(t)=\lfloor (R_i \mpc\lambda_{r_i})(t-v_i) \rfloor$$
+thus $Z_i$ is the output of the constant rate server, with rate
+$r_i$, delayed by $v_i$. Now from \thref{theo-schedofsced} the
+condition in the theorem guarantees that $R'_i \geq Z_i$, thus the
+delay for any packet of flow $i$ is bounded by the delay of the
+constant rate server with rate $r_i$, plus $v_i$. \qed
+
+Note the fundamental difference between rate based and delay based
+schedulers. For the former, schedulability is a condition on the
+sum of the rates; it is independent of the input traffic. In
+contrast, for delay based schedulers, schedulability imposes a
+condition on the arrival curves. Note however that in order to
+obtain a delay bound, we need some arrival curves, even with delay
+based schedulers.
+
+%\paragraph{Notes on Network Wide Allocation of service curves}
+%\thref{}
+%\paragraph{Optimal target service curve}
+\paragraph{Better than Delay Based scheduler}
+A scheduler need not be either rate based or delay based. Rate
+based schedulers suffer from coupling between delay objective and
+rate allocation: if we want a low delay, we may be forced to
+allocate a large rate, which because of \thref{theo-grissched}
+will reduce the number of flows than can be scheduled. Delay based
+schedulers avoid this drawback, but they require that flows be
+reshaped at every hop. Now, with clever use of SCED, it is
+possible to obtain the benefits of delay based schedulers without
+paying the price of implementing shapers.
+
+Assume that for every flow $i$ we know an arrival curve $\alpha_i$
+and we wish to obtain an end-to-end delay bound $d_i$. Then the
+smallest network service curve that should be allocated to the
+flow is $\alpha_i \mpc \delta_{d_i}$ (the proof is easy and left
+to the reader). Thus a good thing to do is to build a scheduler by
+allocating to flow $i$ the target service curve $\alpha_i \mpc
+\delta_{d_i}$. The schedulability condition is the same as with a
+delay based scheduler, however, there is a significant difference:
+the service curve is guaranteed even if some flows are not
+conforming to their arrival curves. More precisely, if some flows
+do not conform to the arrival curve constraint, then the service
+curve is still guaranteed, but the delay bound is not.
+
+This observation can be exploited to allocate service curves in a
+more flexible way than what is done in \sref{sec-L20-fcs}
+\cite{CruzSCED}. Assume flow $i$ uses the sequence of nodes
+$m=1,...,M$. Every node receives a part $d^m_i$ of the delay
+budget $d_i$, with $\sum_{m=1}^M d^m_i \leq d_i$. Then it is
+sufficient that every node implements SCED with a target service
+curve $\beta^m_i= \delta_{d^m_i} \mpc \alpha_i$ for flow $i$. The
+schedulability condition at node $m$ is
+ $$
+ \sum_{j \in E_m} \alpha_j(t-d^m_j) \leq C_m t
+ $$
+where $E_m$ is the set of flows scheduled at node $m$ and $C_m$ is
+the outgoing rate of node $m$. If it is satisfied, then flow $i$
+receives $\alpha_i \mpc \delta_{d_i} $ as end-to-end service curve
+and therefore has a delay bounded by $d_i$. The schedulability
+condition is the same as if we had implemented at node $m$ the
+combination of a delay based scheduler with delay budget $d^m_i$,
+and a reshaper with shaping curve $\alpha_i$; but we do not have
+to implement a reshaper. In particular, the delay bound for flow
+$i$ at node $m$ is larger than $d^m_i$; we find again the fact
+that the end-to-end delay bound is less than the sum of individual
+bounds.
+
+In \cite{saro96}, it is explained how to allocate a service curves
+$\beta_i^m$ to every network element $m$ on the path of the flow,
+such that $\beta_i^1 \mpc \beta_i^2 \mpc ...= \alpha_i \mpc
+\delta_i$, in order to obtain a large schedulability set. This
+generalizes and improves the schedulability region of RCSD.
+
+\paragraph{Extension to variable length packets}
+We can extend the previous results to variable length packets; we
+follow the ideas in \cite{Changbook}. The first step is to
+consider a fictitious preemptive EDF scheduler (system I), that
+allocates a deadline to every bit. We define $Z_i^{I}(t)$ as
+before, as the number of bits whose deadline is $\leq t$. A
+preemptive EDF scheduler serves the bits present in the system in
+order of their deadlines. It is preemptive (and fictitious) in
+that packets are not delivered entirely, but, in contrast, are
+likely to be interleaved. The results in the previous sections
+apply with no change to this system.
+
+The second step is to modify system I by allocating to every bit a
+deadline equal to the deadline of the last bit in the packet. Call
+it system II. We have $Z_i^{II}(t)=P^{L_i}(Z_i^{I}(t))$ where
+$P^{L_i}$ is the cumulative packet length (\sref{sec-vlp}) for
+flow $i$. From the remarks following \pref{prop-edf21}, it follows
+that if system I is schedulable, then so is system II. System II
+is made of a preemptive EDF scheduler followed by a packetizer.
+
+The third step consists in defining ``packet-EDF" scheduler
+(system III); this is derived from system II in the same way as
+PGSP is from GPS. More precisely, the packet EDF scheduler picks
+the next packet to serve among packets present in the system with
+minimum deadline. Then, when a packet is being served, it is not
+interrupted. We also say that system III is the non-preemptive EDF
+scheduler. Then the departure time of any packet in system III is
+bounded by its departure time in system II plus
+$\frac{l_{\max}}{C}$ where $l_{\max}$ is the maximum packet size
+across all flows and $C$ is the total outgoing rate. The proof is
+similar to \pref{prop-pgps} and is left to the reader (it can also
+be found in \cite{Changbook}).
+
+We can apply the three steps above to a SCED scheduler with
+variable size packets, called ``Packet-SCED".
+\begin{definition}[Packet SCED]
+A PSCED schedulers is a non-premptive EDF schedulers, where
+deadlines are allocated as follows. Call $A^n_i$ the arrival time
+for packet $n$ of flow $i$. Define functions $R^n_i$ by:
+$$
+ R^n_i(t) = \inf_{s \in [0, A^n_i]} [R_i(s) + \beta_i (t-s)]
+$$
+With PSCED, the deadline for packet $n$ of flow $i$ is defined by
+$$
+D^n_i = ( R^n_i)^{-1}(L_i(n)) = \min \{t \in \Nats :  R^n_i(t)
+\geq (L_i(n)) \}
+$$
+where $L_i$ is the cumulative packet length for flow $i$. Function
+$\beta_i$ is called the ``target service curve" for flow $i$.
+\mylabel{def-psced}
+\end{definition}
+
+The following proposition follows from the discussion above.
+\begin{proposition}\cite{Changbook}
+Consider a PSCED scheduler with $I$ flows, total outgoing rate
+$C$, and target service curve $\beta_i$ for flow $i$. Call
+$l^{i}_{\max}$ the maximum packet size for flow $i$ and let
+$l_{\max}=\max_i l^{i}_{\max}$.
+\begin{enumerate}
+  \item If
+\begin{equation}\mylabel{eq-schedofsced-21}
+ \sum_{i=1}^I \beta_i(t) \leq Ct \mfa t \geq 0
+\end{equation}
+then every packet is served before or at its deadline plus
+$\frac{l_{\max}}{C}$. A bound on packet delay is $h(\alpha_i,
+\beta_i)+\frac{l_{\max}}{C}$. Moreover, every flow $i$
+  receives
+  $[\beta_i(t-l^{i}_{\max}) - \frac{l_{\max}}{C}]^+$
+  as a service curve.
+  \item Assume that, in addition, we know that every flow $i$ is constrained
+  by an arrival curve $\alpha_i$. If
+  \begin{equation}\mylabel{eq-schedofsced-22}
+ \sum_{i=1}^I (\alpha_i \mpc \beta_i)(t) \leq Ct \mfa t \geq 0
+\end{equation}
+  then the same conclusion holds.
+\end{enumerate}\mylabel{theo-schedofpsced}
+\end{proposition}
+Note that the first part of the conclusion means that the maximum
+packet delay can be computed by assuming that flow $i$ would
+receive $\beta_i$ (not $\beta_i(t-l^{i}_{\max})$) as a service
+curve, and adding $\frac{\max}{C}$.
+\pr
+It follows from the three steps above that the PSCED scheduler can
+be broken down into a preemptive EDF scheduler, followed by a
+packetizer, followed by a delay element. The rest follows from the
+properties of packetizers and \thref{theo-schedofsced}.
+%
+%\begin{theorem}[Schedulability of EDF\cite{LWF96}]
+%Take the same assumptions as in \thref{theo-edf-sched}, but with
+%variable length packets, and with continuous time. Assume further
+%that flows are numbered in order of increasing delays, so $d_1
+%\leq d_2 \leq ... \leq d_F$. Call $l_f$ the maximum packet size
+%for flow $f$. Any mix of flows satisfying these assumptions is
+%schedulable if and only if for all $t \geq 0$
+%\begin{equation}\mylabel{eq-edf-pr}
+%  \sum_f \alpha_f(t - d_f) \leq Ct
+%\end{equation}
+%and for all $t$ such that $d_1 \leq t <d_F$
+% \begin{equation}\mylabel{eq-edf-npr}
+%\sum_f \alpha_f(t - d_f) \leq Ct - \max_{f: d_f > t  } l_f
+% \end{equation}
+%\mylabel{theo-edf-sched2}
+%\end{theorem}
+%The idea of the proof is the same as for the ATM case and is not
+%given here (see \cite{LWF96}). Note that if we would allow the EDF
+%scheduler to be preemptive, then the condition would be
+%\eref{eq-edf-pr} only. In other words, \eref{eq-edf-pr} expresses
+%the additional delay due to packets that cannot be preempted.
+\subsection{Buffer Requirements}
+\mylabel{sec-bufalloc}
+
+As we mentioned at the beginning of this section, buffer
+requirements have to be computed in order to accept a reservation.
+The condition is simply $\sum_i X_i \leq X$ where $X_i$ is the
+buffer required by flow $i$ at this network element, and $X$ is
+the total buffer allocated to the class of service. The
+computation of $X_i$ is based on \thref{theo-vbr-ratlat}; it
+requires computing an arrival curve of every flow as it reaches
+the node. This is done using \thref{theo-vbr-ratlat2} and the flow
+setup algorithm, such as in \dref{def-flowsetup}.
+
+It is often advantageous to reshape flows at every node. Indeed,
+in the absence of reshaping, burstiness is increased linearly in
+the number of hops. But we know that reshaping to an initial
+constraint does not modify the end-to-end delay bound and does not
+increase the buffer requirement at the node where it is
+implemented. If reshaping is implemented per flow, then the
+burstiness remains the same at every node.
+%\section{A network calculus view of scheduling}
+
+
+%\subsection{A second look at GPS}
+%  loop effects
+%
+%  garanties deduites des limites sur les autres flux
+%
+%
+
+% section Non-Work Conserving Schedulers
+%\mylabel{sec-nws}
+%
+%
+%Combination of policing and FIFO queues
+%
+%Spacer Controller + FIFO comme alternative.
+%Mettre la discussion du papier de Cruz et al dans ToN
+%
+%Comprendre le lien entre eff bw et la regionde schedulabilite de
+%Liebeherr
+%  Scheduling
+%
+%  Output of a packet based shaper
+%
+%  Scheduling conditions for EDF
+%
+%  Schedulers faits d'un edf et d'un shaper
+%
+%  Schedulability conditions in a network with feedback (Peris,
+%  Chang)
+%
+%  RCS thesis a reecrire
+%
+%
+%     strict service curve guarantees
+%
+%     (1) si source est localement stable alors service curve
+%rt (facile)
+%
+% (2) sinon on a quand meme des bornes par le principe des greedy
+%sources -> ce point reste a elucider (definir la service curve
+%dans ce cas)
+%
+%
+%
+%
+%idees de Maher: reprendre WFQ avec W(s,t) pb: definir WFQ comme un
+%probleme d'optimisation max-min PG montrent
+%
+%
+%- Guerin et al: shaping by buffer constraints (paper in Sigcomm
+%98)
+%
+%
+%
+%Definition de service curve universelle et transformee de Maher
+\section{Application to Differentiated Services}
+\mylabel{sec-ds} \mylabel{sec-diffserv}
+\subsection{Differentiated Services}
+\mylabel{sec-dsgen}
+
+In addition to the reservation based services we have studied in
+\sref{sec-L20-fcs}, the Internet also proposes differentiated
+services \cite{RFC2475}. The major goal of differentiated services
+is to provide some form of better service while avoiding per flow
+state information as is required by integrated services. The idea
+to achieve this is based on the following principles.
+\begin{itemize}
+  \item Traffic classes are defined; inside a network,
+  all traffic belonging to
+  the same class is treated as one single aggregate flow.
+  \item At the network edge, individual flows (called ``micro-flows")
+  are assumed to conform to some arrival curve, as with integrated
+  services.
+\end{itemize}
+\begin{figure}[!htbp]
+  \insfig{efmod}{0.7}
+  \mycaption{Network Model for EF. Microflows
+  are individually shaped and each conform to some
+   arrival curve. At all nodes, microflows $R_1$ to $R_3$
+   are handled as one aggregate flow, with a guaranteed rate (GR) guarantee. Upon leaving a node, the different microflows
+   take different paths and become part of other aggregates at other nodes.}
+  \mylabel{fig-diffservmod}
+\end{figure}
+If the aggregate flows receive appropriate service curves in the
+network, and if the total traffic on every aggregate flow is not
+too large, then we should expect some bounds on delay and loss.
+The condition on microflows is key to ensuring that the total
+aggregate traffic remains within some arrival curve constraints. A
+major difficulty however, as we will see, is to derive bounds for
+individual flows from characteristics of an aggregate.
+
+Differentiated services is a framework that includes a number of
+different services. The main two services defined today are
+expedited forwarding\index{EF}\index{Expedited Forwarding}
+(EF)\cite{efnew-april,psrgton} and assured
+forwarding\index{AF}\index{Assured Forwarding} (AF)\cite{RFC2597}.
+The goal of EF is to provide to an aggregate some hard delay
+guarantees, and no loss. The goal of AF is to separate traffic
+between a small number of classes (4); inside each class, three
+levels of drop priorities are defined. One of the AF classes could
+be used to provide a low delay service with no loss, similar to
+EF.
+
+In this chapter, we focus on the fundamental issue of how
+aggregate scheduling impacts delay and throughput guarantees. In
+the rest of this section, we use the network model shown on
+\fref{fig-diffservmod}. Our problem is to find bounds for
+end-to-end delay jitter on one hand, for backlog at all nodes on
+the other hand, under the assumptions mentioned above. Delay
+jitter is is the difference between maximum and minimum delay; its
+value determines the size of playout buffers
+(\sref{sec-playoutBuf}).
+
+
+
+\subsection{An Explicit Delay Bound for EF}
+\mylabel{bounds-lossless}
+
+We consider EF, the low delay traffic class, as mentioned in
+\sref{sec-dsgen}, and find a closed form expression for the worst
+case delay, which is valid in any topology, in a lossless network.
+This bound is based on a general time stopping method explained in
+detail in \cref{L24}. It was obtained in \cite{qofis2000} and
+\cite{jiang01}.
+
+\paragraph{Assumption and Notation}
+(See Figure~\ref{fig-diffservmod})
+\begin{itemize}
+\item Microflow $i$ is constrained
+by the arrival curve $\rho_i t + \sigma_i$ at the network access.
+Inside the network, EF microflows are \emph{not} shaped.
+
+\item Node $m$ acts as a Guaranteed Rate node for the entire EF aggregate, with rate $r_m$
+and latency $e_m$. This is true in particular if the aggregate is
+served as one flow in a FIFO service curve element, with a
+rate-latency service curve; but it also holds quite generally,
+even if nodes are non-FIFO (\sref{sec-gr}). In \cref{L24}, we
+explain that the generic node model used in the context of EF is
+packet scale rate guarantee, which satisfies this assumption.
+
+Let $e$ be an upper bound on $e_m$ for all $m$.
+
+\item $h$ is a bound on the number of hops used by any flow. This is
+typically 10 or less, and is much less than the total number of
+nodes in the network.
+
+\item
+Utilization factors: Define $\nu_m =\frac{1}{r_m}\sum_{i \ni m}
+\rho_i$, where the notation $i\ni m$ means that node $m$ is on the
+path of microflow $i$. Let $\nu$ be an upper bound on all $v_m$.
+
+
+\item Scaled burstiness factors: Define $\tau_m =\frac{1}{r_m}\sum_{i \ni m}
+\sigma_i$. Let $\tau$ be an upper bound on all $\tau_m$.
+
+\item $L_{\max}$ is an upper bound on the
+size (in bits) of any EF packet.
+
+\end{itemize}
+\begin{theorem}[Closed form bound for delay and backlog \cite{qofis2000}]
+If $\nu < \frac{1}{h-1}$ then a bound on end-to-end delay
+variation for EF is $h D_1$ with
+$$
+D_1 = \frac{e + \tau}{1-(h-1) \nu}
+$$
+At node $m$, the buffer required for serving low delay traffic
+without loss is bounded by $B_{\mbox{req}}=r_m D_1 + L_{\max}$.
+\mylabel{theo-qofisbound}
+\end{theorem}
+\paragraph{Proof: }
+(Part 1:) Assume that a finite bound exists and call $D$ the least
+upper bound. The data that feeds node $m$ has undergone a variable
+delay in the range $[0,(h-1)D]$, thus an arrival curve for the EF
+aggregate at node $m$ is $\nu r_m (t + (h-1) D)  + r_m \tau $. By
+application of \eref{eq-mpdel}, the delay seen by any packet is
+bounded by $e + \tau + (h-1) D \nu$; thus $D \leq e + \tau + (h-1)
+D \nu$. If the utilization factor $\nu$ is less than
+$\frac{1}{h-1}$, it follows that $D \leq D_1$.
+
+(Part 2:) We prove that a finite bound exists, using the
+time-stopping method. For any time $t>0$, consider the virtual
+system made of the original network, where all sources are stopped
+at time $t$. This network satisfies the assumptions of part 1,
+since there is only a finite number of bits for the entire
+lifetime of the network. Call $D^{\prime }(t)$ the worst case
+delay across all nodes for the virtual network indexed by $t$.
+From the above derivation we see that $D^{\prime }(t)\leq D_{1}$
+for all $t$. Letting $t$ tend to $+\infty $ shows that the worst
+case delay at any node remains bounded by $D_{1}$.
+
+(Part 3:) By \coref{cor-gr-sercur}, the backlog is bounded by the
+vertical deviation between the arrival curve $\nu r_m (t + (h-1)
+D) + r_m \tau $ and the service curve $[r_m (t - e_m) -
+L_{\max}]^+$, which after some algebra gives $B_{\mbox{req}}$ \qed
+
+The theorem can be slightly improved by avoiding to take maxima
+for $\nu_m$; this gives the following result (the proof is left to
+the reader):
+\begin{corollary}
+If $\nu < \frac{1}{h-1}$ then a bound on end-to-end delay
+variation for EF is $h D'_1$ with
+$$
+D'_1 = \min_m \left\{\frac{e_m + \tau_m}{1-(h-1) \nu_m}\right\}
+$$
+\end{corollary}
+
+\paragraph{Improved Bound
+When Peak Rate is Known: }
+
+A slightly improved bound can be obtained if, in addition, we have
+some information about the total incoming bit rate at every node.
+We add the following assumptions to the previous list.
+\begin{itemize}
+\item Let $C_{m}$ denote a bound on the peak rate of all incoming
+low delay traffic traffic at node $m$. If we have no information
+about this peak rate, then $C_{m}=+\infty $. For a router with
+large internal speed and buffering only at the output, $C_{m}$ is
+the sum of the bit rates of all incoming links (the delay bound is
+better for a smaller $C_{m}$).
+
+\item Fan-in: Let $I_m$ be the number of incident links at node $m$.
+Let $F$ be an upper bound on $\frac{I_m L_{\max}}{r_m}$. $F$ is
+the maximum time to transmit a number of EF packets that
+simultaneously appear on multiple inputs.
+
+\item
+Redefine $\tau_m:= \max\{ \frac{I_m L{\max}}{r_m},
+\frac{1}{r_m}\sum_{i \ni m} \sigma_i \}$. Let $\tau$ be an upper
+bound on all $\tau_m$.
+
+\item  Let $u_{m}=\frac{[C_{m}-r_{m}]^+}{C_{m}-\nu_m r_{m}}$.
+Note that $0 \leq u_{m} \leq 1$, $u_{m}$ increases with $C_{m}$,
+and if $C_{m}=+\infty $, then $u_{m}=1$. Call $u=\max_{m}u_{m}$.
+The parameter $u \in[0,1]$ encapsulates how much we gain by
+knowing the maximum incoming rates $C_m$ ($u$ is small for small
+values of $C_m$).
+\end{itemize}
+
+\begin{theorem}[Improved Delay Bound
+When Peak Rate is Known \cite{qofis2000,jiang01}] Let
+$\nu^*=\min_m\{\frac{C_m}{(h-1)(C_m-r_m)^+ + r_m}\}$. If $\nu <
+\nu^*$, a bound on end-to-end delay variation for EF is $h D_2$
+with
+$$
+D_2 = \frac{e +  u \tau + (1-u) F }{1-(h-1) u \nu}
+$$
+\mylabel{theo-qofisbound2}
+\end{theorem}
+\paragraph{Proof: }
+
+The proof is similar to the proof of \thref{theo-qofisbound}. Call
+$D$ the least bound, assuming it exists.
+
+An arrival curve for the flow of EF packets arriving at node $m$
+on some incident link $l$ is $C^l_m t + L_{\max}$, where $C^l_m$
+is the peak rate of the link (this follows from item 4 in
+\thref{theo-delvlp}). Thus an arrival curve for the incoming flow
+of EF packets at node $m$ is $C_m t + I_m L_{\max}$. The incoming
+flow is thus constrained by the T-SPEC $(M,p, r,b)$ (see Page
+\pageref{eq-tspec}) with $M=I_m L_{\max}$, $p=C_m$, $r=r_m \nu_m$,
+$b=r_m \tau_m + (h-1)D r_m \nu_m$. By \pref{theo-vbr-ratlat}, it
+follows that
+$$
+D \leq \frac{I_m L_{\max}  (1-u_m)}{r_m} + (\tau_m + (h-1)D \nu_m)
+u_m
+$$
+The condition $\nu < \nu^*$ implies that $1- (h-1) \nu_m u_m >0$,
+thus
+$$
+D \leq  \frac{e_m + \tau_m u_m + \frac{I_m L_{\max}
+(1-u_m)}{r_m}}{1- (h-1) \nu_m u_m  }
+$$
+The above right-hand-side is an increasing function of $u_m$, due
+to $\tau_m \geq \frac{I_m L{\max}}{r_m}$. Thus we have a bound by
+replacing $u_m$ by $u$:
+$$
+D \leq \frac{e_m + \tau_m u  + \frac{I_m L_{\max} (1-u )}{r_m}}{1-
+(h-1) \nu_m u}
+ \leq D_2
+$$
+The rest of the proof follows along lines similar to the proof of
+\thref{theo-qofisbound}. \qed
+
+
+It is also possible to derive an improved backlog bound, using
+\pref{theo-vbr-ratlat}. As with \thref{theo-qofisbound2}, we also
+have the following variant.
+\begin{corollary}
+If $\nu < \nu^*$, a bound on end-to-end delay variation for EF is
+$h D'_2$ with
+$$
+D'_2 = \min_m\left\{ \frac{e_m + \tau_m u_m + \frac{I_m L_{\max}
+(1-u_m)}{r_m}}{1- (h-1) \nu_m u_m  } \right\}
+$$
+\end{corollary}
+
+
+\paragraph{Discussion:}
+
+If we have no information about the peak incoming rate $C_l$, then
+we set $C_l = + \infty$ and \thref{theo-qofisbound2} gives the
+same bound as \thref{theo-qofisbound2}. For finite values of
+$C_m$, the delay bound is smaller, as illustrated by
+\fref{fig-qofis1}.
+%\begin{table}[tbp]
+%\mylabel{tab-qofis1} \centering
+%\begin{tabular}{|r|c|c|c|c|c|}
+%\hline $\nu$ & 0.04 & 0.08 & 0.12 & 0.16 & 0.20 \\ \hline\hline
+%$D$($C_m=+\infty$) & 16.88 & 74.29 & $+ \infty$ & $+\infty$ &
+%$+\infty $ \\ \hline $D$ ($C_m = 2 r_m$) & 12.75 & 32.67 & 71.50 &
+%186.00 & $+ \infty$ \\ \hline
+%\end{tabular}
+%\caption{The bound $D$ (in ms)\ in \thref{theo-qofisbound}  for
+%$h=10$. $\sigma_{i}=100$B for all flows, $\rho_{i}=32$kb/s for all
+%flows, $r_m=149.760$Mb/s and $C_m=+\infty $ or $C_m=2r_m$.}
+%\end{table}
+\begin{figure}[!htbp]
+  \insfig{dsqofis}{0.7}
+  \mycaption{The bound $D$ (in seconds)\ in \thref{theo-qofisbound} versus the
+  utilization factor $\nu$ for
+$h=10$, $e=2 \frac{1500B}{r_m}$, $L_{\max}=1000$ b,
+$\sigma_{i}=100$B and $\rho_{i}=32$kb/s for all flows,
+$r_m=149.760$Mb/s, and $C_m=+\infty$ (thin line) or $C_m=2r_m$
+(thick line).}
+  \mylabel{fig-qofis1}
+\end{figure}
+
+The bound is valid only for small utilization factors; it explodes
+at $\nu > \frac{1}{h-1}$, which does not mean that the worst case
+delay does grow to infinity \cite{LeBoudec2000mMay}. In some cases
+the network may be unbounded; in some other cases (such as the
+unidirectional ring, there is always a finite bound for all $\nu
+<1$. This issue is discussed in \cref{L24}, where we we find
+better bounds, at the expense of more restrictions on the routes
+and the rates. Such restrictions do not fit with the
+differentiated services framework. Note also that, for
+feed-forward networks, we know that there are finite bounds for
+$\nu <1$. However we show now that the condition $\nu <
+\frac{1}{h-1}$ is the best that can be obtained, in some sense.
+%
+%\mylabel{sec-networkgrand}
+\begin{proposition}\cite{lebinfocom2001, qofis2000}
+With the assumptions of \thref{theo-qofisbound}, if $\nu >
+\frac{1}{h-1}$, then for any $D' >0$, there is a network in which
+the worst case delay is at least $D'$. \mylabel{prop-grand}
+\end{proposition}
+In other words, the worst case queuing delay can be made
+arbitrarily large; thus if we want to go beyond
+\thref{theo-qofisbound}, any bound for differentiated services
+must depend on the network topology or size, not only on the
+utilization factor and the number of hops.
+
+\pr
+We build a family of networks, out of which, for any $D'$, we can
+exhibit an example where the queuing delay is at least $D'$.
+
+The thinking behind the construction is as follows. All flows are
+low priority flows. We create a
+  hierarchical network, where at the first level of the
+  hierarchy we choose one ``flow" for which its first
+  packet happens to encounter just \emph{one} packet of every
+  other flow whose route it intersects, while its next packet
+  does not encounter any queue at all.  This causes the first
+  two packets of the chosen flow to come back-to-back after
+  several hops.  We then construct the second level of the
+  hierarchy by taking a new flow and making sure that its
+  first packet encounters \emph{two} back-to-back packets of each
+  flow whose routes it intersects, where the two back-to-back
+  packet bursts of all these flows come from the output of a
+  sufficient number of networks constructed as described at
+  the first level of the hierarchy. Repeating this process
+  recursively sufficient number of times,  for any chosen
+  delay value $D$ we can create deep enough hierarchy so that
+  the queuing delay of the first packet of some flow
+  encounters a queuing delay more than $D$ (because it
+  encounters a large enough back-to-back burst of packets
+  of every other flow constructed in the previous iteration),
+  while the second packet does not suffer any queuing delay
+  at all.   We now describe in detail how to construct such a
+  hierarchical network (which is really a family of networks)
+  such that utilization factor of any link does not exceed a
+  given factor $\nu$, and no flow traverses more than $h$ hops.
+
+Now let us describe the networks in detail. We consider a family
+of networks with a single traffic class and constant rate links,
+all with same bit rate $C$. The network is assumed to be made of
+infinitely fast switches, with one output buffer per link. Assume
+that sources are all leaky bucket constrained, but are served in
+an aggregate manner, first in first out. Leaky bucket constraints
+are implemented at the network entry; after that point, all flows
+are aggregated. Without loss of generality, we also assume that
+propagation delays can be set to 0; this is because we focus only
+on queuing delays. As a simplification, in this network, we also
+assume that all packets have a unit size. We show that for any
+fixed, but arbitrary delay budget $D$, we can build a network of
+that family where the worst case queueing delay is larger than
+$D$, while each flow traverses at most a specified number of hops.
+
+A network in our family is called $\calN(h, \nu, J)$ and has three
+parameters: $h$ (maximum hop count for any flow), $\nu$
+(utilization factor) and $J$ (recursion depth). We focus on the
+cases where $h \geq 3$ and $\frac{1}{h-1}< \nu <1$, which implies
+that we can always find some integer $k$ such that
+\begin{equation}\mylabel{eqk}
+  \nu > \frac{1}{h-1}\frac{kh+1}{kh-1}
+\end{equation}
+Network $\calN(h, \nu, J)$ is illustrated in
+Figures~\ref{fig-grand1} and \ref{fig-grand2}; it is a collection
+of identical building blocks, arranged in a tree structure of
+depth $J$. Every building block has one internal source of traffic
+(called ``transit traffic"), $kh(h-1)$ inputs (called the
+``building block inputs"), $kh(h-1)$ data sinks, $h-1$ internal
+nodes, and one output. Each of the $h-1$ internal nodes receives
+traffic from $kh$ building block inputs plus it receives transit
+traffic from the previous internal node, with the exception of the
+first one which is fed by the internal source. After traversing
+one internal node, traffic from the building block inputs dies in
+a data sink. In contrast, transit traffic is fed to the next
+internal node, except for the last one which feeds the building
+block output (\fref{fig-grand1}).
+\begin{figure}[!htbp]
+  \insfig{bb1}{0.7}
+  \mycaption{The internal node (top) and the building block (bottom)
+  used in our network example.}
+  \mylabel{fig-grand1}
+\end{figure}
+\fref{fig-grand2} illustrates that our network has the structure
+of a complete tree, with depth $J$. The building blocks are
+organized in levels $j=1,...,J$. Each of the inputs of a level $j$
+building block ($j\geq 2$) is fed by the output of one level $j-1$
+building block. The inputs of level $1$ building blocks are data
+sources. The output of one $j-1$ building block feeds exactly one
+level $j$ building block input. At level $J$, there is exactly one
+building block, thus at level $J-1$ there are $kh(h-1)$ building
+blocks, and at level $1$ there are $(kh(h-1))^{J-1}$ building
+blocks.
+\begin{figure}[!htbp]
+  \insfig{grandnet}{0.7}
+  \mycaption{The network made of building blocks from \fref{fig-grand1}}
+  \mylabel{fig-grand2}
+\end{figure}
+All data sources have the same rate $r=\frac{\nu C}{kh+1}$ and
+burst tolerance $b=1$~packet. In the rest of this section we take
+as a time unit the transmission time for one packet, so that
+$C=1$. Thus any source may transmit one packet every $\theta =
+\frac{kh+1}{\nu}$ time units. Note that a source may refrain from
+sending packets, which is actually what causes the large delay
+jitter. The utilization factor on every link is $\nu$, and every
+flow uses $1$ or $h$ hops.
+
+Now consider the following scenario. Consider some arbitrary level
+1 building block. At time $t_0$, assume that a packet fully
+arrives at each of the building block inputs of level $1$, and at
+time $t_0+1$, let a packet fully arrive from each data source
+inside every level $1$ building block (this is the first transit
+packet). The first transit packet is delayed by $hk-1$ time units
+in the first internal node. Just one time unit before this packet
+leaves the first queue, let one packet fully arrive at each input
+of the second internal node. Our first transit packet will be
+delayed again by $hk-1$ time units. If we repeat the scenario
+along all internal nodes inside the building block, we see that
+the first transit packet is delayed by $(h-1)(hk-1)$ time units.
+Now from \eref{eqk}, $\theta < (h-1)(hk-1)$, so it is possible for
+the data source to send a second transit packet at time
+$(h-1)(hk-1)$. Let all sources mentioned so far be idle, except
+for the emissions already described. The second transit packet
+will catch up to the first one, so the output of any level $1$
+building block is a burst of two back-to-back packets. We can
+choose $t_0$ arbitrarily, so we have a mechanism for generating
+bursts of 2 packets.
+
+Now we can iterate the scenario and use the same construction at
+level $2$. The level-2 data source sends exactly three packets,
+spaced by $\theta$. Since the internal node receives $hk$ bursts
+of two packets originating from level 1, a judicious choice of the
+level 1 starting time lets the first level 2 transit packet find a
+queue of $2hk -1$ packets in the first internal node. With the
+same construction as in level 1, we end up with a total queuing
+delay of $(h-1)(2hk -1) > 2(h-1)(hk-1)> 2\theta$ for that packet.
+Now this delay is more than $2 \theta$, and the first three
+level-2 transit packets are delayed by the same set of non-transit
+packets; as a result, the second and third level-2 transit packets
+will eventually catch up to the first one and the output of a
+level 2 block is a burst of three packets. This procedure easily
+generalizes to all levels up to $J$. In particular, the first
+transit packet at level $J$ has an end-to-end delay of at least
+$J\theta$. Since all sources become idle after some time, we can
+easily create a last level $J$ transit packet that finds an empty
+network and thus a zero queuing delay.
+
+Thus there are two packets in network $\calN(h, \nu, J)$, with one
+packet having a delay larger than $J \theta$, and the other packet
+has zero delay. This establishes that a bound on queuing delay,
+and thus on delay variation in network $\calN(h, \nu, J)$ has to
+be at least as large as~$J \theta$. \qed
+
+\subsection{Bounds for Aggregate Scheduling with Dampers}
+\mylabel{sec-sced+}
+
+At the expense of some protocol complexity, the previous bounds
+can be improved without losing the feature of aggregate
+scheduling. It is even possible to avoid bound explosions at all,
+using the concepts of \emph{damper}\index{damper}. Consider an EDF
+scheduler (for example a SCED scheduler) and assume that every
+packet sent on the outgoing link carries a field with the
+difference $d$ between its deadline and its actual emission time,
+if it is positive, and $0$ otherwise. A damper is a regulator in
+the next downstream node that picks for the packet an eligibility
+time that lies in the interval $[a+d-\Delta, a+d]$, where $\Delta$
+is a constant of the damper, and $a$ is the arrival time of the
+packet in the node where the damper resides.
+We call $\Delta$ the ``damping tolerance".%
+\index{damping tolerance} %
+The packet is then withheld until its eligibility time
+\cite{jitterEDD91,CruzSCED}, see \fref{fig-dsdamper}. In addition,
+we assume that the damper operates in a FIFO manner; this means
+that the sequence of eligibility times for consecutive packets is
+wide-sense increasing.
+
+Unlike the scheduler, the damper does not exist in isolation. It
+is associated with the next scheduler on the path of a packet. Its
+effect is to forbid scheduling the packet before the eligibility
+time chosen for the packet. Consider \fref{fig-dsdamper}.
+Scheduler $m$ works as follows. When it has an opportunity to send
+a packet, say at time $t$, it picks a packet with the earliest
+deadline, among all packets that are present in node $N$, and
+whose eligibility date is $\leq t$. The timing information $d$
+shown in the figure is carried in a packet header, either as a
+link layer header information, or as an IP hop by hop header
+extension. At the end of a path, we assume that there is no damper
+at the destination node.
+
+The following proposition is obvious, but important, and is given
+without proof.
+\begin{proposition}
+Consider the combination $\calS$ of a scheduler and its associated
+damper. If all packets are served by the scheduler before or at
+their deadlines, then $\calS$ provides a bound on delay variation
+equal to $\Delta$.
+\end{proposition}
+\begin{figure}[!htbp]
+  \insfig{dsdamper2}{0.8}
+  \insfig{dsdamper1}{0.8}
+  \mycaption{Dampers in a differentiated services context. The model
+  shown here assumes that routers are made of infinitely fast
+  switching fabrics and output schedulers. There is one logical
+  damper for each upstream scheduler. The damper decides when an
+  arriving packet becomes visible in the node.}
+  \mylabel{fig-dsdamper}
+\end{figure}
+
+It is possible to let $\Delta=0$, in which case the delay is
+constant for all packets. A bound on the end-to-end delay
+variation is then the delay bound at the last scheduler using the
+combination of a scheduler and a damper (this is called ``jitter
+EDD" in \cite{jitterEDD91}). In practice, we consider $\Delta >0$
+for two reasons. Firstly, it is impractical to assume that we can
+write the field $d$ with absolute accuracy. Secondly, having some
+slack in the delay variation objective provides better performance
+to low priority traffic \cite{CruzSCED}.
+%Thirdly, we have
+%considered so far that all propagation times are constant, which,
+%from the analysis in \sref{sec-fixedDelay}, allows us to ignore
+%such delays. In some cases (multiple access links, links with
+%forward error correction), this is not exactly true. We know in
+%general that this can be handled by adding a variable delay
+%component, with appropriate minimum and maximum service curves.
+%More simply here, if the link fed by scheduler $m$ introduces a
+%delay whose variable part is bounded by $\Delta'_m$, then it can
+%easily be seen that this is equivalent to adding equal $\Delta'_m$
+%to the damping tolerance of damper $m$.
+
+There is no complicated feasibility condition for a damper, as
+there is for schedulers. The operation of a damper is always
+possible, as long as there is enough buffer.
+
+\begin{proposition}[Buffer requirement for a damper]
+If all packets are served by the scheduler before or at their
+deadlines, then the buffer requirement at the associated damper is
+bounded by the buffer requirement at the scheduler.
+\end{proposition}
+\pr
+Call $R(t)$ the total input to the scheduler, and $R'(t)$ the
+amount of data with deadline $\leq t$. Call $R^*(t)$ the input to
+the damper, we have $R^*(t) \leq R(t)$. Packets do not stay in the
+damper longer than until their deadline in the scheduler, thus the
+output $R_1(t)$ of the damper satisfies $R_1(t) \geq R'(t)$. The
+buffer requirement at the scheduler at time $t$ is $R(t)- R'(t)$;
+at the damper it is $R^*(t)-R_1(t)\geq R(t)- R'(t)$. \qed
+
+\begin{theorem}[Delay and backlog bounds with dampers]
+ Take the same assumptions as in \thref{theo-qofisbound}, we
+assume that every scheduler $m$ that is not an exit point is
+associated with a damper in the next downstream node, with damping
+tolerance $\Delta_m$. Let $\Delta$ be a bound on all $\Delta_m$.
+
+If $\nu \leq 1$, then a bound on the end-to-end delay jitter for
+low delay traffic is
+$$
+D  = e + (h-1) \Delta (1 +  \nu) + \tau \nu
+$$
+A bound on the queuing delay at any scheduler is
+ $$
+ D_0 = e +  \nu  [\tau + (h-1) \Delta]
+ $$
+The buffer required at scheduler $m$, for serving low delay
+traffic without loss is bounded by
+$$
+B_{req}=  r_m D_0
+$$
+A bound on the buffer required at damper $m$ is the same as the
+buffer required at scheduler $m$.
+ \mylabel{theo-dampersfords}
+\end{theorem}
+\pr
+The variable part of the delay between the input of a scheduler
+and the input of the next one is bounded by $\Delta$. Now let us
+examine the last scheduler, say $m$, on the path of a packet. The
+delay between a source for a flow $i \ni m$ and scheduler $m$ is a
+constant plus a variable part bounded by $(h-1)\Delta$. Thus an
+arrival curve for the aggregate low-delay traffic arriving at
+scheduler $m$ is
+$$
+\alpha_2(t)= \nu r_m (t + \tau + (h-1) \Delta)
+$$
+By applying \thref{theo-delay}, a delay bound at scheduler $m$ is
+given by
+$$D_2 = E + u \nu  [\tau + (h-1) \Delta]
+$$
+A bound on end-to-end delay variation is $(h-1) \Delta + D_2$,
+which is the required formula.
+
+The derivation of the backlog bound is similar to that in
+\thref{theo-qofisbound}. \qed
+
+The benefit of dampers is obvious: there is no explosion to the
+bound, it is finite (and small if $\Delta$ is small) for any
+utilization factor up to $1$ (see \fref{fig-dsdamp1}).
+Furthermore, the bound is dominated by $h \Delta$, across the
+whole range of utilization factors up to $1$. A key factor in
+obtaining little delay variation is to have a small damping
+tolerance $\Delta$.
+\begin{figure}[!htbp]
+  \insfig{dsdamp}{0.7}
+  \mycaption{The bound $D$ (in seconds) in \thref{theo-dampersfords}
+  the same parameters as \fref{fig-qofis1}, for a damping
+  tolerance $\Delta=5$ ms per damper, and $C_m=+\infty$ (thick line).
+   The figure also shows the two curves of \fref{fig-qofis1}, for
+   comparison. The bound is very close to $h \Delta=0.05$s, for all
+   utilization factors up to $1$.}
+   \mylabel{fig-dsdamp1}
+\end{figure}
+
+There is a relation between a damper and a maximum service curve.
+Consider the combination of a scheduler with minimum service curve
+$\beta$ and its associate damper with damping tolerance $\Delta$.
+Call $p$ the fixed delay on the link between the two. It follows
+immediately that the combination offers the maximum service curve
+$\beta \mpc \delta_{p-\Delta }$ and the minimum service curve
+$\beta \mpc \delta_{p}$. Thus a damper may be viewed as a way to
+implement maximum service curve guarantees. This is explored in
+detail in \cite{CruzSCED}.
+
+
+%\section{Application to MPLS and IPv6}
+%Jitter-EDD
+%
+%Requires IP hop by hop option and flow based routing.
+%\section{Annotated Bibliography}
+%
+%GPS et les cas instables
+%\cite{GLV95} gives a bound for end-to-end delay guarantees for
+%what they call ``guaranteed rate" schedulers
+
+%\cite{zha96} is an overview of scheduling policies, their
+%implementation complexity and other properties. See also the
+%scheduling chapter in~\cite{keshav-96}.
+%
+%\cite{gue96} provides a general overview of all components
+%involved in Intserv.
+
+\subsection{Static Earliest Time First (SETF)}
+
+
+A simpler alternative to the of dampers is proposed by Z.-L. Zhang
+et al under the name of Static Earliest Time First
+(SETF)~\cite{zhili01}.
+\paragraph{Assumptions}
+We take the same assumptions as with \thref{theo-qofisbound}, with
+the following differences.
+\begin{itemize}
+  \item At network access, packets are stamped with
+their time of arrival. At any node, they are served within the EF
+aggregate at one node in order of time stamps. Thus we assume that
+nodes offer a GR guarantee to the EF aggregate, as defined by
+\eref{eq-gr-def} or \eref{eq-gr2091}, but where packets are
+numbered in order of time stamps (i.e. their order at the network
+access, not at this node).
+\end{itemize}
+\begin{theorem}
+If the time stamps have infinite precision, for all $\nu <1$, the
+end-to-end delay variation for the EF aggregate is bounded by
+$$
+D = (e + \tau)\frac{1-(1-\nu)^{h}}{\nu (1-\nu)^{h-1}}
+$$
+\mylabel{theo-setf}
+\end{theorem}
+\paragraph{Proof: }
+The proof is similar to the proof of \thref{theo-qofisbound}. Call
+$D_k$ the least bound, assuming it exists, on the end-to-end delay
+after $k$ hops, $k \leq h$. Consider a tagged packet, with label
+$n$, and call $d_k$ its delay in $k$ hops. Consider the node $m$
+that is the $h$th hop for this packet. Apply \eref{eq-grmaxplus}:
+there is some label $k\leq n$ such that
+\begin{equation}\label{eq-setf-1}
+d_n \leq e + a_k + \frac{l_k + ... + l_n}{r}
+\end{equation}
+where $a_j$ and $d_j$ are the arrival and departure times at node
+$m$ of the packet labeled $j$, and $l_j$ its length in bits. Now
+packets $k$ to $n$ must have arrived at the network access before
+$a_n - d_k$ and after $a_m -D_{Hh-1}$. Thus
+$$
+l_k + ... + l_n \leq \alpha(a_n - a_m - d_k + D_{h-1})
+$$
+where $\alpha$ is an arrival curve at network access for the
+traffic that will flow through node $m$. We have $\alpha(t)\leq
+r_m (\nu t +\tau)$. By \eref{eq-mpdel}, the delay $d_n-a_n$ for
+our tagged packet is bounded by
+$$
+e + \sup_{t \geq 0}\left[ \frac{\alpha(t- d_k + D_{h-1})}{r_m}
+-t\right] = e + \tau+ \nu (D_{h-1}- d_k)
+$$
+thus
+$$
+d_{k+1}\leq d_k +e + \tau+ \nu (D_{h-1}- d_k)
+$$
+The above inequation can be solved iteratively for $d_k$ as a
+function of $D_{h-1}$; then take $k=h-1$ and assume the tagged
+packet is one that achieves the worst case $k$-hop delay, thus
+$D_{h-1}=d_{h-1}$ which gives an inequality for $D_{h-1}$; last,
+take $k=h$ and obtain
+%\begin{equation}\label{eq-dh}
+%  d_k \leq ( e + \tau + \nu D_{h-1})\frac{1-(1-\nu)^k}{\nu}
+%\end{equation}
+%Take $k=h-1$ and assume the tagged packet is one that achieves the
+%worst case $k$ hop delay, thus $D_{h-1}=d_{h-1}$; (\ref{eq-dh})
+%then gives an inequality for $D_{h-1}$:
+%$$
+%D_{h-1} \leq (e + \tau)\frac{1-(1-\nu)^{h-1}}{\nu (1-\nu)^{h-1}}
+%$$
+the end-to-end delay bound as desired. \qed
+
+\paragraph{Comments: }
+ The bound is finite for all
+values of the utilization factor $\nu<1$, unlike the end-to-end
+bound in \thref{theo-qofisbound}. Note that for small values of
+$\nu$, the two bounds are equivalent.
+
+We have assumed here infinite precision about the arrival time
+stamped in every packet. In practice, the timestamp is written
+with some finite precision; in that case, Zhang \cite{zhili01}
+finds a bound which lies between \thref{theo-qofisbound} and
+\thref{theo-setf} (at the limit, with null precision, the bound is
+exactly \thref{theo-setf}).
+
+
+
+\section{Bibliographic Notes}
+The delay bound for EF in \thref{theo-qofisbound2} was originally
+found in \cite{qofis2000}, but neglecting the $L_{\max}$ term; a
+formula that accounts for $L_{\max}$ was found in \cite{jiang01}.
+
+Bounds that account for statistical multiplexing can be found in
+\cite{VL2002EF}.
+\section{Exercises}
+\input{temp/L21-11}
+\input{temp/L21-12}
+\input{temp/L21-13}
+\input{temp/L21-14}
+\input{temp/L21-15}
+\input{temp/L21-16}
+\input{temp/L21-17}
+%\input{temp/L21-18}moved to L24
+\input{temp/L21-19}
+%
+% put below the list of exercises you want to see in the document
+% you must have imported the database in the preamble, with commands
+% such as \input{MMMM.bdx.tex}, where MMMM is the name of an exercise
+% database file
+%
+% there is also an automatic mechanism to print all exercises, ask the author
+%

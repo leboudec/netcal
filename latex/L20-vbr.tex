@@ -1,0 +1,37 @@
+\paragraph{Example: VBR flow with rate-latency service curve}
+Consider a VBR flow, defined by T-SPEC $(M, p, r, b)$. This means
+that the flow has $\alpha(t) = \min(M+pt, rt+b)$ as an arrival
+curve (Section~\ref{con-flows}). Assume that the flow is served in
+one node that guarantees a service curve equal to the rate-latency
+function $\beta=\beta_{R,T}$. This example is the standard model
+used in Intserv. Let us apply Theorems~\ref{theo-backlog}
+and~\ref{theo-delay}.  Assume that $R \geq r$, that is, the
+reserved rate is as large as the sustainable rate of the flow.
+
+From the convexity of the region between $\alpha$ and $\beta$
+(Figure~\ref{fig-calculei}), we see that the vertical deviation
+$v=\sup_{s \geq 0}[\alpha(s)-\beta(s)]$ is reached for at an
+angular point of either $\alpha$ or $\beta$. Thus
+$$v = \max [\alpha(T), \alpha(\theta)-\beta(\theta)]
+$$with $\theta =\frac{b-M}{p-r}$.
+Similarly, the horizontal distance is reached an angular point. In
+the figure, it is either the distance marked as $AA'$ or $BB'$.
+Thus, the bound on delay $d$ is given by
+$$d = \max \left( \frac{\alpha(\theta)}{R}+T-\theta, \frac{M}{R}+T \right)$$
+After some max-plus algebra, we can re-arrange these results as
+follows.
+\begin{proposition}[Intserv model, buffer and delay bounds]
+\mylabel{theo-vbr-ratlat}Consider a VBR flow, with TSPEC $(M, p,
+r, b)$, served in a node that guarantees to the flow a service
+curve equal to the rate-latency function $\beta=\beta_{R,T}$. The
+buffer required for the flow is bounded by
+$$v=b + r T + \left(\frac{b-M}{p-r} - T\right)^+ [(p-R)^+ -p + r]
+$$ The maximum delay for the flow is bounded by
+$$d=\frac{M + \frac{b-M}{p-r}(p-R)^+ }{R} +T$$
+\end{proposition}
+\begin{figure}[htbp]
+  \insfig{calculeI}{0.5}
+  \mylabel{fig-calculei}
+  \mycaption{Computation of buffer and delay bound for one VBR flow
+  served in one Intserv node.}
+\end{figure}

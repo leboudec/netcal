@@ -1,0 +1,990 @@
+\chapter{Optimal Multimedia Smoothing}
+\mylabel{L22}
+
+In this chapter we apply network calculus to smooth multimedia data over a network offering reservation based services, such as ATM or RSVP/IP, for which we know one minimal service curve. One approach to stream video is to act on the quantization levels at the encoder output: this is called rate control, see e.g. \cite{Duffield}. Another approach is to smooth the video stream, using a smoother fed by the encoder, see e.g.  \cite{RexfordTowsley99,Salehi,McManus}. In this chapter, we deal with this second approach.
+
+A number of smoothing algorithms have been proposed to optimize various performance metrics, such as peak bandwidth requirements, variability of transmission rates, number of rate changes, client buffer size \cite{FengRexford99}.  With network calculus, we are able to compute the minimal client buffer size required given a maximal peak rate, or even a more complex (VBR) smoothing curve. We can also compute the minimal peak rate required given a given client buffer size. We will see that the scheduling algorithm that must be implemented to reach these bounds is not unique, and we will determine the full set of video transmission schedules that minimize these resources and achieve these optimal bounds.
+
+\section{Problem Setting}
+\mylabel{sec:smoothingdescription}
+
+\index{smoothing}
+\index{playback buffer}
+\index{playback delay}
+\index{look ahead delay}
+
+A video stream stored on the server disk is directly delivered to the client, through the network, as shown on Figure~\ref{fig:prefetching_problem}.
+At the sender side, a smoothing device reads the encoded video stream $R(t)$ and sends a stream $x(t)$
+that must conform to an arrival curve $\sigma$, which we assume to be a `good' function, i.e. is sub-additive and such that $\sigma(0) = 0$.
+The simplest and most popular smoothing curve in practice is a constant rate curve (or equivalently, a peak rate constraint) $\sigma = \lambda_r$ for some $r > 0$.
+
+We take the transmission start as origin of time: this implies that
+%with $x(t)$ denoting the
+%flow produced by the smoothing device and sent over the network, we have
+$x(t) = 0$ for $t \leq 0$.
+
+
+\begin{figure}[hbt]
+%\centerline{ %\begin{center}
+%\insps{smoothing_settings_infocom2000}{0.5}
+\insfig{smoothingsetting}{0.7}
+%}
+%\end{center}
+\caption{Video smoothing over a single network.}
+\mylabel{fig:prefetching_problem}
+\end{figure}
+
+%\begin{figure}[!h]
+%%\centerline{ %\begin{center}
+%\insfig{Smoothing_problems}{0.85}
+%%}
+%%\end{center}
+%   \caption{The two smoothing scenarios: Stored video (top) and live video (bottom).}
+%   \protect\mylabel{fig:prefetching_problems}
+%\end{figure}
+
+
+
+At the receiver side, the video stream $R$ will be played back after $D$ units of times, the {\em playback delay}: the output of the decoding buffer $B$ must therefore be $R(t-D)$.
+
+The network offers a guaranteed service to the flow $x$. If $y$ denotes the output flow,
+it is not possible, in general, to express $y$ as a function of $x$. However we assume that
+the service guarantee can be expressed by a service curve $\beta$.
+For example, as we have seen in Chapter~\ref{L20}, the IETF assumes that RSVP routers offer a rate-latency service curve $\beta$ of the form
+$\beta_{L,C}(t) = C [t-L]^{+} = \max \{ 0, C(t-L) \} $.
+Another example is a network which is completely transparent to the flow (i.e. which does not incur any jitter
+to the flow nor rate limitation, even if it can introduce a fixed delay, which we ignore in this chapter as we can always take it into account separately).
+We speak of a {\em null network}. It offers a service curve $\beta(t) = \delta_0(t)$.
+
+To keep mathematical manipulations simple, we assume that the encoding buffer size is large enough to contain the full data stream.
+On the other hand, the receiver (decoding) buffer is a much more scarce resource. Its finite size is denoted by $B$.
+
+%We would like to compute (i) the requirements on the playback delay $D$ and on the
+%on the client buffer size $B$ guaranteeing a lossless transmission for a given smoothing curve $\sigma$,
+%and (ii) the scheduling strategy at the smoother that will enforce this transmission
+%for the above computed values.
+
+As the stream is pre-recorded and stored in the video server, it allows the smoother to prefetch and send some of the data
+before schedule. We suppose that the smoother is able to look ahead data for up to $d$ time units ahead.
+This {\em look-ahead delay} can take values ranging from zero (in the most restrictive case
+where no prefetching is possible) up to the length of the full stream. The sum of the look-ahead delay and
+playback delay is called the {\em total delay}, and is denoted by $T$: $T = D + d$.
+
+These constraints are described more mathematically in Section~\ref{sec:requirements}.
+
+We will then apply Theorem~\ref{thm:spacemethod} to solve the following problems:
+
+\vspace{1ex}
+\noindent
+(i) we first compute, in Section~\ref{sec:constraintsresolution}, the minimal requirements on the playback delay $D$, on the look-ahead delay $d$, and on the client buffer size $B$ guaranteeing a lossless transmission for given smoothing and service curves $\sigma$ and $\beta$.
+
+\vspace{1ex}
+\noindent
+(ii) we then compute, in Section~\ref{sec:smoothingstrategies}, all scheduling strategies at the smoother that will achieve transmission in the parameter setting computed in Section~\ref{sec:constraintsresolution}. We call the resulting scheduling ``optimal smoothing''.
+
+\vspace{1ex}
+\noindent
+(iii) in the CBR case ($\sigma = \lambda_r$), for a given rate $r$ and for a rate-latency service curve ($\beta=\beta_{L,C}$), we will obtain, in Section~\ref{sec:CBRsmoothing}, closed-form expressions of the minimal values of $D$, $T=D+d$ and $B$ required for lossless smoothing. We will also solve the dual problem of computing the minimal rate $r$ needed to deliver video for a given playback delay $D$,  look-ahead delay $d$ and client buffer size $B$.
+
+\vspace{1ex}
+We will then compare optimal smoothing with greedy shaping in Section~\ref{sec:smoothingvsshaping} and with separate delay equalization in Section~\ref{sec:delayequalization}. Finally, we will repeat problems (i) and (iii) when intermediate caching is allowed between a backbone network and an access network.
+
+\section{Constraints Imposed by Lossless Smoothing}
+\mylabel{sec:requirements}
+
+
+We can now formalize the constraints that completely define the smoothing problem illustrated on Figure~\ref{fig:prefetching_problem}).
+
+\begin{itemize}
+\item{\bf Flow $x \in \calF$}: As mentioned above, the chosen origin of time is such that
+$x(t) = 0$ for $t \leq 0$, or equivalently
+\begin{equation}
+\mylabel{eq:causalflow}
+x(t) \leq \delta_0 (t).
+\end{equation}
+
+\item{\bf Smoothness constraint}: Flow $x$ is constrained by an
+arrival curve $\sigma (\cdot) $. %, which is assumed sub-additive:
+This means that for all $t \geq 0$
+%and for all
+%$s \in [0,t]$, $x(t) - x(s) \leq \sigma(t-s)$ or equivalently, with the use of the convolution
+%operator,
+\begin{equation}
+\mylabel{eq:smoothnessminplus}
+x(t) \leq (x \otimes \sigma)(t) = \calC_{\sigma}(x)(t).
+\end{equation}
+
+
+\item {\bf Playback delay constraint (no playback buffer underflow)}:
+The data is read out from the playback buffer after $D$ unit of times
+at a rate given by $R(t - D) $. This implies that $y(t) \geq R(t-D)$.
+However we do not know the exact expression of $y$ as a function of $x$.
+All we know is that the network  guarantees a service curve $\beta$, namely that
+$y(t) \geq (x \otimes \beta)(t)$.
+The output flow may therefore be as low as $(x \otimes \beta)(t)$,
+and hence we can replace $y$ in the previous inequality to obtain $(x \otimes \beta) (t) \geq  R(t-D)$.
+Using Rule 14 in Theorem~\ref{thm:rule11-14}, we can recast this latter inequality as
+\begin{equation}
+\mylabel{eq:playbackdelay}
+x(t) \geq (R \oslash \beta)(t - D) = \calD_{\beta}(R)(t-D)
+\end{equation}
+for all $t \geq 0$.
+
+\item{\bf Playback buffer constraint (no playback buffer overflow)}:
+The size of the playback buffer is limited to $B$, and to prevent any overflow of the buffer,
+we must impose that $y(t) -  R(t-D) \leq B$ for all $t \geq 0$. Again, we do not know the
+exact value of  $y$, but we know that it can be as high as  $x$, but not higher,
+because the network is a causal system. Therefore the constraint becomes, for all $t \geq 0$,
+\begin{equation}
+\mylabel{eq:playbackbuffer}
+x(t) \leq R(t - D) + B.
+\end{equation}
+
+\item {\bf Look-ahead delay constraint}:
+We suppose that the encoder can prefetch data from the server up to $d$ time units ahead, which translates
+in the following inequality:
+\begin{equation}
+\mylabel{eq:prefetchingdelay}
+x(t) \leq  R(t+d).
+\end{equation}
+
+\end{itemize}
+
+\section{Minimal Requirements on Delays and Playback Buffer}
+\mylabel{sec:constraintsresolution}
+
+Inequalities (\ref{eq:causalflow}) to (\ref{eq:prefetchingdelay}) can be recast as two sets of inequalities as follows:
+\begin{eqnarray}
+\mylabel{eq:ineqminplus}
+x(t) & \leq & \delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \} \wedge \calC_{\sigma} (x)(t)  \\
+\mylabel{eq:ineqmaxplus}
+x(t) & \geq & (R \oslash \beta)(t-D).
+\end{eqnarray}
+There is a solution $x$ to the smoothing problem if and only if it simultaneously
+verifies (\ref{eq:ineqminplus}) and (\ref{eq:ineqmaxplus}). This is equivalent to requiring
+that the maximal solution of (\ref{eq:ineqminplus}) is larger than the right hand side
+of (\ref{eq:ineqmaxplus}) for all $t$. %Indeed this shows that there is a solution to the problem,
+%and on the other hand if the maximal solution of (\ref{eq:ineqminplus}) is smaller than the right hand side
+%of (\ref{eq:ineqmaxplus} for some $t$ then it will be so for any other
+% solution of (\ref{eq:ineqminplus}).
+
+Let us first compute the maximal solution of  (\ref{eq:ineqminplus}).
+Inequality (\ref{eq:ineqminplus}) has the form
+\begin{equation}
+\mylabel{eq:ineqgeneralminplus}
+x \leq a \wedge \calC_{\sigma}(x)
+\end{equation}
+where
+\begin{equation}
+\mylabel{eq:a}
+a(t) = \delta_0 (t) \wedge R(t+d)  \wedge \{ R(t-D) + B \}.
+\end{equation}
+We can thus apply Theorem~\ref{thm:spacemethod} to compute the unique maximal solution of (\ref{eq:ineqgeneralminplus}), which is
+$x_{\max} = \calC_{\sigma}(a) = \sigma \otimes a$ because $\sigma$ is a `good' function. Replacing $a$ by its expression in (\ref{eq:a}), we compute that the maximal solution
+of  (\ref{eq:ineqminplus}) is
+\begin{equation}
+\mylabel{eq:maxsolution}
+x_{\max}(t) = \sigma (t) \wedge \left\{ (\sigma \otimes R)(t+d) \right\} \wedge \left\{ (\sigma \otimes R)(t-D) + B \right\}.
+\end{equation}
+
+
+%Let us denote by $T = D + d$ the sum of the playback and look-ahead delays, which we will call {\em total delay}.
+We are now able to compute the smallest values of the playback delay $D$, of the total delay $T$
+and of the playback buffer $B$ ensuring the existence of a solution to the smoothing problem,
+thanks to following theorem.
+The requirement on $d$ for reaching the smallest value of $D$ is therefore $d = T - D$.
+\begin{theorem}[Requirements for optimal smoothing]
+\mylabel{thm:singlenetwork}
+The smallest values of $D$, $T$ and $B$
+ensuring a lossless smoothing to a `good' curve $\sigma$ through a network offering a service curve $\beta$
+are
+\begin{eqnarray}
+ \mylabel{eq:optimalplaybackdelay}
+D_{\min} & = & h(R, (\beta \otimes \sigma)) = \inf \left\{ t \geq 0 \: : (R \oslash (\beta \otimes \sigma)) (-t) \leq 0 \right\} \\
+\mylabel{eq:optimaltotaldelay}
+T_{\min} & = &  h((R \oslash R), (\beta \otimes \sigma)) \\
+         & = &  \inf \left\{ t \geq 0 \: : ((R \oslash R) \oslash (\beta \otimes \sigma)) (-t) \leq 0 \right\} \nonumber \\
+\mylabel{eq:optimalplaybackbuffer}
+B_{\min} & = & v((R \oslash R),  (\beta \otimes \sigma)) = ((R \oslash R) \oslash (\beta \otimes \sigma))(0).
+\end{eqnarray}
+where $h$ and $v$ denote respectively the horizontal and vertical distances given by Definition~\ref{def:deviations}.
+\end{theorem}
+
+\pr The set of inequalities (\ref{eq:ineqminplus}) and (\ref{eq:ineqmaxplus}) has a solution if, and only if,
+the maximal solution of (\ref{eq:ineqminplus}) is larger or equal to the right hand side of (\ref{eq:ineqmaxplus}) at all
+times. This amounts to impose that for all $t \in \Reals$
+%\begin{equation}
+%\mylabel{eq:constraintforallt}
+%(R \oslash \beta)(t-D) \leq \sigma (t) \wedge \left\{ (\sigma \otimes R)(t+d) \right\}
+%\wedge \left\{ (\sigma \otimes R)(t-D) + B \right\}
+%\end{equation}
+%or equivalently that  three following inequalities be satisfied at all times:
+\begin{eqnarray*}
+%\mylabel{eq:constraint1a}
+ (R \oslash \beta)(t-D) - \sigma(t) & \leq & 0 \\
+%\mylabel{eq:constraint3a}
+ (R \oslash \beta)(t-D) -  (\sigma \otimes R)(t+d) & \leq &  0 \\
+%\mylabel{eq:constraint5a}
+(R \oslash \beta)(t-D) - (\sigma \otimes R)(t-D) & \leq & B.
+\end{eqnarray*}
+Using the deconvolution operator and its properties, the latter three inequalities can be recast as
+\begin{eqnarray*}
+\mylabel{eq:constraint1}
+ (R \oslash (\beta \otimes \sigma)) (-D) & \leq & 0 \\
+\mylabel{eq:constraint3}
+\left( (R \oslash R) \oslash (\beta \otimes \sigma) \right)(-T) & \leq &  0 \\
+\mylabel{eq:constraint5}
+\left( (R \oslash R) \oslash (\beta \otimes \sigma) \right)(0) & \leq & B.
+\end{eqnarray*}
+The minimal values of $D$, $T$ and $B$ satisfying these three inequalities are given by
+(\ref{eq:optimalplaybackdelay}), (\ref{eq:optimaltotaldelay}) and (\ref{eq:optimalplaybackbuffer}).
+These three inequalities are therefore the necessary and sufficient conditions ensuring the existence
+of a solution to the smoothing problem.
+\qed
+
+\section{Optimal Smoothing Strategies}
+\mylabel{sec:smoothingstrategies}
+
+An optimal smoothing strategy is a solution $x(t)$ to the lossless smoothing problem where $D$, $T=D+d$ and $B$ take their minimal value given by Theorem~\ref{thm:singlenetwork}. The previous section shows that there exists at least one optimal solution, namely (\ref{eq:maxsolution}). It is however not the only one, as we will see in this section.
+
+\subsection{Maximal Solution}
+\mylabel{sec:smoothingmaximalsolution}
+
+The maximal solution (\ref{eq:maxsolution}) requires only the evaluation of an infimum
+at time $t$ over the past values of $R$ and over the future values of $R$ up to time $t+d_{\min}$,
+with $d_{\min} = T_{\min} - D_{\min}$.  Of course, we need the knowledge of the traffic trace $R(t)$ to dimension
+$D_{\min}$, $d_{\min}$ and $B_{\min}$. However, once we have these values, we do not need
+the full stream for the computation of the smoothed input to the network.
+
+\subsection{Minimal Solution}
+\mylabel{sec:smoothingminimalsolution}
+
+To compute the minimal solution, we reformulate the lossless smoothing problem slightly differently. Because of Rule 14 of
+Theorem~\ref{thm:rule11-14}, an inequality equivalent to (\ref{eq:smoothnessminplus}) is
+\begin{equation}
+\mylabel{eq:smoothnessmaxplus}
+x(t) \geq (x \oslash \sigma)(t) = \calD_{\sigma}(x)(t).
+\end{equation}
+We use this equivalence to replace the set of inequalities (\ref{eq:ineqminplus}) and (\ref{eq:ineqmaxplus}) by the equivalent set
+\begin{eqnarray}
+\mylabel{eq:ineqminplusbis}
+x(t) & \leq & \delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \} \nonumber \\
+& & \\
+\mylabel{eq:ineqmaxplusbis}
+x(t) & \geq & (R \oslash \beta)(t-D) \vee  \calD_{\sigma}(x)(t) .
+\end{eqnarray}
+One can then apply Theorem~\ref{thm:spacemethodmax} to compute the {\em minimal} solution of (\ref{eq:ineqmaxplusbis}), which is
+$ x_{\min} = \calD_{\sigma}(b) = b \oslash \sigma $ where 
+%%% Bug Fix JYLB April 26, 2012
+% $b(t) =\delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \}$,  
+$b(t) =(R\oslash \beta)(t-D)$,
+because $\sigma$ is a `good' function. Eliminating $b$ from these expressions, we compute that the minimal solution is
+\begin{equation}
+\mylabel{eq:minsolution}
+x_{\min}(t) = (R  \oslash (\beta \otimes \sigma))(t - D),
+\end{equation}
+and compute the constraints on $d$, $D$ and $B$ ensuring that it verifies (\ref{eq:ineqminplusbis}):
+one would get the very same values of $D_{\min}$, $T_{\min}$ and $B_{\min}$ given by (\ref{eq:optimalplaybackdelay})
+(\ref{eq:optimaltotaldelay}) and (\ref{eq:optimalplaybackbuffer}).
+
+It does achieve the values of $D_{\min}$ and $B_{\min}$ given by (\ref{eq:optimalplaybackdelay})
+and (\ref{eq:optimalplaybackbuffer}), but requires nevertheless the evaluation, at time $t$, of a supremum
+over all values of $R$ up to the end of the trace, contrary to the maximal solution (\ref{eq:maxsolution}).
+Min-plus deconvolution can however be represented in the time inverted domain by a min-plus convolution,
+as we have seen in Section~\ref{sec:timeinversion}. As the duration of the pre-recorded stream is usually
+known, the complexity of computing a min-plus deconvolution can thus be reduced to that of computing a convolution.
+
+\subsection{Set of Optimal Solutions}
+
+Any function $x \in \calF$ such that
+$$ x_{\min} \leq x \leq x_{\max} $$
+and
+$$ x \leq x \otimes \sigma $$
+is therefore also a solution to the lossless smoothing problem, for the same minimal
+values of the playback delay, look-ahead delay and client buffer size. This gives the set of all solutions.
+A particular solution among these can be selected to further minimize another metric,
+such as the ones discussed in \cite{FengRexford99}, e.g. number of rate changes or rate variability.
+
+%On the contrary, the maximal solution (\ref{eq:maxsolution}) requires only the evaluation of an infimum
+%at time $t$ over the past values of $R$ and over the future values of $R$ up to time $t+d_{\min}$,
+%with $d_{\min} = T_{\min} - D_{\min}$.  Of course, we still need the complete traffic trace to dimension
+%$D_{\min}$, $d_{\min}$ and $B_{\min}$. However, once we have these values, we do not need
+%the full stream for the computation of the smoothed input to the network.
+
+%If $N$ denotes the number of frames in the stream, the complexity in computing the bounds on $D_{\min}$ is $O(N)$,
+%and on $d_{\min}$ and $B_{\min}$ is $O(N^2)$, which can be reduced to $O(N)$ by using the time-inversion technique
+%in \cite{LeBoudecVerscheure98}. The implementation of the smoothing strategy as (\ref{eq:maxsolution}) has however a
+%very low complexity.
+%%, compared to the $O(N)$ complexity of (\ref{eq:minsolution}).
+%Indeed, in the CBR discrete time setting ($\sigma = \lambda_r$, $ t \in \Nats$), we can rewrite (\ref{eq:maxsolution}) as
+%$$ x_{\max}(t) = \{ x_{\max}(t-1) + r \} \wedge R(t+d) \wedge \{ R(t-D) + B \}, $$
+%and therefore only necessitates two comparisons at each time $t \in {\Nats}_0$.
+%%which does no longer depend on $N$.
+
+The top of Figure~\ref{fig:min_solution_CBR} shows, for a synthetic trace $R(t)$,
+ the maximal solution (\ref{eq:maxsolution}) for a CBR smoothing curve
+$\sigma(t) = \lambda_r(t)$ and a service curve $\beta(t) = \delta_0(t)$,
+whereas the bottom shows %Figure~\ref{fig:min_solution_CBR} shows
+the minimal solution (\ref{eq:minsolution}). Figure~\ref{fig:smoothedtraces} shows the same solutions on a single
+plot, for the MPEG trace $R(t)$ of the top of Figure~\ref{minarrcur} representing the number of packet arrivals per time slot of 40 ms corresponding to a MPEG-2 encoded video when the packet size is 416 bytes for each packet.
+
+An example of VBR smoothing on the same MPEG trace is shown on Figure~\ref{fig:twotracessmoothed}, with a smoothing curve derived from the T-SPEC field, which is
+given by $\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$, where $M$ is the maximum packet size (here $M= 416$ Bytes),
+$P$ the peak rate, $r$ the sustainable rate and $b$ the burst tolerance. Here we roughly have
+$P = 560$ kBytes/sec, $r = 330$ kBytes/sec and $b = 140$ kBytes
+The service curve is a rate-latency curve $\beta_{L,C}$ with $L = 1$ second and $r = 370$ kBytes/sec.
+The two traces have the same envelope, thus the same minimum buffer requirement (here, 928kBytes).
+However the second trace has its bursts later, thus, has a smaller
+   minimum playback delay ($D_2=2.05$s versus $D_1=2.81$s).
+
+
+\begin{figure}[h!]
+%\centerline{ %\begin{center}
+\insfig{maxsolutionCBR}{0.7}
+\insfig{minsolutionCBR}{0.7}
+\caption{In bold, the maximal solution (top figure) and minimal solution (bottom figure)
+to the CBR  smoothing problem with a null network.}
+\mylabel{fig:min_solution_CBR}
+\end{figure}
+
+\begin{figure}[h!]
+%\centerline{ %\begin{center}
+\insfig{smoothedcurves}{0.9}
+\caption{In bold, the maximal and minimal solutions
+to the CBR  smoothing problem of an MPEG trace with a null network. A frame is generated every 40 msec.}
+\mylabel{fig:smoothedtraces}
+\end{figure}
+
+\begin{figure}[h!]
+%\centerline{ %\begin{center}
+\insfig{Figure9}{0.7}
+\caption{Two MPEG traces with the same arrival curve (left). The corresponding playback delays $D_1$ and $D_2$ are the horizontal deviations between the cumulative flows $R(t)$ and function $\sigma \otimes \beta$ (right).}
+\mylabel{fig:twotracessmoothed}
+\end{figure}
+
+\section{Optimal Constant Rate Smoothing}
+\mylabel{sec:CBRsmoothing}
+
+%\subsection{Optimal constant rate smoothing with a rate-latency service curve}
+%\mylabel{sec:CBRsmoothingratelatency}
+
+Let us compute the above values in the case of a constant rate (CBR) smoothing curve $\sigma(t) = \lambda_r(t) = rt$
+(with $t \geq 0$) and a rate-latency service curve of the network $\beta(t) = \beta_{L,C}(t) = C[t-L]^{+} $. We assume that $r < C$,
+the less interesting case where $r \geq C$ being handled similarly.
+We will often use the decomposition of a rate-latency function as the min-plus convolution of a pure delay function, with a constant rate function:
+%\begin{equation}
+%\mylabel{eq:littledecomp}
+$\beta_{L,C} = \delta_L \otimes \lambda_C$.
+%\end{equation}
+We will also use the following lemma.
+
+
+\begin{lemma}
+\mylabel{thm:lemmaW}
+If $f \in {\cal F}$,
+%Define
+%$$ W = \inf \left\{ t \geq 0 \: : \: (f \oslash \beta_{L,C}) (-t) \leq 0 \right\}. $$
+\begin{equation}
+\mylabel{eq:W}
+h(f, \beta_{L,C}) = L + \frac{1}{C} (f \oslash \lambda_C)(0).
+\end{equation}
+
+%\vspace{1ex}
+%\noindent
+%(ii) $(f \oslash \beta_{L,C})(0) = (f \oslash \lambda_C)(L) \leq CW$.
+
+\end{lemma}
+
+\pr As $f(t) = 0 $ for $ t \leq 0$ and as $\beta_{L,C} = \delta_L \otimes \lambda_C$, we can write for any $t \geq 0$
+\begin{eqnarray*}
+(f \oslash \beta_{L,C}) (-t)
+    & = & \sup_{u \geq 0} \{ f(u-t) - (\delta_L \otimes \lambda_C)(u) \} \\
+    & = & \sup_{u \geq 0} \{ f(u-t) - \lambda_C(u-L) \} \\
+    & = & \sup_{v \geq - t} \{ f(v) - \lambda_C(v + t -L) \} \\
+    & = & \sup_{v \geq 0} \{ f(v) - \lambda_C(v + t - L) \} \\
+    & = & \sup_{v \geq 0} \{ f(v) - \lambda_C(v) \} - C(t - L) \\
+    & = & (f \oslash \lambda_C)(0) - C t + C L ,
+\end{eqnarray*}
+from which we deduce the smallest value of $t$ making the left-hand side of this equation
+non-positive is given by (\ref{eq:W}).
+\qed
+
+
+In the particular CBR case, the optimal values (\ref{eq:optimalplaybackdelay}), (\ref{eq:optimaltotaldelay}) and (\ref{eq:optimalplaybackbuffer})
+become the following ones.
+
+\begin{theorem}[Requirements for CBR optimal smoothing]
+\mylabel{thm:CBRcase}
+%The smallest values of the playblack delay $D$, of the total delay $T$ and of the playback buffer $B$
+%ensuring a lossless smoothing to a constant rate curve $\sigma(t) = \lambda_r(t)$
+%through a network offering a service curve $\beta(t) = \beta_{L,C}(t)$ with $r < C$ are
+If $\sigma = \lambda_r$ and  $\beta = \beta_{L,C}$ with $r < C$, the smallest values of $D$, of $T$ and of $B$ are
+\begin{eqnarray}
+ \mylabel{eq:optimalplaybackdelayCBR}
+D_{\min} & = & L + \frac{1}{r} (R \oslash \lambda_r)(0) \\
+%    & = & L + \frac{1}{r} \sup_{t \geq 0} \{ R(t) -rt \} \nonumber \\
+\mylabel{eq:optimaltotaldelayCBR}
+T_{\min}  & = &  L + \frac{1}{r} ((R \oslash R)  \oslash \lambda_r)(0) \\
+%    & = & \;\;\;\; L + \frac{1}{r} \sup_{t,u \geq 0} \{ R(t+u) - R(u) -rt \} \nonumber \\
+\mylabel{eq:optimalplaybackbufferCBR}
+B_{\min}  & = & ((R \oslash R) \oslash \lambda_r))(L) \leq rT_{\min}.\;\;
+\end{eqnarray}
+\end{theorem}
+
+\pr
+To establish (\ref{eq:optimalplaybackdelayCBR}) and (\ref{eq:optimaltotaldelayCBR}),
+we note that $R$ and $(R \oslash R) \in \calF$. Since $r < C$
+%\begin{eqnarray*}
+$$ \beta \otimes \sigma  =  \beta_{L,C} \otimes \lambda_r = \delta_L \otimes \lambda_C \otimes \lambda_r
+     =   \delta_L \otimes \lambda_r = \beta_{L,r} $$
+%\end{eqnarray*}
+so that we can apply Lemma~\ref{thm:lemmaW} with $f = R$ and $f =(R \oslash R)$, respectively.
+
+To establish (\ref{eq:optimalplaybackbufferCBR}), we develop (\ref{eq:optimalplaybackbuffer}) as follows
+\begin{eqnarray*}
+((R \oslash R) \oslash (\beta \otimes \sigma))(0)
+& = & ((R \oslash R) \oslash (\delta_L \otimes \lambda_r))(0) \\
+& = & \sup_{u \geq 0} \{ (R \oslash R)(u) - \lambda_r(u-L)\} \\
+& = & ((R \oslash R) \oslash \lambda_r)(L) \\
+& = & \sup_{u \geq L} \{ (R \oslash R)(u) - \lambda_r(u-L)\} \\
+& = & \sup_{u \geq L} \{ (R \oslash R)(u) - \lambda_r(u)\} + rL \\
+& \leq & \sup_{u \geq 0} \{ (R \oslash R)(u) - \lambda_r(u)\} + rL \\
+& = &  ((R \oslash R) \oslash \lambda_r)(0) + rL = rT_{\min}.
+\end{eqnarray*}
+\qed
+
+This theorem provides the minimal values of playback delay $D_{\min}$ and buffer $B_{\min}$, as well as the minimal look-ahead delay $d _{\min} = T_{\min} - D_{\min}$ for a given constant smoothing rate $r < C$ and a given rate-latency service curve $\beta_{L,C}$. We can also solve the dual problem, namely compute for given values of playback delay $D$, of the look-ahead delay $d$, of the playback buffer $B$ and for a given rate-latency service curve $\beta_{L,C}$, the minimal rate $r_{\min}$ which must be reserved on the network.
+
+\begin{theorem}[Optimal CBR smoothing rate]
+\mylabel{thm:dualCBRcase}
+%The smallest values of the playblack delay $D$, of the total delay $T$ and of the playback buffer $B$
+%ensuring a lossless smoothing to a constant rate curve $\sigma(t) = \lambda_r(t)$
+%through a network offering a service curve $\beta(t) = \beta_{L,C}(t)$ with $r < C$ are
+If $\sigma = \lambda_r$ and  $\beta = \beta_{L,C}$ with $r < C$, the smallest value of $r$,
+given $D \geq L$, $d$ and $B \geq (R \oslash R)(L)$, is
+\begin{eqnarray}
+ \mylabel{eq:optimalrateCBR}
+r_{\min} & = & \sup_{t > 0} \left\{ \frac{R(t)}{t+D-L} \right\} \vee \sup_{t > 0} \left\{ \frac{(R \oslash R)(t)}{t+D+d-L} \right\} \nonumber \\
+         & & \;\;\;\;\;\;\;\;\;\;\;\;\; \vee \sup_{t > 0} \left\{ \frac{(R \oslash R)(t+L) - B}{t} \right\}.
+\end{eqnarray}
+\end{theorem}
+
+\pr Let us first note that because of (\ref{eq:optimalplaybackdelayCBR}), there is no solution if $D < L$.
+On the other hand, if $D \geq L$, then  (\ref{eq:optimalplaybackdelayCBR}) implies that the rate $r$ must be such that for all $t > 0$
+$$ D \geq L + \frac{1}{r} ( R(t) -rt )  $$
+or equivalently $ r \geq R(t)/(t+D-L) $. The latter being true for all $t > 0$, we must have
+$ r \geq \sup_{t \geq 0} \{ R(t)/(t+D-L) \}$.
+Repeating the same argument with (\ref{eq:optimaltotaldelayCBR}) and (\ref{eq:optimalplaybackbufferCBR}), we obtain the minimal rate (\ref{eq:optimalrateCBR}).
+\qed
+
+
+%\section{Optimal constant rate smoothing with a null network}
+%\mylabel{sec:CBRsmoothing}
+
+In the particular case  where $L = 0$ and $r < C$ the network is completely transparent to the flow,
+and can be considered as a null network: can replace $\beta(t)$ by $ \delta_0(t)$. The values
+(\ref{eq:optimalplaybackdelayCBR}), (\ref{eq:optimaltotaldelayCBR}) and (\ref{eq:optimalplaybackbufferCBR}) become,
+respectively,
+\begin{eqnarray}
+\mylabel{eq:optimalplaybackdelayCBRnull}
+D_{\min} & = & \frac{1}{r} (R \oslash \lambda_r)(0) \\
+\mylabel{eq:optimaltotaldelayCBRnull}
+T_{\min} & = & \frac{1}{r} ((R \oslash R)  \oslash \lambda_r)(0) \\
+\mylabel{eq:optimalplaybackbufferCBRnull}
+B_{\min} & = & ((R \oslash R) \oslash \lambda_r))(0) = rT_{\min}.
+\end{eqnarray}
+
+It is interesting to compute these values on a real video trace, such as the first trace on top of Figure~\ref{minarrcur}. Since $B_{\min}$ is directly proportional to $T_{\min}$ because of (\ref{eq:optimalplaybackbufferCBRnull}), we
+show only the graphs of the values of $D_{\min}$ and $d_{\min} = T_{\min} - D_{\min}$, as a function of the CBR smoothing rate $r$ on Figure~\ref{fig:MPEG2}. We observe three qualitative ranges
+of rates: (i) the very low ones where the playback delay is very large, and where look-ahead does not help
+in reducing it; %(ii) the low ones where the playback delay is still significantly high (boave the second), but where
+%look-ahead begins to be useful;
+(ii) a middle range where the playback delay can be kept quite small, thanks to the use
+of look-ahead and (iii) the high rates above the peak rate of the stream, which do not require any playback nor lookahead of the stream. These three regions can be found on every MPEG trace \cite{thilebworm2001}, and depend on the location of the large burst in the trace. If it comes sufficiently late, then the use of look-ahead can become quite useful in keeping the playback delay small.
+
+\begin{figure}[h!]
+\insfig{mytrace400}{0.7}
+%\insfig{jlbpbckL}{0.7}
+%\insfig{jlblaL}{0.7}
+\caption{Minimum playback delay  $D_{\min}$ and corresponding look-ahead delay
+$d_{\min}$ for a constant rate smoothing $r$ of the MPEG-2 video trace shown on top of Figure~\ref{minarrcur}. }
+\protect\mylabel{fig:MPEG2}
+\end{figure}
+
+\section{Optimal Smoothing versus Greedy Shaping}
+\mylabel{sec:smoothingvsshaping}
+
+An interesting question is to compare the requirements on $D$ and $B$, due to the scheduling obtained in Section~\ref{sec:smoothingstrategies}, which are minimal, with those that a simpler scheduling, namely the greedy shaper of Section~\ref{shapers}, would create. As $\sigma$ is a `good' function, the solution of a greedy shaper is
+\begin{equation}
+\mylabel{eq:shapingsolution}
+x_{\mbox{\small shaper}}(t) = (\sigma \otimes R)(t).
+\end{equation}
+
+To be a solution for the smoothing problem, it must satisfy all constraints listed in Section~\ref{sec:requirements}. It already satisfies (\ref{eq:causalflow}), (\ref{eq:smoothnessminplus}) and (\ref{eq:prefetchingdelay}). Enforcing (\ref{eq:playbackdelay}) is equivalent to impose that for all $t \in \Reals$
+$$  (R \oslash \beta)(t-D) \leq  (\sigma \otimes R)(t),  $$
+which can be recast as
+\begin{equation}
+\mylabel{eq:shapingsolutionconstraint1}
+ ((R \oslash R) \oslash (\beta \otimes \sigma)) (-D) \leq 0.
+\end{equation}
+This implies that the minimal playback delay needed for a smoothing using a greedy shaping algorithm is equal to the minimal total delay $T_{\min}$, the sum of the playback and lookahead delays, for the optimal smoothing algorithm. It means that the only way an optimal smoother allows to decrease the playback delay is its ability to look ahead and send data in advance. If this look-ahead is not possible ($d=0$) as for example for a live video transmission, the playback delay is the same for the greedy shaper and the optimal smoother.
+
+The last constraint that must be verified is (\ref{eq:playbackbuffer}), which is equivalent to impose that for all $t \in \Reals$
+$$ (\sigma \otimes R)(t) \leq R(t-D) + B, $$
+which can be recast as
+\begin{equation}
+\mylabel{eq:shapingsolutionconstraint2}
+ ((R \otimes \sigma) \oslash R) (D) \leq B.
+\end{equation}
+
+Consequently, the minimal requirements on the playback delay and buffer using a greedy shaper instead of an optimal smoother are given by the following theorem.
+
+\begin{theorem}[Requirements for greedy shaper]
+\mylabel{thm:shapingvssmoothing}
+If $\sigma$ is a `good' function, then the smallest values of $D$ and $B$ for lossless smoothing of flow $R$ by a greedy shaper are
+\begin{eqnarray}
+\mylabel{eq:optimalshaperdelay}
+D_{\mbox{\small shaper}} & = & T_{\min}  =  h ((R \oslash R),  (\beta \otimes \sigma)) \\
+\mylabel{eq:optimalplaybackbuffershaper}
+B_{\mbox{\small shaper}} & = & ((R \otimes \sigma) \oslash R) (D_{\mbox{\small shaper}}) \in [B_{\min}, \sigma(D_{\mbox{\small shaper}}) ].
+\end{eqnarray}
+\end{theorem}
+
+\pr The expressions of $D_{\mbox{\small shaper}}$ and $B_{\mbox{\small shaper}}$ follow immediately from (\ref{eq:shapingsolutionconstraint1}) and (\ref{eq:shapingsolutionconstraint2}). The only point that remains to be shown is that $B_{\mbox{\small shaper}} \leq
+\sigma(D_{\mbox{\small shaper}})$, which we do by picking $s = u$ in the inf below:
+\begin{eqnarray*}
+ B_{\mbox{\small shaper}}  & = & \left( R \oslash (R \otimes \sigma) \right)  (D_{\mbox{\small shaper}}) \\
+ & = & \sup_{u \geq 0} \left\{ \inf_{0 \leq s \leq u + D_{\mbox{\tiny shaper}}} \left\{ R(s) + \sigma(u  + D_{\mbox{\small shaper}} - s) \right\} - R(u) \right\} \\
+ & \leq & \sup_{u \geq 0} \left\{ R(u) + \sigma(u  + D_{\mbox{\small shaper}} - u) - R(u) \right\} \\
+ & = &  \sigma(D_{\mbox{\small shaper}}).
+\end{eqnarray*}
+
+\qed
+
+Consequently, a greedy shaper does not minimize, in general, the playback buffer requirements,
+although it does minimize the playback delay when look-ahead is not possible.
+Figure~\ref{fig:comparshaper} shows the maximal solution $x_{\max}$ of the optimal shaper (top) and the solution $x_{\mbox{\small shaper}}$ of the greedy shaper (bottom) when the shaping curve is a one leaky bucket affine curve $\sigma = \gamma_{r,b}$, when the look-ahead delay $d=0$ (no look ahead possible) and for a null network ($\beta = \delta_0$). In this case the playback delays are identical, but not the playback buffers.
+
+\begin{figure}[h!]
+\insfig{Comparisonwithshaper}{0.7}
+\caption{In bold, the maximal solution (top figure) and minimal solution (bottom figure)
+to the smoothing problem with a null network, no look-ahead and an affine smoothing curve $\sigma = \gamma_{r,b}$ .}
+\protect\mylabel{fig:comparshaper}
+\end{figure}
+
+Another example is shown on Figure~\ref{fig:comparshaperreal} for the MPEG-2 video trace shown on top of Figure~\ref{minarrcur}. Here the solution of the optimal smoother is the minimal solution  $x_{\min}$.
+
+\begin{figure}[h!]
+\insfig{shapMid}{0.5}
+\insfig{smooMid}{0.5}
+\caption{Example of optimal shaping versus optimal smoothing for the MPEG-2 video trace shown on top of Figure~\ref{minarrcur}.
+  The example is for a null network and a smoothing curve $\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$
+  with $M= 416$ bytes,  $P=600$ kBytes/sec, $r = 300$ kBytes/sec and $b=80$ kBytes.
+  The figure shows the optimal shaper [resp. smoother] output and
+  the original signal (video trace), shifted by the required playback delay. The
+  playback delay is $2.76$ sec for optimal shaping (top) and $1.92$ sec for optimal
+  smoothing (bottom).}
+\protect\mylabel{fig:comparshaperreal}
+\end{figure}
+
+There is however one case where a greedy shaper does minimize the playback buffer: a constant rate smoothing ($\sigma = \lambda_r$) over a null network ($\beta=\delta_0$). Indeed, in this case, (\ref{eq:optimalplaybackbufferCBRnull}) becomes
+$$ B_{\min} = rT_{\min} = rD_{\mbox{\small shaper}} =  \sigma(D_{\mbox{\small shaper}}), $$
+and therefore $B_{\mbox{\small shaper}} =   B_{\min}$. Consequently, if no look-ahead is possible and if the network is transparent to the flow, greedy shaping is an optimal CBR smoothing strategy.
+
+
+
+\section{Comparison with Delay Equalization}
+\mylabel{sec:delayequalization}
+
+A common method to implement a decoder is to first remove any delay jitter caused by the network, by delaying the arriving data in a delay equalization buffer, before using the playback buffer to compensate for fluctuations due to pre-fetching. Figure~\ref{fig:delayequalization} shows such a system. If the delay equalization buffer is properly configured, its combination with the guaranteed service network results into a fixed delay network, which, from the viewpoint we take in this chapter, is equivalent to a null network. Compared to the original scenario in Figure~\ref{fig:prefetching_problem}, there are now two separate buffers for delay equalization and for compensation of prefetching. We would like to understand the impact of this separation on the minimum playback delay $D_{\min}$.
+
+\begin{figure}[h!]
+\insfig{delayequalization}{0.7}
+\caption{Delay equalization at the receiver.}
+\mylabel{fig:delayequalization}
+\end{figure}
+
+The delay equalization buffer operates by delaying the first bit of data by an initial delay $D_{eq}$, equal to the worst case delay through the network. We assume that the network offers a rate-latency service curve $\beta_{L,C}$. Since the flow $x$ is constainted by the arrival curve $\sigma$ which is assumed to be a `good' function, we know from Theorem~\ref{theo-bist}, that the worst-case delay is
+$$ D_{eq} = h( \sigma, \beta_{L,C}). $$
+
+On the other hand, the additional part of the playback delay to compensate for fluctuations due to pre-fetching, denoted by $D_{pf}$, is given by (\ref{eq:optimalplaybackdelay}) with $\beta$ replaced by $\delta_0$:
+$$ D_{pf} =  h(R, \delta_0 \otimes \sigma) = h(R, \sigma). $$
+
+The sum of these two delays is, in general, larger than  the optimal playback delay (without a separation between equalization and compensation for prefetching), $D_{\min}$, given by (\ref{eq:optimalplaybackdelay}):
+$$ D_{\min} =   h(R, \beta_{L,C} \otimes \sigma). $$
+Consider the example of Figure~\ref{fig:comparequalization}, where  $\sigma = \gamma_{r,b}$ with $r < C$. Then one easily computes the three delays  $D_{\min}$, $D_{eq}$ and $D_{pf}$, knowing that
+\begin{eqnarray*}
+\beta_{L,C} \otimes \sigma & = & \delta_L \otimes \lambda_C \otimes \gamma_{r,b} = \delta_L \otimes (\lambda_C \wedge \gamma_{r,b}) \\
+                           & = & (\delta_L \otimes \lambda_C) \wedge (\delta_L \otimes \gamma_{r,b}) = \beta_{L,C} \wedge (\delta_L \otimes \gamma_{r,b}).
+\end{eqnarray*}
+One clearly has  $D_{\min} < D_{eq} + D_{pf}$: separate delay equalization gives indeed a larger overall playback delay. In fact, looking carefully at the figure (or working out the computations), we can observe that the combination of delay equalization and compensation for prefetching in a single buffer accounts for the busrtiness of the (optimally) smoothed flow only once. This is another instance of the ``pay bursts only once'' phenomenon, which we have already met in Section~\ref{sec-concat}.
+
+\begin{figure}[h!]
+\insfig{Comparisonwithequalizer}{0.7}
+\caption{Delays $D_{\min}$, $D_{eq}$ and $D_{pf}$ for a rate-latency service curve $\beta_{L,C}$ and an affine smoothing curve $\sigma = \gamma_{r,b}$ .}
+\protect\mylabel{fig:comparequalization}
+\end{figure}
+
+We must however make -- once again -- an exception for a constant rate smoothing. Indeed, if $\sigma = \lambda_r$ (with $r < C$), then
+$D_{pf}$ is given by  (\ref{eq:optimalplaybackdelayCBRnull}) and $D_{\min}$ by (\ref{eq:optimalplaybackdelayCBR}), so that
+\begin{eqnarray*}
+D_{eq} & = & h( \lambda_r, \beta_{L,C}) = L \\
+ D_{pf} & = & \frac{1}{r} (R \oslash \lambda_r)(0) \\
+D_{\min} & = & L + \frac{1}{r} (R \oslash \lambda_r)(0)
+\end{eqnarray*}
+and therefore $D_{\min} = D_{eq} + D_{pf}$.
+In the CBR case, separate delay equalization is thus able to attain the optimal playback delay.
+
+%Since $\sigma$ is sub-additive, we have that for any $t \in \Reals$
+%\begin{eqnarray*}
+%(R \oslash (\beta \otimes \sigma)) (t) & = & \sup_{u \geq 0} \left\{ R(t+u) - \inf_{0 \leq s \leq u} \{ \sigma(u-s) + \beta(s) \} \right\} \\
+%& \leq & \sup_{u \geq 0}  \left\{ R(t+u) - \inf_{0 \leq s \leq u} \{ \sigma(u) - \sigma(s) + \beta(s) \} \right\} \\
+%& = &  \sup_{u \geq 0}  \left\{ R(t+u) - \sigma(u) + \sup_{0 \leq s \leq u} \{ \sigma(s) - \beta(s) \} \right\} \\
+%& \leq &  \sup_{u \geq 0}  \left\{ R(t+u) - \sigma(u) \right\} + \sup_{s \geq 0} \{ \sigma(s) - \beta(s) \} \\
+%& = & (R \oslash \sigma)(t) + (\sigma \oslash \beta)(0) \\
+%& \leq & (R \oslash \sigma)(t) + (\sigma \oslash \beta)(t)
+%\end{eqnarray*}
+
+
+\section{Lossless Smoothing over Two Networks}
+\mylabel{sec:twonetworksconstraints}
+
+We now consider the more complex setting where two networks
+separate the video server from the client: the first one is a backbone network, offering a service
+curve $\beta_1$ to the flow, and the second one is a local access network, offering a service
+curve $\beta_2$ to the flow, as shown on Figure~\ref{fig:twonetworks}.
+This scenario models intelligent, dynamic caching often done at local network head-ends.
+We will compute the requirements on $D$, $d$, $B$ and on the buffer $X$ of this
+intermediate node in Subsection~\ref{sec:twonetworks}.
+Moreover, we will see in Subsection~\ref{sec:twonetworksCBR} that for constant rate shaping curves and rate-latency
+service curves, the size of the client buffer $B$ can be reduced by implementing a particular smoothing strategy instead of FIFO scheduling
+at the intermediate node.
+
+\index{caching}
+
+\begin{figure}[h!]
+\insfig{smoothingsetting2network}{0.7}
+\caption{Smoothing over two networks with a local caching node.}
+\mylabel{fig:twonetworks}
+\end{figure}
+
+Two flows need therefore to be computed:
+the first one $x_1(t)$ at the input of the backbone network, and the second one $x_2(t)$ at the input of the
+local access network, as shown on Figure~\ref{fig:twonetworks}.
+
+The constraints on both flows are now as follows:
+
+\begin{itemize}
+\item {\bf Causal flow $x_1$}: This constraint is the same as (\ref{eq:causalflow}), but with $x$ replaced by $x_1$:
+\begin{equation}
+\mylabel{eq:causalflow1}
+x_1(t) \leq \delta_0 (t),
+\end{equation}
+
+\item{\bf Smoothness constraint}: Both flows $x_1$ and $x_2$ are constrained by two arrival curves
+$\sigma_1$ and $\sigma_2$:  %, possibly different:
+\begin{eqnarray}
+\mylabel{eq:smoothnessminplus1}
+x_1(t) \leq (x_1 \otimes \sigma_1)(t) \\
+\mylabel{eq:smoothnessminplus2}
+x_2(t) \leq (x_2 \otimes \sigma_2)(t).
+\end{eqnarray}
+
+\item {\bf No playback and intermediate server buffers underflow}:
+The data is read out from the playback buffer after $D$ unit of times
+at a rate given by $R(t - D) $, which implies that $y_2(t) \geq R(t-D)$.
+On the other hand, the data is retrieved from the intermediate server
+at a rate given by $x_2(t)$, which implies that $y_1(t) \geq x_2(t)$.
+As we do not know the expressions of the outputs of each network, but only a service curve
+$\beta_1$ and $\beta_2$ for each of them, we can replace $y_1$ by $x_1 \otimes \beta_1$ and
+$y_2$ by $x_2 \otimes \beta_2$, and reformulate these two constraints by
+\begin{eqnarray}
+\mylabel{eq:playbackdelay1}
+x_2(t) \leq (x_1 \otimes \beta_1)(t) \\
+\mylabel{eq:playbackdelay2}
+x_2(t) \geq (R \oslash \beta_2)(t - D).
+\end{eqnarray}
+
+
+\item{\bf No playback and intermediate server  buffers overflow}:
+The size of the playback and cache buffers are limited to $B$ and $X$, respectively,
+and to prevent any overflow of the buffer, we must impose that $y_1(t) - x_2(t) \leq X$ and
+$y_2(t) -  R(t-D) \leq B$ for all $t \geq 0$. Again, we do not know the
+exact value of  $y_1$ and $y_2$, but we know that they are bounded by $x_1$ and $x_2$, respectively,
+so that the constraints becomes, for all $t \geq 0$,
+\begin{eqnarray}
+\mylabel{eq:playbackbuffer1}
+x_1(t) \leq x_2(t) + X \\
+\mylabel{eq:playbackbuffer2}
+x_2(t) \leq R(t - D) + B.
+\end{eqnarray}
+
+
+\item {\bf Look-ahead delay constraint}: this constraint is the same as in the single network case:
+\begin{equation}
+\mylabel{eq:prefetchingdelay1}
+x_1(t) \leq  R(t+d).
+\end{equation}
+\end{itemize}
+
+
+\subsection{Minimal Requirements on the Delays and Buffer Sizes for Two Networks}
+\mylabel{sec:twonetworks}
+
+Inequalities (\ref{eq:causalflow1}) to (\ref{eq:prefetchingdelay1}) can be recast as three sets of inequalities as follows:
+\begin{eqnarray}
+\mylabel{eq:ineqminplus1}
+x_1(t) & \leq & \delta_0 (t) \wedge R(t+d) \wedge  (\sigma_1 \otimes x_1)(t) \wedge (x_2(t) + X) \\
+\mylabel{eq:ineqminplus2}
+x_2(t) & \leq & \{R(t-D) + B \}  \wedge  (\beta_1 \otimes x_1)(t) \wedge  (\sigma_2 \otimes x_2)(t) \\
+\mylabel{eq:ineqmaxplus2}
+x_2(t) & \geq & (R \oslash \beta_2)(t-D).
+\end{eqnarray}
+
+We use the same technique for solving this problem sa in Section~\ref{sec:constraintsresolution},
+except that now the dimension of the system $J$ is 2 instead of 1.
+
+With $T$ denoting transposition, let us introduce the following notations:
+%\begin{eqnarray*}
+$$ \begin{array}{rcl}
+\vec{x}(t) & = & [ x_1(t) \; \; \; \; \;  x_2(t)  ]^T  \\
+\vec{a}(t) & = & [ \delta_0 (t) \wedge R(t+d)  \; \; \; \;  R(t-D) + B ]^T \\
+\vec{b}(t) & = & [ 0  \; \; \; \; \; (R \oslash \beta_2)(t-D) ]^T \\ \\
+\Sigma(t) & = & \left[ \begin{array}{cc} \sigma_1(t) & \delta_0(t) + X \\
+                    \beta_1(t) & \sigma_2(t)  \end{array} \right].
+\end{array} $$
+%and
+%$$ \Sigma(t) = \left[ \begin{array}{cc} \sigma_1(t) & \delta_0(t) + X \\
+%                   \beta_1(t) & \sigma_2(t)  \end{array} \right]. $$
+
+With these notations, the set of inequalities (\ref{eq:ineqminplus1}), (\ref{eq:ineqminplus2}) and  (\ref{eq:ineqmaxplus2}) can therefore be recast as
+\begin{eqnarray}
+\mylabel{eq:ineqminplusvec}
+\vec{x} & \leq & \vec{a} \wedge (\Sigma \otimes \vec{x}) \\
+\mylabel{eq:ineqmaxplusvec}
+\vec{x} & \geq & \vec{b}.
+\end{eqnarray}
+We will follow the same approach as in Section~\ref{sec:constraintsresolution}: we first compute the maximal solution of (\ref{eq:ineqminplusvec}) and then derive the constraints on $D$, $T$ (and hence $d$), $X$ and $B$ ensuring the existence of this solution. We apply thus Theorem~\ref{thm:spacemethod} again, but this time in the two-dimensional case, to obtain
+an explicit formulation of the maximal solution of (\ref{eq:ineqminplusvec}). We get
+\begin{equation}
+\mylabel{eq:solutionineqgeneralminplusvec}
+\vec{x}_{\max} = \overline{\calC}_{\Sigma} (\vec{a}) = (\overline{\Sigma} \otimes \vec{a})
+\end{equation}
+where $\overline{\Sigma}$ is the sub-additive closure of $\Sigma$, which is, as we know from Section~\ref{operatorclosure},
+\begin{equation}
+\mylabel{eq:sub-additiveclosurematrix}
+\overline{\Sigma} = % \inf \{ I_\delta, \Sigma, \Sigma \otimes \Sigma, \ldots \} =
+ \inf_{n \in \Nats}  \{ \Sigma^{(n)} \}
+\end{equation}
+where $\Sigma^{(0)} = D_0$ and $\Sigma^{(n)}$ denotes the $n$th self-convolution of $\Sigma$.
+Application of (\ref{eq:sub-additiveclosurematrix}) to matrix $\Sigma$ is straightforward,
+but involves a few manipulations which are skipped.
+Denoting
+\begin{eqnarray}
+\mylabel{eq:alpha}
+\alpha & = & \sigma_1 \otimes \sigma_2 \otimes \inf_{n \in \Nats} \left\{ \beta_1^{(n+1)} + nX \right\} \\
+    & = &  \sigma_1 \otimes \sigma_2 \otimes \beta_1 \otimes \overline{ \beta_1 + X }, \nonumber
+\end{eqnarray}
+we find that
+$$ \overline{\Sigma} = \left[ \begin{array}{cc}
+    \!\! \sigma_1 \! \wedge \! (\alpha \! + X)   & (\sigma_1 \! \otimes \! \sigma_2 \! + \! X) \! \wedge \! (\alpha +2X)\!\!  \\
+    \alpha  & \sigma_2 \wedge (\alpha + X)   \end{array} \right] $$
+and therefore the two coordinates of the maximal solution of  (\ref{eq:ineqminplusvec}) are
+\begin{eqnarray}
+\mylabel{eq:maxsolutioncoordinate1}
+x_{1\max}(t)  & = &   \sigma_1 (t) \wedge \{ \alpha(t) + X \}  \wedge   (\sigma_1 \otimes R)(t+d)  \wedge \{ (\alpha \otimes R)(t+d) + X \}   \nonumber \\
+        &  & \wedge  \left\{ (\sigma_1 \otimes \sigma_2 \otimes R)(t-D) + B + X \right\}  \nonumber \\
+                & & \wedge  \left\{ (\alpha \otimes R)(t-D) + B + 2X \right\} \\
+\mylabel{eq:maxsolutioncoordinate2}
+x_{2\max}(t) & = &  \alpha (t) \wedge (\alpha \otimes R)(t+d)  \wedge  \left\{ (\sigma_2 \otimes R)(t-D) + B \right\} \nonumber \\
+         & & \wedge  \left\{ (\alpha \otimes R)(t-D) + B + X \right\} .
+\end{eqnarray}
+Let us mention that an alternative (and computationally simpler) approach to obtain (\ref{eq:maxsolutioncoordinate1}) and (\ref{eq:maxsolutioncoordinate2}) would have been to first compte the maximal solution of (\ref{eq:ineqminplus2}), as a function of $x_1$,
+and next to replace $x_2$ in  (\ref{eq:ineqminplus1}) by this latter value.
+
+We can now express the constraints on $X$, $B$, $D$ and $d$ that will ensure that a solution exists
+by requiring that (\ref{eq:maxsolutioncoordinate2}) be larger than (\ref{eq:ineqmaxplus2}).
+The result is stated in the following theorem, whose proof is similar to that of Theorem~\ref{thm:singlenetwork}.
+% Note that since $X$ and $B$ appear inequalities, we cannot give
+
+\begin{theorem}
+\mylabel{thm:doublenetwork}
+The lossless smoothing of a flow to (sub-additive) curves $\sigma_1$ and $\sigma_2$, respectively, over two networks offering service curves $\beta_1$ and $\beta_2$ has a solution if and only if the  $D$, $T$, $X$ and $B$ verify the following set of inequalities, with $\alpha$ defined by (\ref{eq:alpha}):
+\begin{eqnarray}
+\mylabel{eq:constraint1two}
+ (R \oslash (\alpha \otimes \beta_2) (-D) & \leq & 0 \\
+\mylabel{eq:constraint3two}
+\left( (R \oslash R) \oslash (\alpha \otimes \beta_2) \right)(-T) & \leq &  0 \\
+\mylabel{eq:constraint5two}
+\left( (R \oslash R) \oslash (\sigma_2 \otimes \beta_2) \right)(0) & \leq & B \\
+\mylabel{eq:constraint6two}
+\left( (R \oslash R) \oslash (\alpha \otimes \beta_2) \right)(0) & \leq & B + X. \;\;\;
+\end{eqnarray}
+\end{theorem}
+
+\subsection{Optimal Constant Rate Smoothing over Two Networks}
+\mylabel{sec:twonetworksCBR}
+
+Let us compute the values of Theorem~\ref{thm:doublenetwork} in the case of two constant rate (CBR) smoothing curves $\sigma_1 = \lambda_{r_1}$
+and $\sigma_2 =  \lambda_{r_2}$. We assume that each network offers a rate-latency service curve $\beta_i = \beta_{L_i,C_i} $, $i = 1,2$. We assume that $r_i \leq C_i$
+%, the less interesting case where $r > C$ being handled similarly.
+%
+In this case the optimal values of $D$, $T$ and $B$
+become the following ones, depending on the value of $X$.
+
+\begin{theorem}
+\mylabel{thm:CBRcasetwonetworks}
+Let $r = r_1 \wedge r_2$. Then we have the following three cases depending on $X$:
+
+\noindent
+(i) If $X \geq rL_1$, then $D_{\min}$, $T_{\min}$ and $B_{\min}$ are given by
+%If the intermediate node buffer is $X \geq rL_1$, then the smallest values of the playblack delay $D$, of the total delay $T$, and of the client playback buffer $B$ ensuring a lossless smoothing to two constant rate curves $\lambda_{r_i}$, for $
+%through two networks in tandem offering each a service curve $\beta_{L_i,C_i}$ with $r_i < C_i$,
+%with $i = 1,2$ are
+\begin{eqnarray}
+ \mylabel{eq:optimalplaybackdelayCBRtwonetworks}
+D_{\min} & = & L_1 + L_2 + \frac{1}{r} (R \oslash \lambda_{r})(0) \\
+\mylabel{eq:optimaltotaldelayCBRtwonetworks}
+T_{\min} & = & L_1 + L_2 + \frac{1}{r} ((R \oslash R)  \oslash \lambda_{r})(0) \\
+\mylabel{eq:optimalplaybackbufferCBRtwonetworks}
+B_{\min} & = & ((R \oslash R) \oslash \lambda_{r_2})(L_2) \vee \{ ((R \oslash R) \oslash \lambda_{r})(L_1 + L_2) - X \} \nonumber \\
+    & \leq & ((R \oslash R) \oslash \lambda_{r})(L_2).
+% \mylabel{eq:optimalcachebufferCBRtwonetworks}
+%X_{\min} & = & r_2L_1
+\end{eqnarray}
+
+\noindent
+(ii) If $0 < X < rL_1$ then $D_{\min}$, $T_{\min}$ and $B_{\min}$ are bounded by
+\begin{eqnarray}
+ \mylabel{eq:optimalplaybackdelayCBRtwonetworkssmallbuf}
+\lefteqn {\frac{X}{r} + L_2 + \frac{L_1}{X} (R \oslash \lambda_{\frac{X}{L_1}})(0) \leq D_{\min}}  \nonumber \\
+ & \leq &  L_1 + L_2 + \frac{L_1}{X} (R \oslash \lambda_{\frac{X}{L_1}})(0) \\
+\mylabel{eq:optimaltotaldelayCBRtwonetworkssmallbuf}
+\lefteqn {\frac{X}{r} + L_2 + \frac{L_1}{X} ((R \oslash R) \oslash \lambda_{\frac{X}{L_1}})(0) \leq T_{\min}}  \nonumber \\
+ & \leq &  L_1 + L_2 + \frac{L_1}{X} ((R \oslash  R) \oslash \lambda_{\frac{X}{L_1}})(0) \\
+\mylabel{eq:optimalplaybackbufferCBRtwonetworkssmallbuf}
+\lefteqn{ ((R \oslash  R) \oslash \lambda_{\frac{X}{L_1}})(L_1 + L_2) - r_2L_1 \leq  B_{\min}}  \nonumber \\
+      & \leq & ((R \oslash R) \oslash \lambda_{\frac{X}{L_1}})(L_2)
+%%% \mylabel{eq:optimalcachebufferCBRtwonetworks}
+%%%X_{\min} & = & r_2L_1
+\end{eqnarray}
+%%%If $0 < X < rL_1$ then $D_{\min}$, $T_{\min}$ and $B_{\min}$ are in the following intervals:
+%%%\begin{eqnarray}
+% \mylabel{eq:optimalplaybackdelayCBRtwonetworkssmallbuf}
+%D_{\min} & \in &
+%  L_2 + \frac{L_1}{X} (R \oslash \lambda_{\frac{X}{L_1}})(0) + \left[ \frac{X}{r},  L_1 \right] \\
+%\mylabel{eq:optimaltotaldelayCBRtwonetworkssmallbuf}
+%\lefteqn {\frac{X}{r} + L_2 + \frac{L_1}{X} ((R \oslash R) \oslash \lambda_{\frac{X}{L_1}})(0) \leq T_{\min}}  \nonumber \\
+% & \leq &  L_1 + L_2 + \frac{L_1}{X} ((R \oslash  R) \oslash \lambda_{\frac{X}{L_1}})(0) \\
+%%\mylabel{eq:optimaltotaldelayCBRtwonetworkssmallbuf}
+%%T_{\min} & \in &  L_2 + \frac{L_1}{X} ((R \oslash R) \oslash \lambda_{\frac{X}{L_1}})(0) + \left[ \frac{X}{r},  L_1 \right] \\
+%\mylabel{eq:optimalplaybackbufferCBRtwonetworkssmallbuf}
+%B_{\min} & \in & \left[ ((R \oslash  R) \oslash \lambda_{\frac{X}{L_1}})(L_1 + L_2) - r_2L_1, ((R \oslash R) \oslash \lambda_{\frac{X}{L_1}})(L_2) \right]
+%\end{eqnarray}
+
+\noindent
+(iii) Let $K$ be duration of the stream. If $X = 0 < rL_1$ then  $D_{\min} = K$.
+\end{theorem}
+
+\begin{proof}
+One easily verifies that $\delta_{L_1}^{(n+1)} = \delta_{(n+1)L_1}$ and that $\lambda_{C_1}^{(n+1)} = \lambda_{C_1}$.
+Since $\beta_1 = \beta_{L_1,C_1} = \delta_{L_1} \otimes \lambda_{C_1}$,
+and since $r = r_1 \wedge r_2 \leq C_1$, (\ref{eq:alpha}) becomes
+\begin{eqnarray}
+\mylabel{eq:alphaCBR}
+\alpha & = & \lambda_r \otimes \inf_{n \in \Nats} \left\{ \delta_{(n+1)L_1} \otimes  \lambda_{C_1} + nX \right\} \nonumber \\
+    & = & \delta_{L_1} \otimes \inf_{n \in \Nats} \left\{ \delta_{nL_1} \otimes  \lambda_{r} + nX \right\}.
+\end{eqnarray}
+
+\vspace{1ex}
+\noindent
+(i) %If $X \geq rL_1$, then one checks that
+%$(\delta_{nL_1} \otimes  \lambda_{r})(t) + nX  \geq  rt = \lambda_r(t) $
+%for all $t \geq 0$, which implies that the infimum in (\ref{eq:alphaCBR}) is reached for $n = 0$ and hence that
+%$ \alpha =  \delta_{L_1} \otimes \lambda_r $.
+%
+If $X \geq rL_1$, then for $t \geq nL_1$
+$$ (\delta_{nL_1} \otimes  \lambda_{r})(t) + nX = \lambda_r (t-nL_1) + nX  = rt + n(X - rL_1) \geq  rt = \lambda_r(t) $$ whereas for $0 \leq t < nL_1$
+%\begin{eqnarray*}
+$$ (\delta_{nL_1} \otimes  \lambda_{r})(t) + nX = \lambda_r (t-nL_1) + nX =  nX \geq nrL_1 > rt = \lambda_r(t). $$
+
+Consequently, for all $t \geq 0$, $\alpha(t) \geq (\delta_{L_1} \otimes \lambda_r)(t)$.
+On the other hand, taking $n = 0$ in the infimum in (\ref{eq:alphaCBR}) yields that $\alpha \leq \delta_{L_1} \otimes \lambda_r$. Combining these two inequalities, we get that
+$$ \alpha =  \delta_{L_1} \otimes \lambda_r $$
+and hence that
+\begin{equation}
+\mylabel{eq:alphatimesbeta2}
+\alpha \otimes \beta_2  =   \delta_{L_1} \otimes \lambda_r \otimes \delta_{L_2} \otimes \lambda_{r_2} =  \delta_{L_1+L_2} \otimes \lambda_r = \beta_{L_1+L_2,r}.
+\end{equation}
+Inserting this last relation in (\ref{eq:constraint1two}) to (\ref{eq:constraint6two}), and using Lemma~\ref{thm:lemmaW}
+%a similar argument as in  the proof of Theorem~\ref{thm:CBRcase}
+we establish (\ref{eq:optimalplaybackdelayCBRtwonetworks}),
+(\ref{eq:optimaltotaldelayCBRtwonetworks}) and the equality in (\ref{eq:optimalplaybackbufferCBRtwonetworks}).
+The inequality in (\ref{eq:optimalplaybackbufferCBRtwonetworks}) is obtained by noticing that
+$r_2 \geq r$ and that
+\begin{eqnarray*}
+((R \oslash R) \oslash \lambda_{r})(L_1 + L_2) - X
+& = & \sup_{u \geq 0} \{ (R \oslash R)(u + L_1 + L_2) - ru \} - X \\
+& = & \sup_{v \geq L_1} \{ (R \oslash R)(v + L_2) - r(v-L_1) \} - X \\
+& \leq &  \sup_{v \geq 0} \{ (R \oslash R)(v + L_2) - rv \} + (rL_1 - X) \\
+& \leq &  ((R \oslash R) \oslash \lambda_{r})(L_2) .
+\end{eqnarray*}
+
+\vspace{1ex}
+\noindent
+(ii) If $0 < X < rL_1$, the computation of $\alpha$ does not provide a rate-latency curve anymore,
+but a function % like the one of Figure~\ref{fig:alpha},
+that can be bounded below and above by the
+two following  rate-latency curves: $\beta_{L_1,X/L_1} \leq \alpha \leq \beta_{X/r,X/L_1}$.
+Therefore, replacing (\ref{eq:alphatimesbeta2}) by
+$$ \delta_{L_1+L_2} \otimes \lambda_{\frac{X}{L_1}} \leq \alpha \otimes \beta_2 \leq  \delta_{\frac{X}{r}+L_2} \otimes \lambda_{\frac{X}{L_1}}, $$
+and applying Lemma~\ref{thm:lemmaW} to both bounding rate-latency curves $\beta_{L_1,X/L_1}$ and $\beta_{X/r,X/L_1}$, we get respectively the lower and upper bounds (\ref{eq:optimalplaybackdelayCBRtwonetworkssmallbuf}) to (\ref{eq:optimalplaybackbufferCBRtwonetworkssmallbuf}).
+
+\vspace{1ex}
+\noindent
+(iii) If $X = 0$ and $rL_1 > 0$ then (\ref{eq:alphaCBR}) yields that $\alpha(t) = 0$ for all $t \geq 0$. In this case
+(\ref{eq:constraint1two}) becomes
+$ \sup_{u \geq 0} \{ R(u -D) \} \leq 0$. This is possible only if $D$ is equal to the duration of the stream.
+\end{proof}
+
+%\begin{figure}[hbt]
+%\insfig{min_solution_CBR}{0.5}
+%\caption{In bold, the curve $\alpha$ when $0 < X < rL_1$. The two bounding rate-latency curves $\beta_{L_1,X/L_1}$
+%and $\beta_{X/r,X/L_1}$ are shown in bold dashed lines}
+%\protect\mylabel{fig:alpha}
+%\end{figure}
+
+It is interesting to examine these results for two particular values of $X$.
+
+The first one is $X = \infty$. If the intermediate server is a greedy shaper  whose output is $x_2(t) = (\sigma_2 \otimes y_1)(t)$,
+one could have applied Theorem~\ref{thm:CBRcase} with $\sigma_2 = \lambda_r$ and $\beta = \beta_1 \otimes \sigma_2 \otimes \beta_2 = \delta_{L_1+L_2} \otimes \lambda_{r_2} = \beta_{L_1 + L_2,r_2}$ to find out that $D$ and $T$ are still given by (\ref{eq:optimalplaybackdelayCBRtwonetworks})
+and (\ref{eq:optimaltotaldelayCBRtwonetworks}) but that $B = ((R \oslash R) \oslash \lambda_{r})(L_1 + L_2)$ is larger than (\ref{eq:optimalplaybackbufferCBRtwonetworks}). Using the caching scheduling (\ref{eq:maxsolutioncoordinate2}) instead of a greedy shaping one allows therefore to decrease the playback buffer size, but not the delays. The buffer $X$ of the intermediate node does not need to be infinite, but can be limited to $rL_1$.
+
+The second one is $X = 0$. Then whatever the rate $r > 0$, if $L_1 > 0$, the playback delay is the length of the stream, which makes streaming impossible in practice. When $L_1 = L_2 = 0$ however (in which case we have two null networks) $X = rL_1 = 0$ is the optimal intermediate node buffer allocation. This was shown in \cite{RexfordTowsley99}(Lemma 5.3) using another approach. We see that when $L_1 > 0$, this is no longer the case.
+
+
+\section{Bibliographic Notes}
+
+The first application of network calculus to optimal smoohting is found in \cite{LeBoudecVerscheure98}, for an unlimited value of the look-ahead delay. The minimal solution (\ref{eq:minsolution}) is shown to be an optimal smoothing scheme. The computation of the minimum look-ahead delay, and of the maximal solution, is done in \cite{thilebworm2001}. Network calculus allows to retrieve some results found using other methods, such as the optimal buffer allocation of the intermdiate node for two null networks computed in \cite{RexfordTowsley99}.
+
+It also allows to extend these results, by computing the full set of optimal schedules and by taking into account non null networks,
+as well as by using more complex shaping curves $\sigma$ than constant rate service curves. For example, with the Resource Reservation Protocol (RSVP),
+$\sigma$ is derived from the T-SPEC field in messages used for
+setting up the reservation, and is given by
+$\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$, where $M$ is the maximum packet size,
+$P$ the peak rate, $r$ the sustainable rate and $b$ the burst
+tolerance, as we have seen in Section~\ref{sec-concat}.
+
+The optimal T-SPEC field is computed in \cite{LeBoudecVerscheure98}. More precisely, the following problem
+is solved.  As assumed by the Intserv model, every node offers a service of the form $\beta_{L,C}$ for some latency $L$ and rate $C$, with the latency parameter $L$ depending on the rate $C$ according to
+$L=\frac{C_0}{\rho}+D_0$.  The constants $C_0$
+and $D_0$ depends on the route taken by the flow throughout the
+network. Destinations choose a target admissible network delay
+$D_{net}$. The choice of a specific service curve $\beta_{L,C}$
+(or equivalently, of a rate parameter $C$) is done
+during the reservation phase and cannot be known exactly in
+advance. The algorithm developed in  \cite{LeBoudecVerscheure98}
+computes the admissible choices of $\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$ and of $D_{net}$
+in order to guarantee that the reservation that
+will subsequently be performed ensures a playback delay not
+exceeding a given value $D$.

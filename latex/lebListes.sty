@@ -1,0 +1,99 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%             This is item.xxx
+%
+% It redefines the kind of label for "itemize", "enumerate"
+% and "description" environment. The last is extended by
+% an optional parameter. Its length is used for overall
+% indentation.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% labels of enumerate
+%
+%\def\labelenumi{\theenumi.}
+%\def\labelenumii{\theenumii)}
+%\def\theenumii{\alph{enumii}}
+%\def\p@enumii{\theenumi}
+%
+%% labels of itemize
+%
+%\def\labelitemi{\bf --}
+%\def\labelitemii{\bf --}
+%\def\labelitemiii{$\bullet$}
+%\def\labelitemiv{$\cdot$}
+%
+%% labels of description
+%\def\descriptionlabel#1{\hspace\labelsep #1\hfil}
+%
+%% make indentations changeable
+%
+%\def\setitemindent#1{\settowidth{\labelwidth}{#1}%
+%        \leftmargini\labelwidth
+%        \advance\leftmargini\labelsep
+%   \def\@listi{\leftmargin\leftmargini
+%        \labelwidth\leftmargini\advance\labelwidth by -\labelsep
+%        \parsep=\parskip
+%        \topsep=\medskipamount
+%        \itemsep=\parskip \advance\itemsep by -\parsep}}
+%\def\setitemitemindent#1{\settowidth{\labelwidth}{#1}%
+%        \leftmarginii\labelwidth
+%        \advance\leftmarginii\labelsep
+%\def\@listii{\leftmargin\leftmarginii
+%        \labelwidth\leftmarginii\advance\labelwidth by -\labelsep
+%        \parsep=\parskip
+%        \topsep=\z@
+%        \itemsep=\parskip \advance\itemsep by -\parsep}}
+%%
+%% adjusted environment "description"
+%% if an optional parameter (at the first two levels of lists)
+%% is present, its width is considered to be the widest mark
+%% throughout the current list.
+%\def\description{\@ifnextchar[{\@describe}{\list{}{\labelwidth\z@
+%          \itemindent-\leftmargin \let\makelabel\descriptionlabel}}}
+%%
+%\def\describelabel#1{#1\hfil}
+%\def\@describe[#1]{\relax\ifnum\@listdepth=0
+%\setitemindent{#1}\else\ifnum\@listdepth=1
+%\setitemitemindent{#1}\fi\fi
+%\list{--}{\let\makelabel\describelabel}}
+%%%% modifie les bullets selon AMS et fournit les macros suivants
+%
+
+%* Le petit bout de code ci-dessous, de M. Boyer
+%(mboyer@robot.ireq.ca), d\'{e}finit les commandes : + \noitemsep pour supprimer tout espacement
+%vertical entre les items des environnements \itemize, \enumerate et \description. + \doitemsep
+%pour les remettre. Pour l'utiliser, il suffit de le sauvegarder dans un fichier .sty et de
+%l'inclure dans son document par une commande
+%\usepackage.
+
+%%%% debut macro %%%%
+%% ----------------------------------------------------
+%% Copyright (c) 1993 Hydro-Quebec mboyer@robot.ireq.ca
+%% ----------------------------------------------------
+
+%% Bring items closer together in list environments
+% Prevent infinite loops
+\let\orig@Itemize =\itemize
+\let\orig@Enumerate =\enumerate
+\let\orig@Description =\description
+% Zero the vertical spacing parameters
+\def\Nospacing{\itemsep=0pt\topsep=0pt\partopsep=0pt%
+\parskip=0pt\parsep=0pt}
+% Redefinition de art12.sty pour commencer a la marge de gauche
+%\leftmargini 1.2em      % 2.5em
+
+\def\noitemsep{
+% Redefine the environments in terms of the original values
+\renewenvironment{itemize}{\orig@Itemize\Nospacing}{\endlist}
+\renewenvironment{enumerate}{\orig@Enumerate\Nospacing}{\endlist}
+\renewenvironment{description}{\orig@Description\Nospacing}%
+{\endlist} }
+
+\def\doitemsep{
+% Redefine the environments to the original values
+\renewenvironment{itemize}{\orig@Itemize}{\endlist}
+\renewenvironment{enumerate}{\orig@Enumerate}{\endlist}
+\renewenvironment{description}{\orig@Description}{\endlist}
+}
+%%%% fin macro %%%%

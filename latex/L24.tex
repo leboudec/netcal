@@ -1,0 +1,1603 @@
+\chapter{Aggregate Scheduling}
+\mylabel{L24}
+
+\nfs{Adaptive service curve au lieu de strict service curve en
+section~2.}
+
+\section{Introduction}
+\mylabel{sec-ringintro}
+
+Aggregate scheduling arises naturally in many case. Let us just
+mention here the differentiated services framework (\sref{sec-ds}
+on \pgref{sec-ds}) and high speed switches with optical switching
+matrix and FIFO outputs. The state of the art for aggregate
+multiplexing is not very rich. In this chapter, we give a panorama
+of results, a number of which are new.
+
+In a first step (\sref{sec-arrcurtrans}), we evaluate how an
+arrival curve is transformed through aggregate multiplexing; we
+give a catalog of results, when the multiplexing node is either a
+service curve element with FIFO scheduling, or a Guaranteed Rate
+node (\sref{sec-gr}), or a service curve element with strict
+service curve property. This provides many simple, explicit bounds
+which can be used in practice.
+
+In a second step (\sref{sec-l24-stability}), we consider a global
+network using aggregate multiplexing (see assumptions below);
+given constraints at the inputs of the network, can we obtain some
+bounds for backlog and delay~? Here, the story is complex. The
+question of delay bounds for a network with aggregate scheduling
+was first raised by Chang \cite{cha91}. For a given family of
+networks, we call \emph{critical load factor} $\nu_{cri}$ a value
+of utilization factor below which finite bounds exist, and above
+which there exist unstable networks, i.e., networks whose backlog
+grow to infinity. For feed-forward networks with aggregate
+multiplexing, an iterative application of \sref{sec-arrcurtrans}
+easily shows that $\nu_{cri}=1$. However, many networks are not
+feed-forward, and this result does not hold in general. Indeed,
+and maybe contrary to intuition, Andrews \cite{andrews00} gave
+some examples of FIFO networks with $\nu_{cri} < 1$. Still, the
+iterative application of \sref{sec-arrcurtrans}, augmented with a
+time-stopping argument, provides lower bounds of $\nu_{cri}$
+(which are less than 1).
+
+In a third step (\sref{sec-stability}), we give a number of cases
+where we can say more. We recall the result in
+\thref{theo-qofisbound} on \pgref{theo-qofisbound}, which says
+that, for a general network with either FIFO service curve
+elements, or with GR nodes, we have $\nu_{cri} \geq \frac{1}{h-1}$
+where $h$ is a bound on the number of hops seen by any flow. Then,
+in \sref{sec-l24-ring}, we show that the unidirectional ring
+always always has $\nu_{cri} = 1$; thus, and this may be
+considered a surprise, the ring is not representative of non
+feed-forward topologies. This result is actually true under the
+very general assumption that the nodes on the ring are service
+curve elements, with any values of link speeds, and with any
+scheduling policy (even non FIFO) that satisfies a service curve
+property. As far as we know, we do not really understand why the
+ring is always stable, and why other topologies may not be. Last,
+and not least surprising, we present in \sref{sec-l24-cbr} a
+particular case, originally found by Chlamtac, Farag\'o, Zhang,
+and Fumagalli \cite{CFZF98}, and refined by Zhang \cite{zhang99}
+and Le Boudec and H\'{e}buterne \cite{leb99} which shows that, for
+a homogeneous network of FIFO nodes with constant size packets,
+strong rate limitations at all sources have the effect of
+providing simple, closed form bounds.
+
+\section{Transformation of Arrival Curve through Aggregate Scheduling}
+\mylabel{sec-arrcurtrans}
+
+Consider a number of flows served as an aggregate in a common
+node. Without loss of generality, we consider only the case of two
+flows. Within an aggregate, packets are served according to some
+unspecified arbitration policy. In the following sub-sections, we
+consider three additional assumptions.
+
+\subsection{Aggregate Multiplexing in a Strict Service Curve Element}
+\mylabel{sec-l24-ssc} The strict service curve property is defined
+in \dref{def-ssc} on \pgref{def-ssc}. It applies to some isolated
+schedulers, but not to complex nodes with delay elements.
+\begin{theorem}[Blind multiplexing]
+Consider a node serving two flows, $1$ and $2$, with some unknown
+arbitration between the two flows. Assume that the node guarantees
+a \emph{strict} service curve $\beta$ to the aggregate of the two
+flows. Assume that flow $2$ is $\alpha_2$-smooth. Define
+$\beta_1(t):=[\beta(t) - \alpha_2(t)]^+$. If $\beta_1$ is
+wide-sense increasing, then it is a service curve for flow $1$.
+ \mylabel{theo-blindmux}
+ \mylabel{theo-wcl}
+ \end{theorem}
+ \pr
+ The proof is a straightforward extension of that of \pref{prop-prionode} on \pgref{prop-prionode}.
+\qed
+
+We have seen an example in \sref{sec-clasc}: if $\beta(t)=Ct$
+(constant rate server or GPS node) and $\alpha_2= \gamma_{r,b}$
+(constraint by one leaky bucket) then the service curve for flow
+$1$ is the rate-latency service curve with rate $C-r$ and latency
+$\frac{b}{C-r}$. Note that the bound in \thref {theo-blindmux} is
+actually for a preemptive priority scheduler where flow 1 has low
+priority. It turns out that if we have no other information about
+the system, it is the only bound we can find. For completeness, we
+give the following case.
+
+\begin{corollary}[Non preemptive priority node]
+Consider a node serving two flows, $H$ and $L$, with
+non-preemptive priority given to flow $H$. Assume that the node
+guarantees a \emph{strict} service curve $\beta$ to the aggregate
+of the two flows. Then the high priority flow is guaranteed a
+service curve $\beta_H(t)=[\beta(t) - l^L_{\max}]^+$ where
+$l^L_{\max}$ is the maximum packet size for the low priority flow.
+
+If in addition the high priority flow is $\alpha_H$-smooth, then
+define $\beta_L$ by $\beta_L(t)=[\beta(t) - \alpha_H(t)]^+$. If
+$\beta_L$ is wide-sense increasing, then it is a service curve for
+the low priority flow.
+ \index{Priority Node}
+ \mylabel{cor-prionode}
+ \end{corollary}
+ \pr
+ The first part is an immediate consequence of
+ \thref{theo-blindmux}. The second part is proven in the same way
+ as \pref{prop-prionode}. \qed
+
+If the arrival curves are affine, then the following corollary of
+\thref{theo-wcl} expresses the burstiness increase due to
+multiplexing.
+\begin{corollary}[Burstiness Increase due to Blind Multiplexing]
+Consider a node serving two flows in an aggregate manner. Assume
+the aggregate is guaranteed a \emph{strict} service curve
+$\beta_{R,T}$. Assume also that flow $i$ is constrained by one
+leaky bucket with parameters $(\rho_i,\sigma_i)$. If $\rho_1 +
+\rho_2 \leq R$ the output of the first flow is constrained by a
+leaky bucket with parameters $(\rho_1, b^*_1)$ with
+$$
+b^*_1 = \sigma_1 +\rho_1 T +\rho_1 \frac{\sigma_2+ \rho_2
+T}{R-\rho_2}
+$$
+ \mylabel{coro-wcl}
+\end{corollary}
+Note that the burstiness increase contains a term $\rho_1 T$ that
+is found even if there is no multiplexing; the second term $\rho_1
+\frac{\sigma_2+ \rho_2 T}{R-\rho_2}$ comes from multiplexing with
+flow 2. Note also that if we further assume that the node is FIFO,
+then we have a better bound (\sref{sec-l24-fifosc}).
+\pr
+From \thref{theo-blindmux}, the first flow is guaranteed a service
+curve $\beta_{R', T'}$ with $R'=R-\rho_2$ and $T'= T+\frac{\sigma_2
++T \rho_2}{R-\rho_2}$. The result follows from a direct
+application of \thref{theo-output} on \pgref{theo-output}. \qed
+
+\paragraph{Do we need that the service curve property be strict~?}
+If we relax the assumption that the service curve property is
+strict, then the above results do not hold. A counter-example can
+be built as follows. All packets have the same size, 1 data unit,
+and input flows have a peak rate equal to 1. Flow 1 sends one
+packet at time $0$, and then stops. The node delays this packet
+forever. With an obvious notation, we have, for $t \geq 0$:
+$$R_1(t)= \min(t,1) \mand R'_1(t)=0$$
+Flow 2 sends one packet every time unit, starting at time $t=1$.
+The output is a continuous stream of packets, one per time unit,
+starting from time $1$. Thus
+ $$R_2(t)= (t-1)^+ \mand
+R'_2(t)=R_2(t)$$ The aggregate flows are, for $t\geq 0$:
+ $$R(t) =t \mand R'(t)=(t-1)^+$$
+In other words, the node offers to the aggregate flow a service
+curve $\delta_1$. Obviously, \thref{theo-blindmux} does not apply
+to flow $1$: if it would, flow 1 would receive a service curve
+$(\delta_1 - \lambda_1)^+=\delta_1$, which is not true since it
+receives $0$ service. We can interpret this example in the light
+of \sref{sec-bb-imp} on \pgref{sec-bb-imp}: if the service curve
+property would be strict, then we could bound the duration of the
+busy period, which would give a minimum service guarantee to low
+priority traffic. We do not have such a bound on this example. In
+\sref{sec-l24-fifosc} we see that if we assume FIFO scheduling,
+then we do have a service curve guarantee.
+
+\subsection{Aggregate Multiplexing in a FIFO Service Curve Element}
+\mylabel{sec-l24-fifosc}
+
+\nfs{Je refias cette section: d'abord le th\'{e}or\`{e}me le plus
+g\'{e}n\'{e}ral; puis application \`{a} TONFIFO. Puis le cas
+s\'{e}par\'{e}; puis le cas simple single leaky bucket ; donner la
+service curve en remarque \`{a} la fin.}
+
+Now we relax the strict service curve property; we assume that the
+node guarantees to the aggregate flow a minimum service curve, and
+in addition assume that it handles packets in order of arrival at
+the node. We find some explicit closed forms bounds for some
+simple cases.
+
+\begin{proposition}[FIFO Minimum Service Curves~\cite{CruzSCED}]
+Consider a lossless node serving two flows, $1$ and $2$, in FIFO
+order. Assume that packet arrivals are instantaneous. Assume that
+the node guarantees a minimum service curve $\beta$ to the
+aggregate of the two flows. Assume that flow $2$ is
+$\alpha_2$-smooth. Define the family of functions
+$\beta^1_{\theta}$ by
+$$
+\beta^1_{\theta}(t)=[\beta(t) - \alpha_2(t-\theta)]^+ 1_{\{t >
+\theta\}}$$
+
+Call $R_1(t), R'_1(t)$ the input and output for flow $1$. Then for
+any $\theta \geq 0$
+\begin{equation}\mylabel{eq-fifomux0}
+ R'_1 \geq R_1 \mpc \beta^1_{\theta}
+\end{equation}
+If $\beta^1_{\theta}$ is wide-sense increasing, flow $1$ is
+guaranteed the service curve $\beta^1_{\theta}$
+ \mylabel{prop-fifomux}
+\end{proposition}
+The assumption that packet arrivals are instantaneous means that
+we are either in a fluid system (one packet is one bit or one
+cell), or that the input to the node is packetized prior to being
+handled in FIFO order.
+ \pr
+ We give the proof for continuous time and assume that flow
+functions are left-continuous. All we need to show is
+\eref{eq-fifomux0}. Call $R_i$ the flow $i$ input, $R=R_1 + R_2$,
+and similarly $R'_i, R'$ the output flows.
+
+Fix some arbitrary parameter $\theta$ and time $t$. Define
+$$u:= \sup\{v : \; R(v) \leq R'(t)\}$$
+Note that $u \leq t$ and that
+\begin{equation}\mylabel{eq-fifosc1}
+ R(u) \leq R'(t) \mand R_r(u) \geq R'(t)
+\end{equation}
+where $R_r(u)=\inf_{v >u}[R(v)]$ is the limit from the right of $R$
+at $u$.
+
+(Case 1) consider the case where $u=t$. It follows from the above
+and from $R' \leq R$ that $R'_1(t)=R_1(t)$. Thus for any $\theta$,
+we have $R'_1(t) = R_1(t) + \beta^1_{\theta}(0)$ which shows that
+$R'_1(t) \geq (R_1 \mpc \beta^1_{\theta})(t)$ in that case.
+
+(Case 2), assume now that $u< t$. We claim that
+\begin{equation}\mylabel{eq-fifosc2}
+  R_1(u) \leq R'_1(t)
+\end{equation}
+Indeed, if this is not true, namely, $R_1(u) > R'_1(t)$, it
+follows from the first part of \eref{eq-fifosc1} that $R_2(u)
+<R'_2(t)$. Thus some bits from flow $2$ arrived after time $u$ and
+departed by time $t$, whereas all bits of flow $1$ arrived up to
+time $u$ have not yet departed at time $t$. This contradicts our
+assumption that the node is FIFO and that packets arrive
+instantaneously.
+
+Similarly, we claim that
+\begin{equation}\mylabel{eq-fifosc3}
+  (R_2)_r(u) \geq R'_2(t)
+\end{equation}
+Indeed, otherwise $x:=R'_2(t)- (R_2)_r(u) >0$ and there is some
+$v_0 \in (u,t]$ such that for any $v \in (u, v_0]$ we have $R_2(v)
+< R'_2(t) - \frac{x}{2}$. From \eref{eq-fifosc1}, we can find some
+$v_1 \in (u, v_0]$ such that if $v \in (u, v_1]$ then $R_1(v) +
+R_2(v) \geq R'(t) - \frac{x}{4}$. It follows that
+$$
+R_1(v) \geq R'_1(t) + \frac{x}{4}
+$$Thus we can find some $v$ with $R_1(v) > R'_1(t)$ whereas $R_2(v)
+<R'_2(t)$, which contradicts the FIFO assumption.
+
+Call $s$ a time such that $R'(t) \geq R(s) + \beta(t-s) $. We have
+$R(s) \leq R'(t)$ thus $s\leq u$.
+
+(Case 2a) Assume that $u< t-\theta$ thus also $t -s > \theta$.
+From \eref{eq-fifosc3} we derive
+$$
+R'_1(t) \geq R_1(s) + \beta(t-s) + R_2(s) -R'_2(t) \geq R_1(s) +
+\beta(t-s) + R_2(s) -(R_2)_r(u)
+$$
+%Define $\vec{x}:=\vec{R}(u^+)-\vec{R}(s)$. Thus
+Now there exist some $\epsilon >0$ such that $u+\epsilon \leq
+t-\theta$, thus $(R_2)_r(u) \leq R_2(t-\theta)$ and
+$$
+R'_1(t) \geq R_1(s) + \beta(t-s) -\alpha_2(t-s -\theta)
+$$
+It follows from \eref{eq-fifosc2} that
+$$
+  R'_1(t) \geq R_1(s)
+$$
+which shows that
+$$ R'_1(t) \geq R_1(s) + \beta^1_{\theta}(t-s)
+  $$
+%Now $u <t- \theta$ thus $\vec{x} \in \calX(t-s-\theta)$ which
+%shows the theorem in that case.
+
+ (Case 2b)  Assume that $u \geq t-\theta$. By
+\eref{eq-fifosc2}:
+$$
+R'_1(t) \geq R_1(u) = R_1(u) + \beta^1_{\theta}(t-u)
+$$
+ \qed
+
+ We cannot conclude from
+\pref{prop-fifomux} that $\inf_{\theta} \beta^1_{\theta}$ is a
+service curve. However, we can conclude something for the output.
+
+\begin{proposition}[Bound for Output with FIFO]
+Consider a lossless node serving two flows, $1$ and $2$, in FIFO
+order. Assume that packet arrivals are instantaneous. Assume that
+the node guarantees to the aggregate of the two flows a minimum
+service curve $\beta$.
+% and a maximum service curve
+%$\gamma$.
+Assume that flow $2$ is $\alpha_2$-smooth. Define the family of
+functions as in \pref{prop-fifomux}. Then the output of flow $1$
+is $\alpha_1^*$-smooth, with
+$$\alpha_1^* (t) = \inf_{\theta \geq 0 }\left(
+ \alpha_1 \mpd \beta^1_{\theta}
+ \right)(t)
+$$
+ \mylabel{prop-fifomuxoutput}
+\end{proposition}
+
+\pr
+Observe first that the network calculus output bound holds even if
+$\beta$ is not wide-sense increasing. Thus, from
+\pref{prop-fifomux}, we can conclude that
+ $\alpha_1 \mpd \beta^1_{\theta}$
+ is an arrival curve for the output of flow $1$. This is true for
+ any $\theta$.
+ \qed
+
+We can apply the last proposition and obtain the following
+practical result.
+
+\begin{theorem}[Burstiness Increase due to FIFO, General Case]
+Consider a node serving two flows, $1$ and $2$, in FIFO order.
+Assume that flow $1$ is constrained by one leaky bucket with rate
+$\rho_1$ and burstiness $\sigma_1$, and flow 2 is constrained by a
+sub-additive arrival curve $\alpha_2$. Assume that the node
+guarantees to the aggregate of the two flows a rate latency
+service curve $\beta_{R,T}$. Call $\rho_2:=\inf_{t>0}
+\frac{1}{t}\alpha_2(t)$ the maximum sustainable rate for flow $2$.
+
+If $\rho_1 + \rho_2 < R$, then at the output, flow $1$ is
+constrained by one leaky bucket with rate $\rho_1$ and burstiness
+$b^*_1$ with
+$$
+b^*_1= \sigma_1 +\rho_1 \left(T+\frac{\hat{B}}{R}\right)
+$$
+and
+$$
+ \hat{B}= \sup_{t \geq 0} \left[
+  \alpha_2(t) +\rho_1 t - R t
+ \right]
+$$
+
+The bound is a worst case bound. \mylabel{theo-burincfifo}
+\end{theorem}
+
+\pr
+(Step 1) Define $\beta^1_{\theta}$ as in \pref{prop-fifomux}.
+Define $B_2=\sup_{t \geq 0} \left[\alpha_2(t)-R t\right]$. Thus
+$B_2$ is the buffer that would be required if the latency $T$
+would be $0$. We first show the following
+\begin{equation}\mylabel{eq-fifomux37}
+\mif \theta \geq \frac{B_2}{R}+T \mthen \mfor t \geq \theta: \;
+\beta^1_{\theta}(t)
+=
+Rt-RT - \alpha_2(t-\theta)
+\end{equation}
+
+To prove this, call $\phi(t)$ the right hand-side in
+\eref{eq-fifomux37}, namely, for $t \geq \theta$ define
+$\phi(t)=Rt-\alpha_2(t- \theta)-RT$. We have
+$$\inf_{t > \theta} \phi(t)=  \inf_{v > 0} \left[Rv -\alpha_2(v)
+-RT + R\theta
+ \right]$$
+ From the definition of $B_2$:
+$$\inf_{t > \theta} \phi(t) = -B_2 + R \theta -RT $$
+If $\theta \geq \frac{B_2}{R}+T$ then  $ \phi(t) \geq 0$ for all
+$t> \theta$. The rest follows from the definition of
+$\beta^1_{\theta}$.
+
+(Step 2) We apply the second part of \pref{prop-fifomux} with
+$\theta=\frac{\hat{B}}{R}+T$. An arrival curve for the output of
+flow $1$ is given by
+$$\alpha_1^* = \lambda_{\rho_1, \sigma_1} \mpd \beta^1_{\theta}$$
+We now compute $\alpha_1^*$. First note that, obviously, $\hat{B}
+\geq B_2 $,  and therefore $\beta^1_{\theta}(t)= Rt-RT -
+\alpha_2(t-\theta)$ for $t \geq \theta$. $\alpha_1^*$ is thus
+defined for $t>0$ by
+$$\alpha_1^*(t) = \sup_{s \geq 0} \left[
+\rho_1 t + \sigma_1 +\rho_1 s - \beta^1_{\theta}(s)
+ \right]
+ =\rho_1 t + \sigma_1 + \sup_{s \geq 0}\left[
+\rho_1 s - \beta^1_{\theta}(s) \right]
+$$
+Define $\psi(s):=\rho_1 s - \beta^1_{\theta}(s)$. Obviously:
+$$\sup_{s \in [0, \theta]} [\psi(s)]=\rho_1 \theta$$
+Now from Step 1, we have
+\begin{eqnarray*}
+\sup_{s > \theta}[\psi(s)]&=& \sup_{s > \theta} \left[\rho_1 s -
+Rs+RT + \alpha_2(s-\theta) \right]\\ &=& \sup_{v >0} \left[\rho_1
+v - Rv +\alpha_2(v)\right] + (\rho_1-R) \theta +R T
+\end{eqnarray*}
+From the definition of $\hat{B}$, the former is equal to
+$$
+ \sup_{s > \theta}[\psi(s)] = \hat{B} + (\rho_1-R) \theta +R T =\rho_1
+ \theta
+$$
+which shows the burstiness bound in the theorem.
+
+(Step 3) We show that the bound is attained. There is a time a
+$\hat{\theta}$ such that $\hat{B}=
+(\alpha_2)_r(\hat{\theta})-(R-\rho_1)\hat{\theta}$. Define flow
+$2$ to be greedy up to time $\hat{\theta}$ and stop from there on:
+$$ \bracket{
+ R_2(t) = \alpha_2(t) \mfor t \leq \hat{\theta} \\
+ R_2(t) = (R_2)_r(\hat{\theta})  \mfor t > \hat{\theta}
+ }
+ $$
+Flow $2$ is $\alpha_2$-smooth because $\alpha_2$ is sub-additive.
+Define flow $1$ by
+$$
+\bracket{
+ R_1(t) =\rho_1 t \mfor t \leq \hat{\theta} \\
+ R_1(t) =\rho_1 t + \sigma_1 \mfor t > \hat{\theta}
+ }
+$$
+Flow $1$ is $\lambda_{\rho_1, \sigma_1}$-smooth as required.
+Assume the server delays all bits by $T$ at time $0$, then after
+time $T$ operates with a constant rate $R$, until time
+$\hat{\theta}+ \theta$, when it becomes infinitely fast. Thus the
+server satisfies the required service curve property. The backlog
+just after time $\hat{\theta}$ is precisely $\hat{B}+RT$. Thus all
+flow-$2$ bits that arrive just after time $\hat{\theta}$ are
+delayed by $\frac{\hat{B}}{R}+T=\theta$. The output for flow $1$
+during the time interval $(\hat{\theta}+ \theta, \hat{\theta}+
+\theta + t]$ is made of the bits that have arrived in
+$(\hat{\theta}, \hat{\theta}+t]$, thus there are $\rho_1 t +
+b^*_1$ such bits, for any $t$. \qed
+
+The following corollary is an immediate consequence.
+\begin{corollary}[Burstiness Increase due to FIFO]
+Consider a node serving two flows, $1$ and $2$, in FIFO order.
+Assume that flow $i$ is constrained by one leaky bucket with rate
+$\rho_i$ and burstiness $\sigma_i$. Assume that the node
+guarantees to the aggregate of the two flows a rate latency
+service curve $\beta_{R,T}$. If $\rho_1 + \rho_2 < R$,  then flow
+$1$ has a service curve equal to the rate latency function with
+rate $R-\rho_2$ and latency $T+\frac{\sigma_2}{R}$ and at the
+output, flow $1$ is constrained by one leaky bucket with rate
+$\rho_1$ and burstiness $b^*_1$ with
+$$
+b^*_1= \sigma_1 +\rho_1 \left(T+\frac{\sigma_2}{R}\right)
+$$
+\mylabel{coro-burincfifo}
+\end{corollary}
+
+
+Note that this bound is better than the one we used in
+\coref{coro-wcl} (but the assumptions are slightly different).
+Indeed, in that case, we would obtain the rate-latency service
+curve with the same rate $R-\rho_2$ but with a larger latency:
+$T+\frac{\sigma_2+\rho_2 T}{R-\rho_2}$ instead of
+$T+\frac{\sigma_2}{R}$. The gain is due to the FIFO assumption.
+
+%\paragraph{Example: }appliquer au ring: on trouve que
+%le ring est stable pour toute valeur sous critique pour n=3 mais
+%pas au-dessus. We will see in the next section an example where we
+%can say more.
+
+
+\subsection{Aggregate Multiplexing in a GR Node}
+We assume now that the node is of the Guaranteed Rate type
+(\sref{sec-gr} on \pgref{sec-gr}). A FIFO service curve element
+with rate-latency service curve satisfies this assumption, but the
+converse is not true (\thref{theo-grcrep} on \pgref{theo-grcrep}).
+
+\begin{theorem}
+\mylabel{theo-QoFISmethod} Consider a node serving two flows, $1$
+and $2$ in some aggregate manner. Arbitration between flows is
+unspecified, but the node serves the aggregrate as a GR node with
+rate $R$ and latency $T$. Assume that flow $1$ is constrained by
+one leaky bucket with rate $\rho_1$ and burstiness $\sigma_1$, and
+flow 2 is constrained by a sub-additive arrival curve $\alpha_2$.
+Call $\rho_2:=\inf_{t>0} \frac{1}{t}\alpha_2(t)$ the maximum
+sustainable rate for flow $2$.
+
+If $\rho_1 + \rho_2 < R$, then at the output, flow $1$ is
+constrained by one leaky bucket with rate $\rho_1$ and burstiness
+$b^*_1$ with
+$$
+b^*_1= \sigma_1 +\rho_1 \left(T+\hat{D}\right)
+$$
+and
+$$
+ \hat{D}=
+ \sup_{t > 0} [\frac{\alpha_2(t)+\rho_1 t + \sigma_1}{R} -  t]
+$$
+\end{theorem}
+\pr
+From \thref{theo-grcdelaybound} on \pgref{theo-grcdelaybound}, the
+delay for any packet is bounded by $\hat{D} +T$. Thus an arrival
+curve at the output of flow 1 is $\alpha_1(t+\hat{D})$. \qed
+\begin{corollary}
+\mylabel{coro-QoFISmethod2} Consider a node serving two flows, $1$
+and $2$ in some aggregate manner. Arbitration between flows is
+unspecified, but the node serves the aggregrate as a GR node with
+rate $R$ and latency $T$. Assume that flow $i$ is constrained by
+one leaky bucket with rate $\rho_i$ and burstiness $\sigma_i$. If
+$\rho_1 + \rho_2 < R$,  then, at the output, flow $1$ is
+constrained by one leaky bucket with rate $\rho_1$ and burstiness
+$b^*_1$ with
+$$
+b^*_1= \sigma_1 +\rho_1 \left(T+\frac{\sigma_1+\sigma_2}{R}\right)
+$$
+\end{corollary}
+We see that the bound in this section is less good than
+\coref{coro-burincfifo} (but the assumptions are more general).
+
+\section{Stability and Bounds for a Network with Aggregate Scheduling}
+\mylabel{sec-l24-stability}
+
+\subsection{The Issue of Stability}
+In this section we consider the following global problem: Given a network with aggregate
+scheduling and arrival curve constraints at the input (as defined in the introduction) can we
+find good bounds for delay and backlog ? Alternatively, when is a network with aggregate
+scheduling stable (i.e., the backlog remains bounded)~? As it turns out today, this problem is
+open in many cases. In the rest of the chapter, we make the following assumptions.
+\paragraph{Assumption and Notation}
+\begin{itemize}
+  \item Consider a network with a fixed number $I$ of flows, following
+fixed paths. The collection of paths is called the topology of the network. A network node is
+modeled as a collection of output buffers, with no contention other than at the output buffers.
+Every buffer is associated with one unidirectional link that it feeds.
+
+\item Flow $i$ is constrained by one leaky bucket of rate $\rho_i$
+and burstiness $\sigma_i$ at the input.
+\item Inside the network, flows are treated as an aggregate by the
+network; within an aggregate, packets are served according to some unspecified arbitration
+policy. We assume that the node is such that the aggregate of all flows receives a service curve
+at node $m$ equal to the rate-latency function with rate $r_m$ and latency $e_m$. This does not
+imply that the node is work-conserving. Also note that we do not require, unless otherwise
+specified, that the service curve property be strict. In some parts of the chapter, we make
+additional assumptions, as explained later.
+
+$e_m$ accounts for the latency on the link that exits node $m$; it also account for delays due
+to the scheduler at node $m$.
+
+  \item We write $i \ni m$ to express that node $m$ is on the route of
+flow $i$. For any node  $m$, define $\rho^{(m)} = \sum_{i \ni m} \rho_i$. The utilization factor
+of link $m$ is $\frac{\rho^{(m)}}{r_m}$ and the load factor of the network is $\nu = \max_m
+\frac{\rho^{(m)}}{r_m}$.
+
+\item  The bit rate of the link feeding node $m$ is $C_{m} < + \infty$, with $C_m \geq r_m$.
+\end{itemize}
+
+
+In the context of the following definition, we call ``network" $\calN$ a system satisfying the
+assumptions above, where all parameters except $\rho_i, \sigma_i, r_m, e_m$ are fixed. In some
+cases (\sref{sec-timestoppingm}), we may add additional constraints on these parameters.
+\begin{definition}[Critical Load Factor]
+We say that $\nu_{cri}$ is the critical load factor for a network
+$\calN$ if\index{Critical Load Factor}\index{1nucri@$\nu_{cri}$}
+\begin{itemize}
+  \item for all values of $\rho_i, \sigma_i, r_m, e_m$ such that
+  $\nu < \nu_{cri}$, $\calN$ is stable
+  \item there exists values of $\rho_i, \sigma_i, r_m, e_m$ with $\nu > \nu_{cri}$ such
+  that $\calN$ is unstable.
+\end{itemize}
+\end{definition}
+It can easily be checked that $\nu_{cri}$ is unique for a given
+network $\calN$.
+
+It is also easy to see that for all well defined networks, the
+critical load factor is $\leq 1$. However, Andrews gave in
+\cite{andrews00} an example of a FIFO network with $\nu_{cri} <
+1$. The problem of finding the critical load factor, even for the
+simple case of a FIFO network of constant rate servers, seems to
+remain open. Hajek \cite{hajek2000} shows that, in this last case,
+the problem can be reduced to that where every source $i$ sends a
+burst $\sigma_i$ instantly at time $0$, then sends at a rate
+limited by $\rho_i$.
+
+In the rest of this section and in \sref{sec-stability}, we give
+lower bounds on $\nu_{cri}$ for some well defined sub-classes.
+
+\paragraph{Feed-Forward Networks}
+A feed-forward network is one in which the graph of unidirectional
+links has no cycle. Examples are interconnection networks used
+inside routers or multiprocessor machines. For a feed-forward
+network made of \emph{strict} service curve element or GR nodes,
+$\nu_{cri}=1$. This derives from applying the burstiness increase
+bounds given in \sref{sec-arrcurtrans} repeatedly, starting from
+network access points. Indeed, since there is no loop in the
+topology, the process stops and all input flows have finite
+burstiness.
+
+\paragraph{A Lower Bound on the Critical Load Factor}
+It follows immediately from \thref{theo-qofisbound} on
+\pgref{theo-qofisbound} that for a network of GR nodes (or FIFO
+service curve elements), we have $\nu_{cri} \geq \frac{1}{h-1}$,
+where $h$ is the maximum hop count for any flow. A slightly better
+bound can be found if we exploit the values of the peak rates
+$C_m$ (\thref{theo-qofisbound2}).
+
+
+\subsection{The Time Stopping Method}
+\mylabel{sec-timestoppingm} \mylabel{sec-l24-prio}
+
+For a non feed-forward network made of \emph{strict} service curve
+element or GR nodes, we can find a lower bound on $\nu_{cri}$
+(together with bounds on backlog or delay), using the time
+stopping method. It was introduced by Cruz in \cite{cru91b}
+together with bounds on backlog or delay. We illustrate the method
+on a specific example, shown on \fref{fig-dsnet1}. All nodes are
+constant rate servers, with unspecified arbitration between the
+flows. Thus we are in the case where all nodes are strict service
+curve elements, with service curves of the form $\beta_m=
+\lambda_{C_m}$.
+
+The method has two steps. First, we assume that there is a finite
+burstiness bound for all flows;  using \sref{sec-arrcurtrans} we
+obtain some equations for computing these bounds. Second, we use
+the same equations to show that, under some conditions, finite
+bounds exist.
+
+\begin{figure}[!htbp]
+  \insfig{dsnet1}{0.7}
+  \mycaption{A simple example with aggregate scheduling, used to
+   illustrate the bounding method. There are three nodes numbered
+   $0,1,2$ and six flows, numbered $0,...,5$.
+   For $i=0,1,2$, the path of flow $i$ is $i, (i+1) \mod 3, (i+2) \mod
+   3$ and the path of flow $i+3$ is $i, (i+2) \mod 3, (i+1) \mod
+   3$. The fresh arrival curve is the same
+for all flows, and is given by $\alpha_i=\gamma_{\rho,\sigma}$.
+All nodes are constant rate, work conserving servers, with rate
+$C$. The utilization factor at all nodes is $6\frac{\rho}{C}$.}
+  \mylabel{fig-dsnet1}
+\end{figure}
+
+\paragraph{First step: inequations for the bounds}
+
+
+For any flow $i$ and any node $m \in i$, define $\sigma_i^m$ as
+the maximum backlog that this flow would generate in a constant
+rate server with rate $\rho_i$. By convention, the fresh inputs
+are considered as the outputs of a virtual node numbered $-1$. In
+this first step, we assume that $\sigma_i^m$ is finite for all $i$
+and $m \in i$.
+
+By applying \coref{coro-wcl} we find that for all $i$ and $m \in
+i$:
+\begin{equation}\mylabel{eq-ds-lin}
+\bracket{
+ \sigma_i^0 \leq \sigma_i \\
+\sigma_i^m = \sigma_i^{\mbox{pred}_i(m)} + \rho_i \frac{
+ \sum_{j \ni m, j \neq i}\sigma_j^{\mbox{pred}_j(m)}
+ }
+ {C-\sum_{j \ni m, j \neq i} \rho_j}
+ }
+\end{equation}
+where $\mbox{pred}_i(m)$ is the predecessor of node $m$. If $m$ is
+the first node on the path of flow $i$, we set by convention
+$\mbox{pred}_i(m)=-1$ and $\sigma_i^{-1}=\sigma_i$.
+
+Now put all the $\sigma_i^m$, for all $(i,m)$ such that $m \in i$,
+into a vector $\vec{x}$ with one column and $n$ rows, for some
+appropriate $n$. We can re-write \eref{eq-ds-lin} as
+\begin{equation}\mylabel{eq-ds-lin2}
+\vec{x} \leq A \vec{x} + \vec{a}
+\end{equation}
+where $A$ is an $n \times n$, non-negative matrix and $\vec{a}$ is
+a non-negative vector depending only on the known quantities
+$\sigma_i$. The method now consists in assuming that the spectral
+radius of matrix $A$ is less than $1$. In that case the power
+series $I + A + A^2 + A^3 + ...$ converges and is equal to
+$(I-A)^{-1}$, where $I$ is the $n \times n$ identity matrix. Since
+$A$ is non-negative, $(I-A)^{-1}$ is also non-negative; we can
+thus multiply \eref{eq-ds-lin2} to the left by $(I-A)^{-1}$ and
+obtain:
+\begin{equation}\mylabel{eq-ds-lin3}
+\vec{x} \leq (I-A)^{-1} \vec{a}
+\end{equation}
+which is the required result, since $\vec{x}$ describes the
+burstiness of all flows at all nodes. From there we can obtain
+bounds on delays and backlogs.
+
+Let us apply this step to our network example. By symmetry, we
+have only two unknowns $x$ and $y$, defined as the burstiness
+after one and two hops:
+$$\bracket{
+x=\sigma_0^0=\sigma_1^1=\sigma_2^2=\sigma_3^0=\sigma_4^1=\sigma_5^2\\
+y=\sigma_0^1=\sigma_1^2=\sigma_2^0=\sigma_3^2=\sigma_4^0=\sigma_5^1
+ }
+$$
+\eref{eq-ds-lin} becomes
+$$
+\bracket{
+ x \leq \sigma + \frac{\rho}{C -5 \rho} ( \sigma + 2x + 2y)\\
+ y \leq x + \frac{\rho}{C -5 \rho} ( 2 \sigma +  x + 2y)
+  }
+$$
+Define $\eta=\frac{\rho}{C-5 \rho}$; we assume that the
+utilization factor is less than $1$, thus $0 \leq \eta <1$. We can
+now write \eref{eq-ds-lin2} with
+$$
+ \vec{x}=\left(
+  \begin{array}{c}
+    x\\y
+  \end{array}\right)
+  ,\;
+ A= \left(\begin{array}{c c}
+    2 \eta &  2 \eta\\1 + \eta & 2 \eta
+  \end{array}\right)
+  ,\;
+   \vec{a}=\left(
+  \begin{array}{c}
+    \sigma (1 + \eta)\\ 2 \sigma \eta
+  \end{array}\right)
+$$
+Some remnant from linear algebra, or a symbolic computation
+software, tells us that
+$$
+(I-A)^{-1}=\left(\begin{array}{c c}
+    \frac{1-2  \eta}{1-6  \eta+2
+{\eta^2}} & \frac{2  \eta}{1-6  \eta+2  {\eta^2}}  \\
+   \frac{1+\eta}{1-6  \eta+2
+{\eta^2}}& \frac{1-2  \eta}{1-6  \eta+2  {\eta^2}}
+  \end{array}\right)
+$$
+If $\eta < \frac{1}{2} (3 -\sqrt{7}) \approx 0.177$ then
+$(I-A)^{-1}$ is positive. This is the condition for the spectral
+radius of $A$ to be less than 1. The corresponding condition on
+the utilization factor $\nu= \frac{6\rho}{C}$ is
+\begin{equation}\mylabel{eq-example-ds-1}
+ \nu <2 \frac{8-\sqrt{7}}{19} \approx 0.564
+\end{equation}
+Thus, for this specific example, if \eref{eq-example-ds-1} holds,
+and if the burstiness terms $x$ and $y$ are finite, then they are
+bounded as given in \eref{eq-ds-lin3}, with $(I-A)^{-1}$ and
+$\vec{a}$ given above.
+
+\paragraph{Second Step: time stopping}
+
+We now prove that there is a finite bound if the spectral radius
+of $A$ is less than 1. For any time $\tau>0$, consider the virtual
+system made of the original network, where all sources are stopped
+at time $\tau$. For this network the total number of bits in
+finite, thus we can apply the conclusion of step 1, and the
+burstiness terms are bounded by \eref{eq-ds-lin3}. Since the
+right-handside \eref{eq-ds-lin3} is independent of $\tau$, letting
+$\tau$ tend to $+\infty $ shows the following.
+\begin{proposition}
+With the notation in this section, if the spectral radius of $A$
+is less than $1$, then the burstiness terms $b^m_i$ are bounded by
+the corresponding terms in \eref{eq-ds-lin3}.
+\mylabel{prop-stoppingTimeMethod}
+\end{proposition}
+Back to the example of \fref{fig-dsnet1}, we find that if the
+utilization factor $\nu$ is less than $0.564$, then the burstiness
+terms $x$ and $y$ are bounded by
+$$
+\bracket{
+ x \leq 2 \sigma \frac{18 -33 \nu + 16 \nu^2}
+ {36 -96 \nu + 57 \nu^2 }\\
+ y \leq  2 \sigma \frac{18 - 18  \nu + \nu^2}
+ {36 -96 \nu + 57 \nu^2}
+ }
+$$
+The aggregate traffic at any of the three nodes is $\gamma_{6\rho,
+b}$-smooth with $b=2(\sigma + x + y)$. Thus a bound on delay is
+(see also \fref{fig-L21-ds}):
+$$
+ d=\frac{b}{C}= 2 \frac{\sigma}{C}
+ \frac{108 - 198 \nu + 91 \nu^2}{36 - 96 \nu + 57 \nu^2}
+$$
+
+\begin{figure}[!htbp]
+  \insfig{L21-ds}{0.5}
+  \mycaption{The bound $d$ on delay at any node obtained by the method
+  presented here for the network of
+  \fref{fig-dsnet1}  (thin line).
+  The graph shows $d$ normalized by $\frac{\sigma}{C}$
+  (namely, $\frac{d C}{\sigma}$),
+  plotted as a function of
+  the utilization factor. The thick line is a delay bound
+  obtained if every flow is re-shaped at every output.}
+  \mylabel{fig-L21-ds}
+\end{figure}
+
+\paragraph{The critical load factor for this example}
+For the network in this example, where we impose the constraint
+that all $\rho_i$ are equal, we find $\nu_{cri} \geq \nu_0 \approx
+0.564$, which is much less than $1$. Does it mean that no finite
+bound exists for  $\nu_0 \leq \nu <1$ ? The answer to this
+question is not clear.
+
+First, the $\nu_0$ found with the method can be improved if we
+express more arrival constraints. Consider our particular example:
+we have not exploited the fact that the fraction of input traffic
+to node $i$ that originates from another node has to be
+$\lambda_C$-smooth. If we do so, we will obtain better bounds.
+Second, if we know that nodes have additional properties, such as
+FIFO, then we may be able to find better bounds. However, even so,
+the value of $\nu_{cri}$ seems to be unknown.
+
+%In general, the issue of stability, or existence of finite bounds,
+%for a given network with aggregate multiplexing is still
+%unresolved. The question of delay bounds for a network with
+%aggregate scheduling was first raised in \cite{cha91}. We will see
+%in \cref{L24} that if the network is a ring of constant bit rate
+%servers, then $\nu_0=1$, in other words, we can find a bound for
+%any $\nu<1$ \cite{tg96}. However, the proof does not extend to
+%general service curve guarantees, even strict service curves. In
+%\cite{andrews00}, the author exhibits an unstable network similar
+%to ours, with $\nu=1$ (a ``critical'' network), and claims that
+%this also holds for some sub-critical networks, but the proof is
+%not conclusive. In addition, a startling fact referred to as a
+%``non-monotone property'' of FIFO networks is described in
+%\cite{andrews00}, where it is shown that a network that is
+%\emph{stable} with a set of sessions with given rates may become
+%\emph{unstable} if the rates of some of these sessions are
+%\emph{reduced} for a period of time. On the other side of the
+%spectrum, we will also see in \cref{L24} strong and explicit
+%results \cite{leb99,CFZF98} with FIFO multiplexing.
+
+\paragraph{The price for aggregate scheduling}
+Consider again the example on \fref{fig-dsnet1}, but assume now
+that every flow is reshaped at every output. This is not possible
+with differentiated services, since there is no per-flow
+information at nodes other than access nodes. However, we use this
+scenario as a benchmark that illustrates the price we pay for
+aggregate scheduling.
+
+With this assumption, every flow has the same arrival curve at
+every node. Thus we can compute a service curve $\beta_1$ for flow
+$1$ (and thus for any flow) at every node, using \thref{theo-wcl};
+we find that $\beta_1$ is the rate-latency function with rate $(C-
+5 \rho)$ and latency $\frac{5 \sigma}{C-5 \rho}$. Thus a delay
+bound for flow at any node, including the re-shaper, is
+$h(\alpha_1, \alpha_1 \mpc \beta_1)= h(\alpha_1,
+\beta_1)=\frac{6C}{C- 5 \rho}$ for $\rho \leq \frac{C}{6}$.
+\fref{fig-L21-ds} shows this delay bound, compared to the delay
+bound we found if no reshaper is used. As we already know, we see
+that with per-flow information, we are able to guarantee a delay
+bound for any utilization factor $\leq 1$. However, note also that
+for relatively small utilization factors, the bounds are very
+close.
+
+\section{Stability Results and Explicit Bounds}
+\mylabel{sec-stability}
+
+In this section we give strong results for two specific case. The
+former is for a unidirectional ring of aggregate servers (of any
+type, not necessarily FIFO or strict service curve). We show that
+for all rings, $\nu_{cri}=1$. The latter is for any topology, but
+with restrictions on the network type: packets are of fixed size
+and all links have the same bit rate.
+
+\subsection{The Ring is Stable}
+\mylabel{sec-l24-ring} \mylabel{sec-ringisstable}  The result was
+initially obtained in \cite{tg96} for the case of a ring of
+constant rate servers, with all servers having the same rate. We
+give here a more general, but simpler form.
+
+\paragraph{Assumption and Notation}
+We take the same assumptions as in the beginning of \sref{sec-l24-stability} and assume in
+addition that the network topology is a unidirectional ring. More precisely:
+\begin{itemize}
+\item
+The network is a unidirectional ring of $M$ nodes, labelled
+$1,..., M$.
+  We use the notation $m \oplus k= (m + k -1) \mod M + 1$
+  and $m \ominus k= (m-k-1) \mod M + 1$,
+  so that the successor of node $m$ on the ring is node $m \oplus 1$ and its
+  predecessor is node $m \ominus 1$.
+
+\item  The route of flow $i$ is $(0, i.\mathrm{first},
+i.\mathrm{first}\oplus 1, ..., i.\mathrm{first}\oplus (h_i-1))$
+where $0$ is a virtual node representing the source of flow $i$,
+$i.\mathrm{first}$ is the first hop of flow $i$, and $h_i$ is the
+number of hops of flow $i$.  At its last hop, flow $i$ exits the
+network. We assume that a flow does not wrap, namely, $h_i \leq
+M$. If $h_i=M$, then the flow goes around the all ring, exiting at
+the same node it has entered.
+\item Let $b_m=e_m r_m$ and let $b= \sum_m b_m$ reflect the total latency of the ring.
+
+\item  For any node  $m$ let $\sigma^{(m)} = \sum_{i \ni m} \sigma_i$.
+
+Let $\sigma_{\max}= \max_{m=1}^M \sigma^{(m)}$ and $\sigma= \sum_i
+\sigma_i$. Note that $\sigma_{\max} \leq \sigma \leq M
+\sigma_{\max}$.
+
+\item  Define
+$\eta= \min_m(r_m - \rho^{(m)})$.
+
+\item Let $\rho^{(m)}_0=\sum_{i.\mathrm{first}=m}\rho_i$ and
+$\mu= \max_{m=0}^M \left[ C_m - r_m + \rho^{(m)}_0\right]^+$. $\mu$
+reflects the sum of the peak rate of transit links and the rates
+of fresh sources, minus the rate guaranteed to the aggregate of
+microflows. We expect high values of $\mu$ to give higher bounds.
+\end{itemize}
+
+\begin{theorem}
+If $\eta >0$ (i.e. if the utilization factor is $<1$) the backlog
+at any node of the unidirectional ring is bounded by
+$$M \frac{\mu}{\eta} \left( M \sigma_{\max} + b \right) + \sigma +
+b
+$$
+ \mylabel{theo-ring}
+\end{theorem}
+
+\pr
+The proof relies on the concept of chain of busy periods, combined
+with the time stopping method in \sref{sec-timestoppingm}.
+
+For a node $m$ and a flow $i$, define $R^m_i(t)$ as the cumulative
+amount of data of flow $i$ at the output of node $m$. For $m=0$,
+this defines the input function. Also define
+\begin{equation}\mylabel{eq-lemfifodefx}
+ x_m(t) = \sum_{i \ni m} \left( R^0_i(t) -R^m_i(t)\right)
+\end{equation}
+thus $x_m(t)$ is the total amount of data that is present in the
+network at time $t$ and will go through node $m$ at some time $>
+t$.
+
+We also define the backlog at node $m$ by
+ $$
+ q_m(t)=\sum_{i \ni m, i. \mathrm{first}\neq m} R^{m \ominus 1}_i(t)
+ +
+ \sum_{i. \mathrm{first}= m} R^{0}_i(t)
+ -
+ \sum_{i \ni m} R^{m}_i(t)
+ $$
+Now obviously, for all time $t$ and node $m$:
+\begin{equation}\mylabel{eq-ringisstable2}
+  q_m(t) \leq x_m(t)
+\end{equation}
+and
+\begin{equation}\mylabel{eq-ringisstable}
+  x_m(t) \leq \sum_{n=1}^M q_n(t)
+\end{equation}
+
+(Step 1) Assume that a finite bound $X$ exists. Consider a time
+$t$ and a node $m$ that achieves the bound: $x_m(t)=X$. We fix $m$
+and apply \lref{lem-cbp} to all nodes $n$. Call $s_n$ the time
+called $s$ in the lemma. Since $x_n(s_n) \leq X$, it follows from
+the first formula in the lemma that
+\begin{equation}\mylabel{eq-ring1}
+(t-s_n) \eta \leq M \sigma_{\max}  + b
+\end{equation}
+By combining this with the second formula in the lemma we obtain
+ $$q_n(t) \leq  \mu \frac{M \sigma_{\max}  + b}{\eta} + b_n + \sigma^{(n)}_0
+ $$
+Now we apply \eref{eq-ringisstable} and note that $\sum_{n=1}^M
+\sigma^{(n)}_0=\sigma$, from which we derive
+\begin{equation}\mylabel{eq-ring3}
+X \leq M \frac{\mu}{\eta} \left( M \sigma_{\max} + b \right) +
+\sigma + b
+\end{equation}
+
+(Step 2) By applying the same reasoning as in
+\sref{sec-timestoppingm}, we find that \eref{eq-ring3} is always
+true. The theorem follows from \eref{eq-ringisstable2}. \qed
+\begin{lemma}
+ \mylabel{lem-cbp}
+ For any nodes $m, n$ (possibly with $m = n$), and for any time $t$ there is
+ some $s$ such that
+ $$
+ \bracket{
+ x_m(t) \leq  x_n (s)-  (t-s) \eta + M \sigma_{\max} + b\\
+ q_n(t) \leq  (t-s)\mu  + b_n + \sigma^{(n)}_0
+ }
+ $$
+ with $\sigma^{(n)}_0=\sum_{i.\mathrm{first}=n}\sigma_i$.
+\end{lemma}
+\pr By definition of the service curve property at node $m$, there
+is some $s_1$ such that
+$$
+   \sum_{i \ni m} R^m_i(t) \geq
+   \sum_{i \ni m, i.\mathrm{first} \neq
+m} R^{m \ominus 1}_i(s_1) + \sum_{i.\mathrm{first} = m} R^0_i(s_1)
+ + r_m(t-s_1) - b_m $$
+ which we can rewrite as
+ $$
+\sum_{i \ni m} R^m_i(t) \geq -A
+    + \sum_{i \ni m} R^0_i(s_1)
++ r_m(t-s_1) - b_m
+$$
+with
+  $$
+   A = \sum_{i \ni m, i.\mathrm{first} \neq m}
+  \left(R^0_i(s_1)-R^{m-1}_i(s_1)\right)
+  $$
+%  and
+%  $$
+% B =\sum_{i \ni m} \left(R^0_i(t)-R^0_i(s_1)\right)
+% - r_m(t-s_1) + r_m E
+%  $$
+Now the condition $\left\{i \ni m, i.\mathrm{first} \neq
+m\right\}$
+ implies that flow $i$ passes through node $m-1$, namely, $\left\{i \ni
+ (m-1)\right\}$. Furthermore, each element in the summation that
+ constitutes
+ $A$ is nonnegative. Thus
+ $$A \leq \sum_{i \ni
+ (m-1)}  \left(R^0_i(s_1)-R^{m-1}_i(s_1)\right) = x_{m \ominus 1} (s_1)
+ $$
+Thus
+\begin{equation}\mylabel{eq-fifolem23}
+  \sum_{i \ni m} R^m_i(t) \geq -x_{m \ominus 1} (s_1) + \sum_{i \ni m} R^0_i(s_1)
++ r_m(t-s_1) - b_m
+\end{equation}
+Now combining this with the definition of $x_m(t)$ in
+\eref{eq-lemfifodefx} gives:
+$$
+x_m(t) \leq  x_{m \ominus 1} (s_1) + \sum_{i \ni m}
+\left(R^0_i(t)-R^0_i(s_1)\right) - r_m(t-s_1) + b_m
+$$
+From the arrival curve property applied to all micro-flows $i$ in
+the summation, we derive:
+$$
+x_m(t) \leq  x_{m \ominus 1} (s_1)- (r_m - \rho^{(m)}) (t-s_1) +
+\sigma^{(m)} + b_m
+$$
+and since $r_m - \rho^{(m)} \geq \eta$ and $\sigma^{(m)} \leq
+\sigma_{\max}$ by definition of $\eta$ and $\sigma_{\max}$, we
+have
+ $$
+x_m(t) \leq  x_{m \ominus 1} (s_1)-  (t-s_1) \eta + \sigma_{\max}
++ b_m
+ $$
+ We apply the same reasoning to node $m \ominus 1$ and
+time $s_1$, and so on iteratively until we reach node $n$
+backwards from $m$. We thus build a sequence of times $s_0=t,s_1,
+s_2, ..., s_j,  ..., s_k$ such that
+\begin{equation}\mylabel{eq-fifolem893}
+  x_{m \ominus j}(s_j) \leq  x_{m \ominus (j+1)} (s_{j+1})-
+(t-s_{j+1}) \eta + \sigma_{\max} + b_{m \ominus j}
+\end{equation}
+until we have $m \ominus k= n$. If $n=m$ we reach the same node
+again by a complete backwards rotation and $k=M$. In all cases, we
+have $k \leq M$. By summing \eref{eq-fifolem893} for $j=0$ to
+$k-1$ we find the first part of the lemma.
+
+Now we prove the second part. $s=s_k$ is obtained by applying the
+service curve property to node $n$ and time $s_{k-1}$. Apply the
+service curve property to node $n$ and time $t$. Since $t \geq
+s_{k-1}$, we know from \pref{prop-t0augmente} on
+\pgref{prop-t0augmente} that we can find some $s' \geq s$ such
+that
+$$\sum_{i \ni n} R^n_i(t) \geq \sum_{i \ni
+n, i.\mathrm{first} \neq n} R^{n-1}_i(s') + \sum_{i.\mathrm{first}
+= n} R^0_i(s') + r_n(t-s') - b_n
+$$
+Thus
+\begin{eqnarray*}
+\lefteqn{ q_n(t) \leq
+  \sum_{i \ni n, i.\mathrm{first} \neq n}
+\left(R^{n\ominus 1}_i(t)-R^{n \ominus 1}_i(s')\right) +}
+ \\ & &
+\sum_{i.\mathrm{first} = n} (R^0_i(t)-R^0_i(s')) - r_n(t-s') + b_n
+\\
+ & & \leq (C_n-r_n + \rho^{(n)}_0)(t-s') + b_n + \sigma^{(n)}_0
+\leq(t-s') \mu  + b_n + \sigma^{(n)}_0
+\end{eqnarray*} the second
+part of the formula follows from $s \leq s'$. \qed
+
+\paragraph{Remark: }
+A simpler, but weaker bound, is
+$$M \frac{\mu}{\eta} \left( M \sigma + b \right) + \sigma +b
+$$
+or
+\begin{equation}\mylabel{eq-tg33}
+ M \frac{\mu}{\eta} \left( M \sigma_{\max} + b \right) + M \sigma_{\max} +b
+\end{equation}
+\paragraph{The special case in \cite{tg96}: }
+Under the assumption that all nodes are constant rate servers of
+rate equal to $1$ (thus $C_m=r_m=1$ and $b_m$ is the latency of
+the link $m$), the following bound is found in \cite{tg96}:
+\begin{equation}\mylabel{eq-tg96}
+  B_1= \frac{M b + M^2 \sigma_{\max}}{\eta}+ b
+\end{equation}
+In that case, we have $\mu \leq 1 - \eta$. By applying
+\eref{eq-tg33}, we obtain the bound
+%$$
+%B_2= \frac{M(1 -\eta)b + \left[ M^2 (1- \eta) \right]\sigma_{\max} +
+%\eta \sigma }{\eta} + b
+%$$
+%Now
+%\begin{equation}\mylabel{eq-ringsig}
+% \sigma \leq M \sigma_{\max}
+%\end{equation}
+%thus
+$$B_2 = \frac{M \mu b + \left[ M^2 \mu + M \eta
+\right]\sigma_{\max}}{\eta} + b
+$$
+since
+\begin{equation}\mylabel{eq-ringsig}
+  \mu \leq 1-\eta
+\end{equation}
+and $0< \eta \leq 1, \; M \leq M^2$, we have $B_2 <B_1$, namely,
+our bound is better than that in \cite{tg96}. If there is equality
+in \eref{eq-ringsig} (namely, if there is a node that receives no
+transit traffic), then both bounds are equivalent when $\eta
+\rightarrow 0$. \nfs{However, in that case, there is no feedback
+in the ring and even better bounds can be found by applying
+\thref{theo-wcl}.}
+%
+%\section{A General Theory for Aggregate Multiplexing}
+%Je refais cette section sur la base de la d\'{e}couverte que
+%TONFIFO est valable pour autre que FIFO.
+%\subsection{A General Theorem}
+%\paragraph{Assumptions and Notation}
+%Consider a lossless node serving a set of flows, $R_1(t), ...,
+%R_I(t)$ with some unknown arbitration between flows. Call
+%$R'_1(t), ..., R'_I(t)$ the output flows. We are interested in
+%finding an arrival curve for the output $R'_A(t)=\sum_{i \in A}
+%R'_i(t)$ of the sub-aggregate of all flows in some subset $A$ of
+%$\{1, ..., I\}$.
+%
+%Assume that the aggregate of all flows receives a minimum service
+%curve $\beta$ and a maximum service curve $\gamma$. For example, a
+%work conserving link with constant bit rate $R$ corresponds to
+%$\beta=\gamma=\lambda_R$.
+%
+%Assume that packet arrivals are instantaneous. We assume that
+%functions $R$ and $R'$ are left-continuous.
+%
+%Assume that the flows are subject to $J$ joint \emph{combined}
+%arrival curve constraints, defined by
+%\begin{equation}\mylabel{eq-defjcs}
+%  \sum_{i \in S_j} \left( R_i(t) -R_i(s) \right) \leq
+%  \alpha_j(t-s)
+%\end{equation}
+%for $j=1$ to $J$, where $S_j$ is the set of flows that are
+%constrained by the $j$th arrival curve $\alpha_j$.
+%
+%Put an example here.
+%
+%Define
+%$$\calX(t):=\{\vec{x} \in (\Reals^+)^I | \mfa j \; :
+%\sum_{i \in S_j} x_i \leq
+%  \alpha_j(t) \}
+%$$
+%so that the arrival curve constraints can be rewritten
+%$\vec{R}(t)-\vec{R}(t) \in \calX(t-s)$.
+%
+%Let $B$ be the complement of $A$. We denote with $\vec{x}_A$ the
+%vector equal to the restriction of $\vec{x}$ to the set of indices
+%$A$. We also use the notation $\vec{x}=(\vec{x}_A, \vec{x}_B)$.
+%
+%For any vector $\vec{x}$ we denote by $|\vec{x}|$ the sum of its
+%coordinates. The flow function for the input of sub-aggregate $A$
+%is thus $R_A(t):= |\vec{R}_A(t)|=\sum_{i \in A}R_i(t)$.
+%
+%From \pref{prop-sercurt0} we can find a function $\tau(t)$ such
+%that the service curve property can be expressed by
+%$$
+%R'(t) \geq R(\tau(t)) + \beta(t- \tau(t))
+%$$
+%Call $\tau_{\max}:=\sup_{t \geq 0} \tau(t)$. $\tau_{\max}$ depends
+%on the arrival curve constraints in \eref{eq-defjcs}. In some
+%cases (``critical networks") it may be that $\tau_{\max}= +
+%\infty$.
+%
+%Define
+%$$\alpha_A(t):=\max_{\vec{x} \in \calX(t)}|\vec{x}_A(t)|
+%$$ so that $\alpha_A$ is an arrival curve for the input aggregate
+%$R_A(t)$.
+%\begin{lemma}
+%\mylabel{lem-fifo-alphA} $$\alpha_A(t)= \max_{(\vec{x}_A, \vec{0})
+%\in \calX(t)} |\vec{x}_A(t)|$$
+%\end{lemma}
+%\pr
+%to be done \qed
+%
+%\begin{theorem}
+%\mylabel{theo-aggmux} An arrival curve for the output of aggregate
+%$A$ is
+% $$\alpha^*(t):=\sup_{s \in [0, \tau_{\max}]}\inf_{t' \in [0, t]}
+% a(s, t, t')$$
+% where
+% $$
+% a(s, t,t'):=\max_{(\vec{x}_A, \vec{x}_B) \in \calX(s), (\vec{x}_A+ \vec{y}_A, \vec{x}_B) \in \calX(s+t')}
+% \left[|\vec{x}_A+\vec{x}_B+\vec{y}_A| - \beta(s) +
+% \gamma(t-t')\right]
+% $$
+%\end{theorem}
+%\paragraph{Remark: }
+%In the separable case, a direct application of
+%\thref{theo-blindmux} and \thref{theo-output-maxsc} gives the same
+%result. In the non-separable case, the bad news is that we do not
+%have a concept of service curve for flow aggregate $A$.
+%
+%\pr
+%To be done
+%
+%\qed
+
+\subsection{Explicit Bounds for a Homogeneous ATM Network with Strong
+Source Rate Conditions} \mylabel{sec-l24-cbr}
+
+When analyzing a global network, we can use the bounds in
+\sref{sec-l24-fifosc}, using the same method as in
+\sref{sec-ds}. However, as illustrated in
+\cite{LeBoudec2000mMay}, the bounds so obtained are not
+optimal: indeed, even for a FIFO ring, the method does
+\emph{not} find a finite bound for all utilization factors
+less than 1 (although we know from \sref{sec-ringisstable}
+that such finite bounds exist).
+
+In this section we show in \thref{theo-tonfifo} some partial
+result that goes beyond the per-node bounds in
+\sref{sec-l24-fifosc}. The result was originally found in
+\cite{CFZF98,leb99,zhang99}.
+
+Consider an ATM network with the assumptions as in \sref{sec-l24-stability}, with the following
+differences
+\begin{itemize}
+
+\item  Every link has one origin node and one end node. We say
+that a link $f$ is incident to link $e$ if the origin node of link
+$e$ is the destination node of link $f$. In general, a link has
+several incident links.
+  \item All packets have the same size (called cell). All arrivals
+  and departures occur at integer times (synchronized model).
+All links have the same bit rate, equal to $1$ cell per
+  time unit. The service time for one cell is $1$ time unit. The propagation times are
+  constant per link and integer.
+  \item All links are FIFO.
+\end{itemize}
+
+\begin{proposition}
+\mylabel{prop-tonfifodm} For a network with the above assumption,
+the delay for a cell $c$ arriving at node $e$ over incident link
+$i$ is bounded by the number of cells arriving on incident links
+$j \neq i$ during the busy period, and that will depart before
+$c$.
+\end{proposition}
+\pr
+Call $R'(t)$ (resp. $R_j(t), R(t)$)the output flow (resp. input
+arriving on link $j$, total input flow). Call $d$ the delay for a
+tagged cell arriving at time $t$ on link $i$. Call $A_j$ the
+number of cells arriving on link $j$ up to time $t$ that will
+depart before the tagged cell, and let $A=\sum_j A_j$. We have
+$$
+ d = A - R'(t) \leq A - R(s) - (t-s)
+$$
+where $s$ is the last time instant before the busy period at $t$.
+We can rewrite the previous equation as
+$$d\leq \sum_{j \neq i}[A_j-R_j(s)] +  [A_i(t)-R_i(s)] - (t-s)
+$$
+Now the link rates are all equal to $1$, thus $A_i -R_i(s) \leq
+t-s$ and
+$$
+ d \leq \sum_{j \neq i}[A_j-R_j(s)]
+$$
+ \qed
+
+An ``Interference Unit" is defined as a set $(e, \{j,k\})$ where
+$e$ is a link, $\{j,k\}$ is a set of two distinct flows that each
+have $e$ on their paths, and that arrive at $e$ over two different
+incident links (\fref{fig-tonfifo1}). The Route Interference
+Number (RIN) of flow $j$ is the number of interference units that
+contain $j$. It is thus the number of other flows that share a
+common sub-path, counted with multiplicity if some flows share
+several distinct sub-paths along the same path. The RIN is used to
+define a sufficient condition, under which we prove a strong
+bound.
+
+\begin{figure}[!htbp]
+  \insfig{tonfifo1}{1.0}
+  \mycaption{The network model and definition of an interference unit.
+  Flows $j$ and $i_2$ have an interference unit at node $f$.
+  Flows $j$ and $i_1$ have an interference unit at node $l$ and one at node $g$.}
+  \mylabel{fig-tonfifo1}
+\end{figure}
+
+\begin{definition}[Source Rate Condition]
+The fresh arrival curve constraint (at network boundary) for flow
+$j$ is the stair function $v_{R+1, R+1}$, where $R$ is the RIN of
+flow $j$.\mylabel{def-sourceratecond}
+\end{definition}
+The source rate condition is equivalent to saying that a flow
+generates at most one cell in any time interval of duration
+$\mathrm{RIN}+1$.
+
+\begin{theorem}
+\mylabel{theo-tonfifo} If the source rate condition holds at all
+sources, then
+\begin{enumerate}
+  \item The backlog at any node is bounded by $N - \max_i N_i$,
+  where $N_i$ is the number of flows entering the node via
+  input link $i$, and $N=\sum_i N_i$.
+   \item The end-to-end queuing delay for a given flow is bounded by its
+   RIN.
+  \item There is at most one cell per flow present during any
+  busy period.
+\end{enumerate}
+\end{theorem}
+
+The proof of item 3 involves a complex analysis of chained busy
+periods, as does the proof of \thref{theo-ring}. It is given in a
+separate section. Item 3 gives an intuitive explanation of what
+happens: the source rate condition forces sources to leave enough
+spacing between cells, so that two cells of the same flow do not
+interfere, in some sense. The precise meaning of this is given in
+the proof. Items 1 and 2 derive from item 3 by a classical network
+calculus method (\fref{fig-tonfifoheb}).
+
+\paragraph{Proof of \thref{theo-tonfifo}} \mylabel{sec-tonfifoproof} As a
+simplification, we call ``path of a cell``  the path of the flow
+of the cell. Similarly, we use the phrase ``interference unit of
+$c$" with the meaning of interference unit of the flow of $c$.
+%For a path $P$, a node $e$ and two flows $j,k$ we say that
+%$(e,\{j,k\})$ is a route interference unit of $P$ if $P$ is a
+%sub-path of the path of $j$, $e$ is on $P$ and $(e,\{j,k\})$ is an
+%interference unit.
+
+We define a busy period as a time interval during which the
+backlog for the flow at the node is always positive. We now
+introduce a definition (super-chain) that will be central in the
+proof. First we use the following relation:
+%\begin{definition}[A relation]
+%\mylabel{def-relordretonfifo} Consider some fixed link $e$ and
+%some fixed subset $A$ of flows using link $e$.
+%
+%For any pair of flows, there may be several interference units (if
+%they interfere several times). We call ``merging point" of two
+%flows $i$ and $j$ in $A$ the last node before or at $e$ at which
+%they interfere.
+%
+%For two cells $c$ and $d$ in $A$ we say that $c \preccurlyeq d$ if
+%$c$ and $d$ are in the same busy period at their merging point,
+%and if $d$ joins the buffer of the merging point no earlier than
+%$c$.
+%\end{definition}
+\begin{definition}[``Delay Chain" \cite{CFZF98}]
+\mylabel{def-relordretonfifo} For two cells $c$ and $d$, and for
+some link $e$, we say that $c \preccurlyeq_e d$ if $c$ and $d$ are
+in the same busy period at $e$ and $c$ leaves $e$ before $d$.
+\end{definition}
+Figure~\ref{fig-fifof2} illustrates the definition.
+\begin{figure}
+\insfig{tonfifo2}{0.7}
+  \mycaption{A time-space diagram illustrating the definitions of $d \preccurlyeq_g c_1$ and $c_1
+   \preccurlyeq_f c_2$. Time flows
+   downwards.
+ Rectangles illustrate busy periods.}
+ \mylabel{fig-fifof2}
+\end{figure}
+\begin{definition}[Super-Chain \cite{CFZF98}]
+Consider a sequence of cells $\underline{c}=(c_0, ...,$ $c_i, ...,
+c_k)$ and a sequence of nodes $\underline{f}=(f_1, ...,f_k)$. We
+say that $(\underline{c}, \underline{f})$ is a super-chain if
+% either $k=0$ and $\underline{f}$ is empty or
+\begin{itemize}
+  \item $f_1, ..., f_k$ are all on the
+  path $P$
+   of cell $c_0$ (but not necessarily consecutive)
+   \item
+ $c_{i-1}\preccurlyeq_{f_i} c_i$ for $i=1$ to $k$.
+  \item the path of cell $c_i$ from $f_i$ to $f_{i+1}$ is a sub-path of $P$
+\end{itemize}
+\end{definition}
+We say that the sub-path of $c_0$ that spans from node $f_1$ to
+node $f_k$ is the path of the super-chain.
+
+\begin{definition}[Segment Interfering with a Super-Chain]
+For a given super-chain, we call ``segment" a couple $(d, P)$
+where $P$ is a sub-path of the path of the super-chain, $d$ is a
+cell whose path also has $P$ as a sub-path, and $P$ is maximal
+(namely, we cannot extend $P$ to be a common sub-path of both $d$
+and the super-chain). We say that the segment $(d,P)$ is
+interfering with super-chain $(\underline{c},\underline{f})$ if
+there is some $i$ on $P$ such that $d \preccurlyeq_{f_i} c_i$.
+\end{definition}
+\begin{lemma}
+\mylabel{lem-superchain1}  Let $(\underline{c}, \underline{f})$ be
+a super-chain. Let $s_0$ be the arrival time of cell $c_0$ at link
+$f_1$ and  $s'_k$ the departure time of cell $c_k$ from link
+$f_k$. Then $s'_k-s_0 \leq R_{1,k}+T_{1, k}$, where $R_{1,k}$ is
+the total number of segments interfering with $(\underline{c},
+\underline{f})$ and $T_{1, k}$ is the total transmission and
+propagation time on the path of the super-chain.
+\end{lemma}
+\pr
+Consider first some node $f_j$ on the super-chain. Let $s_{j-1}$
+(resp. $t_j$) be the arrival time of cell $c_{j-1}$  (resp. $c_j$)
+at the node. Let $t'_{j-1}$ (resp. $s'_j$) be the departure time
+of cell $c_{j-1}$ (resp. $c_j$) (\fref{fig-lemtfsc1}). Let $v_j$
+be the last time slot before the busy period that $t_j$ is in. By
+hypothesis, $v_j + 1 \leq s_{j-1}$.
+\begin{figure}[!htbp]
+  \insfig{lemtfsc1}{0.7}
+  \mycaption{The notation used in the proof of \lref{lem-superchain1}.}
+  \mylabel{fig-lemtfsc1}
+\end{figure}
+Also define $\calB_j$ (resp. $\calB^0_j$) as the set of segments
+$(d,P)$ where $d$ is a cell arriving at the node after time $v_j$
+on a link incident to the path of the super-chain (resp. on the
+path of the super-chain) and that will depart no later than cell
+$c_{j}$, and where $P$ is the maximal common sub-path for $d$ and
+the super-chain that $f_j$ is in. Also define $\calA^0_j$ as the
+subset of those segments in $\calB^0_j$ for which the cell departs
+after $c_{j-1}$. Let $B_j$ (resp. $B^0_j, A^0_j$) be the number of
+elements in $\calB_j$ (resp. $\calB^0_j, \calA^0_j$), see
+\fref{fig-lemtfsc1}.
+
+Since the rate of all incident links is $1$, we have
+$$
+B^0_j-A^0_j \leq s_{j-1}- v_j
+$$
+Also, since the rate of the node is $1$, we have:
+$$
+s'_j - v_j = B_j + B^0_j
+$$
+Combining the two, we derive
+\begin{equation}\mylabel{eq-lemsc73}
+ s'_j - s_{j-1} = B_j + B^0_j -(s_{j-1} - v_j) \leq B_j + A^0_j
+\end{equation}
+By iterative application of \eref{eq-lemsc73} from $j=1$ to $k$,
+we obtain
+$$
+s'_k -s_0 \leq \sum_{j=1}^k (B_j + A^0_j) + T_{1, k}
+$$
+Now we show that all sets in the collection $\{\calB_j, \calA^0_j,
+\; j=1 \mbox{ to } k\}$ are two-by-two disjoint. Firstly, if
+$(d,P) \in \calB_j$ then $f_j$ is the first node of $P$ thus
+$(d,P)$ cannot be in some other $ \calB_{j'}$ with $j \neq j'$.
+Thus the $\calB_j$ are two-by-two disjoint. Second, assume
+$(d,P)\in \calB_j$ and $(d,P)\in \calA^0_{j'}$. It is obvious from
+their definitions that, for a fixed $j$, $\calB_j$ and $\calA^0_j$
+are disjoint; thus $j \neq j'$. Since $f_j$ is the first node of
+$P$ and $j'$ is on $P$, it follows that $j < j'$. Now $d$ leaves
+$f_j$ before $c_j$ and leaves $f_{j'}$ after $c_{j'-1}$, which
+contradicts the FIFO assumption. Thus the $\calB_j$ and
+$\calA^0_{j'}$ are two-by-two disjoint. The same reasoning shows
+that it is not possible that $(d,P) \in \calA_j \bigcap
+\calA_{j'}$ with $j < j'$.
+
+Now, by definition, every segment in either $\calB_j$ or
+$\calA^0_j$ is an interfering segment. Thus
+$$\sum_{j=1}^k (B_j + A^0_j) \leq R_{1,k}$$.
+ \qed
+
+\begin{proposition}
+\mylabel{prop-superchain2} Assume the source rate condition holds.
+Let $(\underline{c}, \underline{f})$ be a super-chain.
+\begin{enumerate}
+  \item  For every interference unit of $c_0$
+  there is at most one cell interfering with the super-chain.
+  \item $c_k$ does not belong to the same flow as $c_0$.
+\end{enumerate}
+\end{proposition}
+\pr
+Define the time of a super-chain as the exit time for the last
+cell $c_k$ on the last node $f_k$.  We use a recursion on the time
+$t$ of the super-chain.
+%For a super-chain as in the theorem,
+%call $t$ the exit time for cell $c_k$ out  the time stopping
+%method \sref{sec-timestoppingm} and do a recursion on time. Call
+%$\calN_t$ the network derived from the original one, where all
+%sources are stopped after time $t$. We show that the RIN property
+%holds for all networks $\calN_t$, which is sufficient to show the
+%theorem.
+
+If $t=1$, the proposition is true because any flow has at most one
+cell on a link in one time slot. Assume now that the proposition
+holds for any super-chain with time $\leq t-1$ and consider a
+super-chain with time $t$.
+
+First, we associate an interference unit to any segment $(d, P)$
+interfering with the sub-chain, as follows. The paths of $d$ and
+$c_0$ may share several non contiguous sub-paths, and $P$ is one
+of them. Call $f$ the first node of $P$. To $d$ we associate the
+interference unit $(f, \{j_0, j\})$, where $j_0$ (resp. $j$) is
+the flow of $c_0$ (resp. $d$).
+
+We now show that this mapping is injective. Assume that another
+segment $(d', P') \neq (d, P)$ is associated with the same
+interference unit $(f, \{j_0, j\})$. Without loss of generality,
+we can assume that $d$ was emitted before $d'$. $d$ and $d'$
+belong to the same flow $j$, thus, since $P$ and $P'$ are maximal,
+we must have $P=P'$. By hypothesis, have an interference with the
+super-chain at a node on $P$. Let $f_l$ be a node on the
+super-chain and on $P$ such that $d\preccurlyeq_{f_l} c_l$. If
+$d'$ leaves node $f_l$ before $c_l$, then $d\preccurlyeq_{f_l}
+d'$, and thus $((d, d'),(f_l))$ is a super-chain. Since $d'$ is an
+interfering cell, necessarily, it must leave node $f_l$ before
+$t$, thus the proposition is true for super-chain $((d,
+d'),(f_l))$, which contradicts item 2. Thus $d'$ must leave node
+$f_l$ after cell $c_l$. But there is some other index $m \leq k$
+such that $d\preccurlyeq_{f_m} c_m$, thus cell $d'$ leaves node
+$f_m$ before cell $c_m$. Define $l'$ as the smallest index with $l
+< l' \leq m$ such that $d'$ leaves node $f_{l'}$ after cell
+$c_{l'-1}$ and before $c_{l'}$. Then $((d, c_l, ..., c_{l'-1},
+d'),(f_l, ..,f_{l'}))$ is a super-chain with time $\leq t-1$ which
+would again contradict item 2 in the proposition. Thus, in all
+cases we have a contradiction, the mapping is injective, and item
+1 is shown for the super-chain.
+
+Second, let us count a bound on the maximum queuing delay of cell
+$c_0$. Call $u_0$ its emission time, $P_0$ the sub-path of $c_0$
+from its source up to, but excluding, node $f_1$, and $T$ the
+total transmission and propagation time for the flow of $c_0$. The
+transmission and propagation time along $P_0$ is thus $T-T_{1,k}$.
+By \pref{prop-tonfifodm}, the queuing delay of $c_0$ at a node $f$
+on $P_0$ is bounded by the number of cells $d \preccurlyeq_{f}
+c_0$ that arrive on a link not on $P_0$. By the same reasoning as
+in the previous paragraph, there is at most one such cell $d$ per
+interference unit of $c_0$ at $f$. Define $R$ as the number of
+interference units of the flow of $c_0$ on $P_1$. We have thus
+\begin{equation}\mylabel{eq-tonfifopr332}
+ s_0 \leq u_0 + R + T-T_{1,k}
+\end{equation}
+
+Similarly, from \lref{lem-superchain1}, we have
+$$s'_k \leq s_0 + R_{1,k}+T_{1,k}$$
+Call $R'$ the number of interference units of the flow of $c_0$ on
+the path of the super-chain. It follows from the first part of the
+proof that $R_{1,k} \leq R'$, thus
+$$
+s'_k \leq s_0 + R'+T_{1,k}
+$$
+Combining with \eref{eq-tonfifopr332} gives
+\begin{equation}\mylabel{eq-tonfifo238197}
+ s'_k \leq u_0 + R + R' +T
+\end{equation}
+Now by the source condition, if $c_k$  belongs to the flow of
+$c_0$, its emission time $u'$ must satisfy
+$$
+u' \geq u_0 + R + R' + 1
+$$
+and thus
+$$
+s'_k \geq u_0 + R + R' + 1 + T
+$$
+which contradicts \eref{eq-tonfifo238197}. This shows that the
+second item of the proposition must hold for the super-chain.
+ \qed
+
+\paragraph{Proof of \thref{theo-tonfifo}: }
+Item 3 follows from \pref{prop-superchain2}, since if there would
+be two cells $d, d'$ of the same flow in the same busy period,
+then $((d, d'),(e))$ would be a super-chain.
+
+Now we show how items 1 and 2 derive from item 3. Call
+$\alpha^*_i(t)$ the maximum number of cells that may ever arrive
+on incident link $i$ during $t$ time units inside a busy period.
+Since $\lambda_1$ is a service curve for node $e$, the backlog $B$
+at node $e$ is bounded by
+$$
+B \leq \sup_{t \geq 0} \left[\sum_{i=1}^{I} \alpha^*_i(t) \;  - t
+\right]
+$$
+Now by item 3, $\alpha^*_i(t) \leq N_i$ and thus
+$$\alpha^*_i (t) \leq \alpha_i(t):= \min [N_i, t ]
+$$
+Thus
+$$
+B \leq \sup_{t \geq 0} \left[\sum_{i=1}^{I} \alpha_i(t) \;  - t
+\right]
+$$
+Now define a renumbering of the $N_i$'s such that $N_{(1)} \leq
+N_{(2)} \leq ...\leq N_{(I)}$. The function $\sum_i \alpha_i(t)
+-t$ is continuous and has a derivative at all points except the
+$N_{(i)}$'s (\fref{fig-tonfifoheb}). The derivative changes its
+sign at $N_{(I)}$ (=$\max_{1\leq i\leq I}(N_i)$) thus the maximum
+is at $N_{(I)}$ and its value is $N-N_{(I)}$, which shows item 1.
+\begin{figure}[!htbp]
+  \insfig{tonfifoheb}{0.8}
+  \mycaption{Derivation of a backlog bound.}
+  \mylabel{fig-tonfifoheb}
+\end{figure}
+
+From Item 1, the delay at a node is bounded by the number of
+interference units of the flow at this node. This shows item 2.
+ \qed
+
+\section{Bibliographic Notes}
+
+\nfs{<courbes de service inadequate pour FIFO>}
+
+In \cite{leb99}, a stronger property is shown than
+\thref{theo-tonfifo}: Consider a given link $e$ and a subset $A$
+of $m$ connections that use that link. Let $n$ be a lower bound on
+the number of route interferences that any connection in the
+subset will encounter after this link. Then over any time interval
+of duration $m+n$, the number of cells belonging to $A$ that leave
+link $e$ is bounded by $m$.
+
+It follows from item 1 in \thref{theo-tonfifo} that a better
+queuing delay bound for flow $j$ is:
+$$\delta(j) = \sum_{e \mst e \in j}
+ \left\{\min_{i \mst 1 \leq i\leq I(e)}(N(e)-N_i(e)) \right\}$$
+ where $I(e)$ is the number of incident links at node $e$,
+ $N_i(e)$ is the number of flows entering node $e$ on link i, and
+ $N=\sum{i=1}^{I(e)}N_i(e)$.
+In other words, the end-to-end queuing delay is bounded by the sum
+of the minimum numbers of route interference units for all flows
+at all nodes along the path of a flow. For asymmetric cases, this
+is less than the RIN of the flow.
+
+\section{Exercises}
+\input{temp/L24-1}
+\input{temp/L24-2}
+\input{temp/L21-18}
+\input{temp/L24-3}

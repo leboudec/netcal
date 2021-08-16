@@ -1,0 +1,1958 @@
+\chapter{Adaptive and Packet Scale Rate Guarantees}
+\mylabel{L23}
+
+\section{Introduction}
+In \cref{L20} we defined a number of service curve concepts:
+minimum service curve, maximum service curve and strict service
+curves. In this chapter we go beyond and define some concepts that
+more closely capture the properties of generalized processor
+sharing (GPS).
+
+We start by a motivating section, in which we analyze some
+features of service curves or Guaranteed Rate node that do not
+match GPS. Then we provide the theoretical framework of packet
+scale rate guarantee (PSRG); it is a more complex node
+abstraction than Guaranteed Rate, which better captures some
+of the properties of GPS. A major difference is the
+possibility to derive information on delay when the buffer
+size is known -- a property that is not possible with service
+curve or guaranteed rate. This is important for low delay
+services in the internet. PSRG is used in the definition of
+the Internet Expedited Forwarding service.
+
+Just like GR is the max-plus correspondant of the min-plus
+concept of service curve, PSRG is the max-plus correspondant
+of \emph{adaptive service curves}. These were first proposed
+in Okino's dissertation in \cite{oki98} and by Agrawal, Cruz,
+Okino and Rajan in \cite{cruzADAP}. We explain the
+relationship between the two and give practical applications
+to the concatenation of PSRG nodes.
+
+
+In the context of differentiated services, a flow is an
+aggregate of a number of micro-flows that belong to the same
+service class. Such an aggregate may join a router by
+different ports, and may follow different paths inside the
+router. It follows that it can generally not be assumed that a
+router is FIFO per flow. This is why the definition of PSRG
+(like GR) does not assume the FIFO property.
+
+In all of this chapter, we assume that flow functions are
+left-continuous, unless stated otherwise.
+
+
+\section{Limitations of the Service Curve and GR  Node
+Abstractions} \mylabel{sec-sercurnotenough} The definition of
+service curve introduced in \sref{sec-sercur} is an
+abstraction of nodes such as GPS and its practical
+implementations, as well as guaranteed delay nodes. This
+abstraction is used in many situations, described all along
+this book. However, it is not always sufficient.
+
+Firstly, it does not provide a guarantee over any interval.
+Consider for example a node offering to a flow $R(t)$ the service
+curve $\lambda_C$. Assume $R(t)=B$ for $t>0$, so the flow has a
+very large burst at time $0$ and then stops. A possible output is
+illustrated on \fref{fig-ascintro}. It is perfectly possible that
+there is no output during the time interval $(0,
+\frac{B-\epsilon}{C}]$, even though there is a large backlog. This
+is because the server gave a higher service than the minimum
+required during some interval of time, and the service property
+allows it to be lazy after that.
+\begin{figure}[!htbp]
+  \insfig{ascintro}{0.7}
+  \mycaption{The service curve property is not sufficient.}
+  \mylabel{fig-ascintro}
+\end{figure}
+
+
+Secondly, there are case where we would like to deduce a bound on
+the delay that a packet will suffer given the backlog that we can
+measure in the node. This is used for obtaining bounds in FIFO
+systems with aggregate scheduling. In \cref{L24} we use such a
+property for a constant delay server with rate $C$: given that the
+backlog at time $t$ is $Q$, the last bit present at time $t$ will
+depart before within a time of $\frac{Q}{C}$. If we assume instead
+that the server has a service curve $\lambda_C$, then we cannot
+draw such a conclusion. Consider for example \fref{fig-ascintro}:
+at time $t >0$, the backlog, $\epsilon$, can be made arbitrily
+small, whereas the delay $\frac{B - \epsilon}{C}-t$ can be made
+arbitrarily large.
+
+The same limitation applies to the concept of Guaranteed Rate
+node. Indeed, the example in \fref{fig-ascintro} could very
+well be for GR node. The main issue here is that a GR node,
+like a service curve element, may serve packets \emph{earlier}
+than required.
+
+A possible fix is the use of \emph{strict service curve}, as
+defined in \dref{def-ssc} on \pgref{def-ssc}. Indeed, it follows
+from the next section (and can easily be shown independently) that
+if a FIFO node offers a strict service curve $\beta$, then the
+delay at time $t$ is bounded by $\beta^{-1}(Q(t))$, where $Q(t)$
+is the backlog at time $t$, and $\beta^{-1}$ is the pseudo-inverse
+(\dref{def:pseudo-inverse} on \pgref{def:pseudo-inverse}).
+%\end{definition}
+%\pr
+%Call  $R(t), R^*(t)$ the input and output. If the last bit present
+%at time $t$ has not yet departed at time $t+ \tau$, then we must
+%have
+%$$R^*(t+ \tau) < R(t)
+% $$
+% and
+% $$
+% R^*(t + \tau) \geq R^*(t) + \beta (\tau)
+% $$
+% thus
+% $$
+% \beta(\tau) <R(t)-R^*(t)=Q(t)
+% $$
+% thus the delay is bounded by $\sup\{\tau: \beta(\tau) > Q(t) \}$
+% which is equal to $\beta^{-1}(Q(t))$.
+% \qed
+
+We know that the GPS node offers to a flow a strict service
+curve equal of the form $\lambda_{R}$. However, we cannot
+model delay nodes with a strict service curve. Consider for
+example a node with input $R(t)=\epsilon t$, which delays all
+bits by a constant time $d$. Any interval $[s,t]$ with $s \geq
+d$ is within a busy period, thus if the node offers a strict
+service curve $\beta$ to the flow, we should have $\beta(t-s)
+\epsilon (t-s)$, and $\epsilon$ can be arbitrarily small.
+Thus, the strict service curve does not make much sense for a
+constant delay node.
+\section{Packet Scale Rate Guarantee}
+\subsection{Definition of Packet Scale Rate
+Guarantee}
+
+In \sref{sec-gr} on \pgref{sec-gr} we have introduced the
+definition of guaranteed rate scheduler, which is the
+practical application of rate latency service curves. Consider
+a node where packets arrive at times $a_1\geq 0, a_2, ...$ and
+leave at times $d_1, d_2, ...$. A guaranteed rate scheduler,
+with rate $r$ and latency $e$ requires that $d_i \leq f'_i +
+e$, where $f'_i$ is defined iteratively by $f'_0=0$ and
+ $$
+ f'_i=\max\{a_i, f'_{i-1}\} + \frac{l_i}{r}
+ $$
+where $l_i$ is the length of the $i$th packet.
+
+A \emph{packet scale rate guarantee} is similar, but avoids
+the limitations of the service curve concept discussed in
+\sref{sec-sercurnotenough}. To that end, we would like that
+the deadline $f'_i$ is reduced whenever a packet happens to be
+served early. This is done by replacing $f'_{i-1}$ in the
+previous equation by $\min\{f'_i, d_i\}$. This gives the
+following definition.
+\begin{definition}[Packet Scale Rate Guarantee]
+Consider a node that serves a flow of packets numbered $i=1,
+2, ...$. Call $a_i, d_i, l_i$ the arrival time, departure
+time, and length in bits for the $i$th packet, in order of
+arrival. Assume $a_1 \geq 0$.We say that the node offers to
+the flow a packet scale rate guarantee with rate $r$ and
+latency $e$ if the departure times satisfy
+$$d_i \leq f_i + e$$ where $f_i$ is defined by:
+\begin{equation}\mylabel{eq-psrg-def}
+\bracket{f_0= d_0= 0 \\
+    f_i = \max \left\{
+                   a_i, \min\left(d_{i-1}, f_{i-1}\right)
+                 \right\}
+             + \frac{l_i}{r} \gap \mfa i \geq 1
+            }
+\end{equation}
+\index{Packet Scale Rate Guarantee}%
+ \mylabel{def-psrg}
+\end{definition}
+
+See \fref{fig-psrgdef} and \fref{fig-psrggr} for an
+illustration of the definition.
+
+\begin{figure}[!htbp]
+  \insfig{psrgdef}{0.85}
+  \mycaption{Definition of PSRG.}
+  \mylabel{fig-psrgdef}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \insfig{psrggr}{0.85}
+  \mycaption{Difference between PSRG and GR when packet $n-1$ leaves before $f_n$.}
+  \mylabel{fig-psrggr}
+\end{figure}
+
+\begin{theorem}
+A PSRG node with rate $r$ and latency $e$ is GR($r,e$).
+\mylabel{theo-psrgisgr}
+\end{theorem}
+\pr Follows immediately from the definition. \qed
+
+\textbf{Comment.} It follows that a PSRG node enjoys all the
+properties of a GR node. In particular:
+\begin{itemize}
+  \item Delay bounds for input traffic with arrival curves can
+  be obtained from \thref{theo-grcdelaybound}.
+  \item PSRG nodes have a  rate latency service curve property (\thref{theo-grcrep})
+  that can be used for buffer dimensioning.
+\end{itemize}
+
+We now obtain a characterization of packet scale rate
+guarantee that does not contain the virtual finish times
+$f_n$. It is the basis for many results in this chapter. We
+start with an expansion of the recursive definition of packet
+scale rate guarantee,
+
+\begin{lemma}[Min-max expansion of PSRG]
+\mylabel{lem-psrgmaxplus} Consider three arbitrary sequences
+of non-negative numbers $(a_n)_{n \geq 1}$, $(d_n)_{n \geq
+0}$, and $(m_n)_{n \geq 1}$, with $d_0 =0$. Define the
+sequence $(f_n)_{n\geq 0}$, by
+$$\bracket{
+ f_0 =0\\
+ f_n = \max \left[a_n, \min \left(d_{n-1}, f_{n-1} \right)\right] + m_n \mfor
+ n \geq 1
+ }
+$$
+Also define
+$$
+ \bracket{
+ A^n_j=a_j +  m_j + ... + m_n \mfor 1 \leq j\leq n\\
+ D^n_j=d_j + m_{j+1} + ... + m_n \mfor 0 \leq j\leq n -1
+ }
+$$
+For all $n \geq 1$, we have
+  \begin{eqnarray*}
+    f_n  = \min & [ & \max(A_n^n , A_{n-1}^n , ... ,
+    A_1^n),\\
+ &&  \max(A_n^n , A_{n-1}^n ... , A_2^n , D_1^n),\\
+ &&    ...\\
+  &&  \max(A_n^n , A_{n-1}^n ... , A_{j+1}^n , D_j^n),\\
+  &&   ...\\
+ &&  \max(A_n^n , A_{n-1}^n , D_{n-2}^n),\\
+ && \max(A_n^n , D_{n-1}^n)\\
+ & ]\end{eqnarray*}
+\end{lemma}
+
+%\begin{theorem}[Max-Min-Plus expansion of PSRG]
+%\mylabel{theo-psrgmaxplus} Consider three arbitrary sequences of
+%non-negative numbers $(a_n)_{n \geq 1}$, $(d_n)_{n \geq 0}$, and
+%$(m_n)_{n \geq 1}$, with $d_0 =0$. Define the sequence
+%$(f_n)_{n\geq 0}$, by
+%$$\bracket{
+% f_0 =0\\
+% f_n = a_n \vee \left[d_{n-1}\wedge f_{n-1} \right] + m_n \mfor
+% n \geq 1
+% }
+%$$
+%Also define
+%$$
+% \bracket{
+% A^n_j=a_j +  m_j + ... + m_n \mfor 1 \leq j\leq n\\
+% D^n_j=d_j + m_{j+1} + ... + m_n \mfor 0 \leq j\leq n
+% }
+%$$
+%with the convention that $D_n^n=d_n$.  For all $n \geq 1$, we have
+%  \begin{eqnarray*}
+%    \lefteqn{f_n = \left[A_n^n \vee A_{n-1}^n ... \vee A_1^n\right]}\\
+% &&  \wedge  \left[A_n^n \vee A_{n-1}^n ... \vee A_2^n \vee D_1^n\right]\\
+% &&  \wedge ...\\
+%  &&  \wedge  \left[A_n^n \vee A_{n-1}^n ... \vee A_{j+1}^n \vee D_j^n\right]\\
+%  &&  \wedge ...\\
+% &&  \wedge \left[A_n^n \vee A_{n-1}^n \vee D_{n-2}^n\right]\\
+% &&  \wedge \left[A_n^n \vee D_{n-1}^n\right]\\
+%  \end{eqnarray*}
+%\end{theorem}
+The proof is long and is given in a separate section
+(\sref{sec-ascproof}); it is based on min-max algebra.
+
+\textbf{Comment: }The expansion in \lref{lem-psrgmaxplus} can
+be interpreted as follows. The first term $\max(A_n^n ,
+A_{n-1}^n , ... ,
+    A_1^n)$ corresponds to the guaranteed rate clock recursion
+    (see \thref{theo-GR}). The following terms have the
+    effect of reducing $f_n$, depending on the values of $d_j$.
+
+
+We now apply the previous lemma to packet scale rate guarantee
+and obtain the required characterization without the virtual
+finish times $f_n$:
+\begin{theorem}
+\mylabel{theo-psrgmaxplus} Consider a system where packets are
+numbered $1, 2, ...$ in order of arrival. Call $a_n$, $d_n$
+the arrival and departure times for packet $n$, and $l_n$ the
+size of packet $n$. Define by convention $d_0=0$. The packet
+scale rate guarantee with rate $r$ and latency $e$ is
+equivalent to: For all $n$ and all $0\leq j\leq n-1$, one of
+the following holds
+\begin{equation}\mylabel{eq-psrgmaxplus1}
+ d_n \leq e + d_j + \frac{l_{j+1} + ... + l_n}{r}
+ \end{equation}
+or there is some $k \in \{j+1, ..., n\}$ such that
+\begin{equation}\mylabel{eq-psrgmaxplus2}
+ d_n \leq e + a_k + \frac{l_k + ... + l_n}{r}
+\end{equation}
+\end{theorem}
+The proof is also given in \sref{sec-ascproof}. It is a
+straightforward application of \lref{lem-psrgmaxplus}.
+
+\textbf{Comment 1: }The original definition of EF in
+\cite{RFC2598} was based on the informal intuition that a node
+guarantees to the EF aggregate a rate equal to $r$, at all
+time scales (this informal definition was replaced by PSRG).
+\thref{theo-psrgmaxplus} makes the link to the original
+intuition: a rate guarantee at all time scales means that
+either \eref{eq-psrgmaxplus1} or \eref{eq-psrgmaxplus2} must
+hold. For a simple scheduler, the former means that $d_j, d_n$
+are in the same backlogged period; the latter is for the
+opposite case, and here $a_k$ is the beginning of the
+backlogged period. But note that we do not assume that the
+PSRG node is a simple scheduler; as mentioned earlier, it may
+be any complex, non work conserving node. It is a merit of the
+abstract PSRG definition to avoid using the concept of
+backlogged period, which is not meaningful for a composite
+node \cite{efsup-rfc,psrgton}.
+
+\textbf{Comment 2: }In \thref{theo-grmaxplus} we give a
+similar result for GR nodes. It is instructive to compare both
+in the case of a simple scheduler, where the interpretation in
+terms of backlogged period can be made.  Let us assume the
+latency term is $0$, to make the comparison simple. For such a
+simple scheduler,  PSRG means that during \emph{any}
+backlogged period, the scheduler guarantees a rate at least
+equal to $r$. In contrast, and again for such simple
+schedulers, GR means that during the backlogged period
+starting at the first packet arrival that finds the system
+empty (this is called ``busy period" in queuing theory), the
+average rate of service is at least $r$. GR allows the
+scheduler to serve some packets more quickly than at rate $r$,
+and take advantage of this to serve other packets at a rate
+smaller than $r$, as long as the overall average rate is at
+least $r$. PSRG does not allow such a behaviour.
+
+A special case of interest is when $e=0$.
+
+\begin{definition}
+We call \emph{minimum rate server}, with rate $r$, a PSRG node
+for with latency $e=0$.
+\index{minimum rate server}
+\end{definition}
+For a minimum rate server we have
+\begin{equation}\mylabel{eq-mr-def}
+\bracket{ d_0=0\\
+    d_i \leq \max \left\{
+                   a_i, d_{i-1}
+                 \right\}
+             + \frac{l_i}{r} \gap \mfa i \geq 1
+            }
+\end{equation}
+Thus, roughly speaking, a
+minimum rate server guarantees that during any busy period,
+the instantaneous output rate is at least $r$. A GPS node with
+total rate $C$ and weight $w_i$ for flow $i$ is a minimum rate
+server for flow $i$, with rate $r_i=\frac{w_i C }{\sum_j
+w_j}$.
+
+
+
+\subsection{Practical Realization of Packet Scale Rate Guarantee}
+
+We show in this section that a wide variety of schedulers
+provide the packet scale rate guarantee. More schedulers can
+be obtained by using the concatenation theorem in the previous
+section.
+
+A simple but important realization is the priority scheduler.
+\begin{proposition}
+Consider a non-preemptive priority scheduler in which all
+packets share a single FIFO queue with total output rate $C$.
+The high priority flow receives a packet scale rate guarantee
+with rate $C$ and latency $e= \frac{l_{max}}{C}$, where
+$l_{max}$ is the maximum packet size of all low priority
+packets.
+ \mylabel{prop-asc-pq}
+\end{proposition}
+\pr
+By \pref{prop-priostric}, the high priority traffic receives a
+strict service curve $\beta_{r,c}$. \qed
+
+We have already introduced in \sref{sec-gr} schedulers that
+can be thought of as derived from GPS and we have modeled
+their behaviour with a rate-latency service curve. In order to
+give a PSRG for such schedulers, we need to define more.
+
+%% local definition
+\newcommand{\wf} {\textrm{WF}^2\textrm{Q}}
+\begin{definition}[PSRG Accuracy of a scheduler with respect to rate $r$]
+Consider a scheduler $S$ and call $d_i$ the time of the $i$-th
+departure. We say that the PSRG accuracy of $S$ with respect
+to rate $r$ is $(e_1, e_2)$ if there is a minimum rate server
+with rate $r$ and departure times $g_i$ such that for all $i$
+\begin{equation}\mylabel{eq-asc-eq6}
+  g_i-e_1 \leq d_i\leq g_i + e_2
+\end{equation}
+\end{definition}
+We interpret this definition as a comparison to a hypothetical
+GPS reference scheduler that would serve the same flows. The
+term $e_2$ determines the maximum  per-hop delay bound,
+whereas $e_1$ has an effect on the jitter at the output of the
+%XXX change all the W2FQ to  $\textrm{WF}^{\texterm{2}}\texterm{Q}$
+%XXX or at least WF2Q if the math verson does not work :-)
+scheduler. For example, it is shown in\ \cite{BZ96a} that
+$\wf$ satisfies $e_1(\wf) = l_{max}/r$, $e_2(\wf) =
+l_{max}/C$, where $l_{max}$ is maximum packet size and $C$ is
+the total output rate. In contrast, for PGPS \cite{pg94}
+$e_2(\textrm{PGPS}) = e_2(\wf)$, while $e_1(\textrm{PGPS})$ is
+linear in the number of queues in the scheduler. This
+illustrates that, while $\wf$ and PGPS have the same delay
+bounds, PGPS may result in substantially burstier departure
+patterns.
+\begin{theorem}
+\label{theo-ascgps} If a scheduler satisfies
+\eref{eq-asc-eq6}, then it offers the packet scale rate
+guarantee with rate $r$ and latency $e= e_1 + e_2$.
+\end{theorem}
+The proof is in \sref{sec-ascproof}.
+
+\subsection{Delay From Backlog}
+ A main feature of the packet scale rate
+guarantee definition is that it allows to bound delay from
+backlog. For a FIFO node, it could be derived from
+\thref{theo-ascdelay} and \thref{theo-ascrep}. But the
+important fact is that the bound is the same, with or without
+FIFO assumption.
+
+\begin{theorem} \mylabel{theo-delfrbknf}
+Consider a node offering the Packet Scale Rate Guarantee with
+rate $r$ and latency $e$, not necessarily FIFO. Call $Q$ the
+backlog at time $t$. All packets that are in the system at
+time $t$ will leave the system no later than at time
+$t+Q/r+e$,
+\end{theorem}
+The proof is in \sref{sec-ascproof}.
+
+
+\textbf{Application to Differentiated Services} Consider a
+network of nodes offering the EF service, as in
+\sref{sec-dsgen}. Assume node $m$ is a PSRG node with rate
+$r_m$ and latency $e_m$. Assume the buffer size at node $m$ is
+limited to $B_m$. A bound $D$ on delay at node $m$ follows
+directly
+$$
+D=\frac{B_m}{r_m} + e_m
+$$
+Compare to the bound in \thref{theo-qofisbound}: this bound is
+valid for all utilization levels and is independent of traffic
+load. \fref{fig-boundlal7} shows a numerical example.
+\begin{figure}[!htbp]
+  \insfig{efboundpsrg}{0.85}
+  \mycaption{End to end delay bound versus the
+utilization factor $\alpha$ for an infinite buffer (left
+curve) and buffers sizes of $1$MB (top), $0.38$MB (middle) and
+$0.1$MB (bottom).  There are $h=10$ hops, $e_m=2
+\frac{1500B}{r_m}$, $\sigma_{i}=100$B and $\rho_{i}=32$kb/s
+for all flows, $r_m=149.760$Mb/s.}
+  \mylabel{fig-boundlal7}
+\end{figure}
+
+However, forcing a small buffer size may cause some packet
+loss. The loss probability can be computed if we assume in
+addition that the traffic at network edge is made of
+stationary, independent flows \cite{VL2002EF}.
+
+\section{Adaptive Guarantee}
+\subsection{Definition of Adaptive Guarantee} Much in the spirit of PSRG, we know introduce a
+stronger service curve concept, called \emph{adaptive
+guarantee}, that better captures the properties of GPS
+\cite{oki98,cruzADAP}, and helps finding concatenation
+properties for PSRG. Before giving the formula, we motivate it
+on three examples.
+
+\textbf{Example 1.} Consider a node offering a strict service
+curve $\beta$. Consider some fixed, but arbitrary times $s<t$.
+Assume that $\beta$ is continuous. If $[s,t]$ is within a busy
+period, we must have
+ $$
+ R^*(t) \geq R^*(s) + \beta (t-s)
+ $$
+Else, call $u$ the beginning of the busy period at $t$. We
+have
+$$
+R^*(t) \geq R(u) + \beta(t-u)
+$$
+thus in all cases
+\begin{equation}\mylabel{eq-introasc1}
+ R^*(t) \geq \left( R^*(s) + \beta(t-s)\right) \wedge \inf_{u \in
+[s,t] }\left(R(u) + \beta(t-u)\right)
+\end{equation}
+
+\textbf{Example 2.} Consider a node that guarantees a virtual
+delay $\leq d$. If $t-s\leq d$ then trivially
+$$
+ R^*(t) \geq R^*(s) + \delta_d (t-s)
+ $$
+ and if $t-s >d$ then the virtual delay property means that
+ $$
+ R^*(t) \geq R(t-d)= \inf_{u \in
+[s,t] }\left(R(u) + \delta_d(t-u)\right)
+ $$
+ thus we have the same relation as in \eref{eq-introasc1}
+with $\beta=\delta_d$.
+
+\textbf{Example 3.} Consider a greedy shaper with shaping
+function $\sigma$ (assumed to be a good function). Then
+$$
+R^*(t) = \inf_{u\leq t} [R(u) + \sigma(t-u)]
+$$
+Breaking the inf into $u <s$ and $u\geq s$ gives
+\begin{equation}\mylabel{eq-ascsh1}
+  R^*(t) = \inf_{u < s}[R(u)+\sigma(t-u)] \wedge \inf_{u \in
+[s,t]}[R(u)+\sigma(t-u)]
+\end{equation}
+Define $\tilde{\sigma}:=\sigma \Mpd \sigma$, namely,
+\begin{equation}\mylabel{eq-ascsigtil}
+\tilde{\sigma}(u) = \inf_t [\sigma(t+u) - \sigma(u)]
+\end{equation}
+For example, for a piecewise linear concave arrival curve
+(conjunction of leaky buckets), $\sigma(t)=\min_i (r_i u +
+b_i)$, we have $\tilde{\sigma}(u)=\min_i r_i u$. Back to
+\eref{eq-ascsh1}, we have
+$$
+\sigma(t-u) \geq \sigma(s-u) + \tilde{\sigma}(t-s)
+$$
+and finally
+\begin{equation}\mylabel{eq-introasc2}
+ R^*(t) \geq \left( R^*(s) + \tilde{\sigma}(t-s)\right) \wedge \inf_{u \in
+[s,t] }\left(R(u) + \sigma(t-u)\right)
+\end{equation}
+We see that these three cases fall under a common model:
+\begin{definition}[Adaptive Service Curve]
+Let $\tilde{\beta},\beta$ be in $\calF$.
+%with
+%$\tilde{\beta} \leq \beta$.
+Consider a system $\mathcal{S}$ and a flow through
+$\mathcal{S}$ with input and output functions $R$ and $R^{*}$.
+We say that $\calS$ offers the \emph{adaptive guarantee}
+$(\tilde{\beta},\beta)$ if for any $s \leq t$ it holds:
+$$
+R^*(t) \geq \left( R^*(s) + \tilde{\beta}(t-s)\right)  \wedge
+\inf_{u \in [s,t]}[R(u)+\beta(t-u)]
+$$%
+\index{adaptive guarantee}%
+If $\tilde{\beta}=\beta$ we say that the node offers the
+adaptive guarantee $\beta$.
+ \mylabel{def-asc}
+\end{definition}
+The following proposition summarizes the examples discussed
+above:
+\begin{proposition}
+\begin{itemize}
+  \item If $\calS$ offers to a flow a strict service curve $\beta$, then
+it also offers the \emph{adaptive guarantee} $\beta$.
+  \item If $\calS$ guarantees a virtual delay bounded by $d$, then
+  it also offers the \emph{adaptive guarantee} $\delta_d$
+  \item A greedy shaper with shaping curve $\sigma$, where
+  $\sigma$ is a good function, offers the \emph{adaptive guarantee}
+  $(\tilde{\sigma},\sigma)$,
+with $\tilde{\sigma}$ defined in \eref{eq-ascsigtil}.
+\end{itemize}
+\end{proposition} Similar to \cite{oki98}, we use the notation $R
+\rightarrow (\tilde{\beta}, \beta) \rightarrow R^*$ to express
+that \dref{def-asc} holds. If $\tilde{\beta}=\beta$ we write
+$R \rightarrow (\beta) \rightarrow R^*$.
+
+Assume that $R$ is left-continuous and $\beta$ is continuous.
+It follows from \thref{theo-minplust0} on
+\pgref{theo-minplust0} that the adaptive guarantee is
+equivalent to saying that for all $s \leq t$, we have either
+$$
+R^*(t) - R^*(s) \geq \tilde{\beta}(t-s)
+$$
+or
+$$
+R^*(t) \geq R(u) + \beta(t-u)
+$$
+for some $u \in [s,t]$.
+\subsection{Properties of Adaptive
+Guarantees} \mylabel{sec-ascprop}
+\begin{theorem}
+Let $R \rightarrow (\tilde{\beta}, \beta) \rightarrow R^*$. If
+$\tilde{\beta} \leq \beta$ then $\beta$ is a minimum service
+curve for the flow. \mylabel{theo-ascsc}
+\end{theorem}
+\pr Apply \dref{def-asc} with $s=0$ and use the fact that
+$\tilde{\beta} \leq \beta$.
+ \qed
+
+
+
+\begin{theorem}[Concatenation]
+If $R \rightarrow (\tilde{\beta_1}, \beta_1) \rightarrow R_1$
+and $R_1 \rightarrow (\tilde{\beta_2}, \beta_2) \rightarrow
+R^*$ then $R \rightarrow (\tilde{\beta}, \beta) \rightarrow
+R^*$ with
+$$
+\tilde{\beta}=\left( \tilde{\beta_1} \mpc \beta_2 \right)
+\wedge \tilde{\beta_2}
+$$
+and
+$$
+\beta= \beta_1 \mpc \beta_2
+$$
+ \mylabel{theo-ascconc}
+\end{theorem}
+The proof is in \sref{sec-ascproof}
+ \begin{corollary}
+If $R_{i-1} \rightarrow (\tilde{\beta_i}, \beta_i) \rightarrow
+R_i$ for $i=1$ to $n$ then $R_0 \rightarrow (\tilde{\beta},
+\beta) \rightarrow R_n$ with
+$$
+\tilde{\beta}= \left( \tilde{\beta_1} \mpc \beta_2 \mpc ...
+\mpc \beta_n \right)
+ \wedge
+ \left( \tilde{\beta_2} \mpc \beta_3 \mpc
+... \mpc \beta_n \right)
+ \wedge
+ ...
+ \wedge
+ \left( \tilde{\beta}_{n-1} \mpc \beta_n \right)
+ \wedge
+ \tilde{\beta_n}
+$$
+and
+$$
+\beta= \beta_1 \mpc ... \mpc \beta_n
+$$
+ \mylabel{coro-ascconc}
+ \end{corollary}
+ \pr
+ Apply \thref{theo-ascconc} iteratively and use
+Rule 6 in \thref{thm:rule1-7} on \pgref{thm:rule1-7}. \qed
+
+\begin{theorem}[Delay from Backlog]
+If $R \rightarrow (\tilde{\beta}, \beta) \rightarrow R^*$,
+then the virtual delay at time $t$ is bounded by
+$\tilde{\beta}^{-1}(Q(t))$, where $Q(t)$ is the backlog at
+time $t$, and $\tilde{\beta}^{-1}$ is the pseudo-inverse of
+$\tilde{\beta}$ (see \dref{def:pseudo-inverse} on
+\pgref{def:pseudo-inverse}).
+ \mylabel{theo-ascdelay}
+\end{theorem}
+The proof is in \sref{sec-ascproof}. Note that if the node is
+FIFO, then the virtual delay at time $t$ is the real delay for
+a bit arriving at time $t$.
+
+Consider a system (\emph{bit-by-bit system}) with
+$L$-packetized input $R$ and bit-by-bit output $R^*$, which is
+then $L$-packetized to produce a final packetized output $R'$.
+We call \emph{combined system} the system that maps $R$ into
+$R'$. Assume both systems are first-in-first-out and lossless.
+Remember from \thref{theo-delvlp} that the per-packet delay
+for the combined system is equal the maximum virtual delay for
+the bit-by-bit system.
+
+\begin{theorem}[Packetizer and Adaptive Guarantee]
+If the bit-by-bit system offers to the flow the adaptive
+guarantee $(\tilde{\beta}, \beta)$, then the combined system
+offers to the flow the adaptive guarantee $(\tilde{\beta}',
+\beta')$ with
+$$\tilde{\beta}'(t) = [\tilde{\beta}(t)-l_{\max}]^+
+$$ and
+$$\beta'(t) = [\beta(t)-l_{\max}]^+
+$$
+where $l_{\max}$ is the maximum packet size for the flow.
+\mylabel{theo-ascpack}
+\end{theorem}
+The proof is in \sref{sec-ascproof}.
+
+
+
+\subsection{PSRG and Adaptive Service Curve}
+
+We now relate packet scale rate guarantee to an adaptive
+guarantee. We cannot expect an exact equivalence, since a
+packet scale rate guarantee does not specify what happens to
+bits at a time other than a packet departure or arrival.
+However, the concept of packetizer allows us to establish an
+equivalence.
+
+\begin{theorem}[Equivalence with adaptive guarantee]
+Consider a node $\calS$ with $L$-packetized input $R$ and with
+output $R^*$.
+\begin{enumerate}
+  \item If $R \rightarrow (\beta)\rightarrow R^*$,
+where $\beta=\beta_{r,e}$ is the rate-latency function with
+rate $r$ and latency $e$, and if $\calS$ is FIFO, then $\calS$
+offers to the flow the packet scale rate guarantee with rate
+$r$ and latency $e$.
+  \item Conversely, if $\calS$ offers to the flow the packet
+scale rate guarantee with rate $r$ and latency $e$ and if
+$R^*$ is $L$-packetized, then $\calS$ is the concatenation of
+a node $\calS'$ offering the adaptive guarantee $\beta_{r,e}$
+and the $L$-packetizer. If $\calS$ is FIFO, then so is
+$\calS'$.
+\end{enumerate}
+ \mylabel{theo-ascrep}
+\end{theorem}
+The proof is long and is given in a separate section
+(\sref{sec-ascproof}). Note that the packet scale rate
+guarantee does not mandate that the node be FIFO; it is
+possible that $d_i < d_{i-1}$ in some cases. However, part 1
+of the theorem requires the FIFO assumption in order for a
+condition on $R, R^*$ to be translated into a condition on
+delays.
+
+\section{Concatenation of PSRG Nodes}
+%%%ici
+
+\subsection{Concatenation of FIFO PSRG Nodes}
+We have a simple concatenation result for FIFO systems:
+\begin{theorem}
+Consider a concatenation of FIFO systems numbered $1$ to $n$.
+The output of system $i-1$ is the input of system $i$, for
+$i>1$. Assume system $i$ offers the packet scale rate
+guarantee with rate $r_i$ and latency $e_i$. The global system
+offers the packet scale rate guarantee with rate
+$r=\min_{i=1,...,n} r_i$ and latency $e= \sum_{i=1,...,n} e_i
++ \sum_{i=1,...,n-1}\frac{L_{\max}}{r_i}$. \mylabel{prop-conc}
+\end{theorem}
+ \pr
+ By \thref{theo-ascrep}--(2), we can decompose system $i$ into a
+concatenation $\calS_i, \calP_i$, where $\calS_i$ offers the
+adaptive guarantee $\beta_{r_i,e_i}$ and $\calP_i$ is a
+packetizer.
+
+Call $\calS$ the concatenation
+ $$\calS_1, \calP_1, \calS_2,
+\calP_2,...,\calS_{n-1},\calP_{n-1},\calS_n$$ By
+\thref{theo-ascrep}--(2), $\calS$ is FIFO. By
+\thref{theo-ascpack}, it provides the adaptive guarantee
+$\beta_{r,e}$. By \thref{theo-ascrep}--(1), it also provides
+the packet scale rate guarantee with rate $r$ and latency $e$.
+Now $\calP_n$ does not affect the finish time of the last bit
+of every packet.
+
+\qed
+
+\textbf{A Composite Node} We analyze in detail one specific
+example, which often arises in practice when modelling a
+router. We consider a composite node, made of two components.
+The former (``variable delay component") imposes to packets a
+delay in the range $[\delta_{\max}-\delta, \delta_{\max}]$.
+The latter is FIFO and offers to its input the packet scale
+rate guarantee, with rate $r$ and latency $e$. We show that,
+if the variable delay component is known to be FIFO, then we
+have a simple result. We first give the following lemma, which
+has some interest of its own.
+
+\begin{lemma}[Variable Delay as PSRG]
+\mylabel{lem-vdpsrg} Consider a node which is known to
+guarantee a delay $\leq \delta_{\max}$. The node need not be
+FIFO. Call $l_{\min}$ the minimum packet size. For any $r>0$,
+the node offers the packet scale rate guarantee with latency
+$e=[\delta_{\max}-\frac{l_{\min}}{r}]^+$ and rate $r$.
+\end{lemma}
+\begin{preuve} With the standard notation in this section, the
+hypothesis implies that $d_n \leq a_n + \delta_{\max}$ for all
+$n \geq 1$. Define $f_n$  by \eref{eq-psrg-def}. We have
+$f_n\geq a_n + \frac{l_n}{r} \geq a_n + \frac{l_{\min}}{r}$,
+thus $d_n-f_n \leq \delta_{\max} - \frac{l_{\min}}{r}\leq
+[\delta_{\max}-\frac{l_{\min}}{r}]^+$. \end{preuve}
+
+We will now apply known results on the concatenation of FIFO
+elements and solve the case where the variable delay component
+is FIFO.
+\begin{theorem}(\emph{Composite Node with FIFO Variable Delay Component})
+\mylabel{theo-fvd} Consider the concatenation of two nodes.
+The former imposes to packets a delay  $\leq \delta_{\max}$.
+The latter offers the packet scale rate guarantee to its
+input, with rate $r$ and latency $e$. Both nodes are FIFO. The
+concatenation of the two nodes, in any order, offers the
+packet scale rate guarantee with rate $r$ and latency $e'=e
++\delta_{\max}$.
+\end{theorem}
+\begin{preuve} Combine \thref{theo-ascconc} with
+\lref{lem-vdpsrg}: for any $r' \geq r$, the combined node
+offers the packet scale guarantee with rate $r$ and latency
+$e(r')=e + \delta_{\max} + \frac{l_{\max}-l_{\min}}{r'}$.
+Define $f_n$ for all $n$ by \eref{eq-psrg-def}. Consider some
+fixed but arbitrary $n$. We have $d_n - f_n \leq e(r')$, and
+this is true for any $r'\geq r$. Let $r' \rightarrow +\infty$
+and obtain $d_n - f_n \leq \inf_{r' \geq r} e(r') = e +
+\delta_{\max}$ as required.
+\end{preuve}
+
+\subsection{Concatenation of non FIFO PSRG Nodes}
+In general, we cannot say much about the concatenation of non
+FIFO PSRG nodes. We analyze in detail composite node described
+above,  but now the delay element is non FIFO. This is a
+frequent case in practice. The results are of interest for
+modelling a router. The also serve the purpose of showing that
+the results in \thref{prop-conc} do not hold here.
+
+To obtain a result, we need to an arrival curve for the
+incoming traffic. This is because some packets may take over
+some other packets in the non-FIFO delay element
+(\fref{fig-expsrgnf}); an arrival curve puts a bound on this.
+
+\begin{figure}[!htbp]
+  \insfig{expsrgnf}{0.7}
+  \mycaption{Composite Node with non-FIFO Variable Delay Component. Packet $n$ arrives at times
+  $a_n$ at the first component, at time $b_n$ at the second component, and leaves the system
+  at time $d_n$. Since the first component is not FIFO, overtaking may occur; $(k)$ is the packet number of
+  the $k$th packet arriving at the second component. }
+  \mylabel{fig-expsrgnf}
+\end{figure}
+
+\begin{theorem}(\emph{Composite Node with non-FIFO Variable Delay
+Component}) \mylabel{theo-nfvd} Consider the concatenation of
+two nodes. The first imposes to packets a delay in the range
+$[\delta_{\max}-\delta, \delta_{\max}]$. The second is FIFO
+and offers the packet scale rate guarantee to its input, with
+rate $r$ and latency $e$. The first node is not assumed to be
+FIFO, so the order of packet arrivals at the second node is
+not the order of packet arrivals at the first one. Assume that
+the fresh input is constrained by a continuous arrival curve
+$\alpha(\cdot)$. The concatenation of the two nodes, in this
+order,  satisfies the packet scale rate guarantee with rate
+$r$ and latency
+\begin{equation}\mylabel{eq-theonfvd}
+  \begin{array}{rl}
+    e'=&  e+ \delta_{\max} +  \\
+    & \min \{
+  \sup_{t \geq 0}[ \frac{\alpha(t+ \delta) - l_{\min}}{r}- t], \\
+    & \; \; \sup_{0 \leq t \leq \delta}
+  [ \frac{\alpha(t)+ \alpha(\delta) -
+2 l_{\min}}{r}- t] \}
+  \end{array}
+\end{equation}
+%$$e'= e+ \delta_{\max} + \frac{\alpha(\delta)}{r} + \sup_{0 \leq u
+%\leq \delta}[\frac{\alpha(u)}{r}- u]
+%$$
+%where $\alpha(u+)$ is the limit to the right of $\alpha$.
+\end{theorem}
+The proof is long, and is given in \sref{sec-ascproof}.
+
+Figures \ref{fig-numapp} to \ref{fig-numapp3} show numerical
+applications when the arrival curve includes both peak rate
+and mean rate constraints.
+
+\textbf{Special Case : }For $\alpha(t)=\rho t + \sigma$, a
+direct computation of the suprema in \thref{theo-nfvd} gives:
+$$\begin{array}{rl}
+\mif \rho \leq r
+ \mthen & e'=e+ \delta_{\max}+\frac{\rho \delta +\sigma - l_{\min}}{r}
+\\
+ \melse & e'=e+ \delta_{\max} -
+ \delta + 2 \frac{\rho \delta + \sigma - l_{\min}}{r}
+\end{array}
+ $$
+The latency of the composite node has a discontinuity equal to
+$\sigma/r$ at $\rho=r$. It may seem irrelevant to consider the
+case $\rho
+> r$. However, PSRG gives a delay from backlog
+bound; there may be cases where the only information available
+on the aggregate input is a bound on sustainable rate $\rho$,
+with $\rho
+>r$. In such cases, there are probably other mechanisms (such as
+window flow control \cite{CO96}) to prevent buffer overflow;
+here, it is useful to be able to bound $e'$ as in
+\thref{theo-nfvd}.
+\begin{figure}[!htbp]
+  \insfig{psrgnf1}{0.4}
+  \mycaption{Numerical Application of \thref{theo-nfvd} and \thref{theo-nfgrvd},
+  showing the additional latency $e'-e$ for a composite
+  node, made of a variable delay element ($\delta=\delta_{\max}=0.01 s$)
+  followed by a PSRG or GR component with rate $r=100$Mb/s and latency $e$. The
+  fresh traffic has arrival curve $\rho t + \sigma$, with
+  $\sigma=50$KBytes. The figure shows $e'-e$ as a function of $\rho$, for $\l_{\min}=0$.
+  Top graph: delay element is non-FIFO, second component is PSRG
+  (\thref{theo-nfvd}); middle graph: delay element is non-FIFO, second component is
+  GR (\thref{theo-nfgrvd}); bottom line: delay element is FIFO, both cases (\thref{theo-fvd} and \thref{theo-nfvd}).
+  Top and middle graph coincide for $\rho \leq r$.
+} \mylabel{fig-numapp}
+\end{figure}
+\begin{figure}[!htbp]
+\begin{center}
+  \ifig{psrgnf31}{0.4}\ifig{psrgnf33}{0.4}
+\end{center}
+  \mycaption{Same as \fref{fig-numapp}, but the fresh traffis has a peak rate
+  limit. The arrival curve for the
+  fresh traffic is $\min(pt+MTU,\rho t + \sigma)$, with $MTU=500$B, $p=200Mb/s$ (top picture) or $p=2 \rho$ (bottom picture).
+} \mylabel{fig-numapp2}
+\end{figure}
+\begin{figure}[!htbp]
+  \insfig{psrgnf3d}{0.5}
+  \mycaption{Latency increase as a function of peak rate and mean rate. The parameters are the same as for \fref{fig-numapp2}.
+} \mylabel{fig-numapp3}
+\end{figure}
+
+
+\textbf{Comment 1 : } We now justify why \thref{theo-nfvd} is
+needed, in other words: if we relax the FIFO assumption for
+the variable delay component, then \thref{theo-fvd} does not
+hold any more. Intuitively, this is because a tagged packet
+(say $P3$ on \fref{fig-expsrgnf}) may be delayed at the second
+stage by packets ($P4$ on the figure) that arrived later, but
+took over our tagged packet. Also, the service rate may appear
+to be reduced by packets ($P1$ on the figure) that had a long
+delay in the variable delay component. Formally, we have:
+\begin{proposition}[Tightness] The bound in \thref{theo-nfvd} is
+tight in the case of an arrival curve of the form
+$\alpha(t)=\rho t + \sigma$ and if $l_{\max} \geq 2 l_{min}$.
+\end{proposition}\mylabel{prop-psrgtight}
+The proof is in \sref{sec-ascproof}.
+
+The proposition shows that the concatenation of non-FIFO PSRG
+nodes does not follow the rule as for FIFO nodes, which is
+recalled in the proof of \thref{theo-fvd}. Note that if the
+condition $l_{\max} \geq 2 l_{min}$ is not satisfied then the
+bound in \thref{theo-nfvd} is tight up to a tolerance of $2
+\l_{\min}/r$.
+
+\textbf{Comment 2 : } \eref{eq-theonfvd} for the latency is
+the minimum of two terms. In the case $\alpha(t)=\rho t +
+\sigma$, for $\rho \leq r$, the bound is equal to its former
+term, otherwise to its second term. For a general $\alpha$
+however, such a simplification does not occur. \nfs{For
+example, for $\alpha(t)=\min(pt+M, \rho t + \sigma)$, with
+$\rho \leq r \leq p$, the bound is equal to its former term
+for large values of $\delta$, and otherwise to the latter
+term.}
+
+%
+%\textbf{Comment 3 : } We have shown in Comment 1 that
+%\thref{theo-nfvd} is tight for $\rho \leq r$. While our initial
+%simulations indicate that the bound is almost tight for $\rho >
+%r$, a general statement about tightness in this case is for
+%further study.
+%
+
+\textbf{Comment 3 : }If $\alpha$ is not continuous (thus has
+jumps at some values), then it can be shown that
+\thref{theo-nfvd} still holds, with \eref{eq-theonfvd}
+replaced by
+$$
+  \begin{array}{rl}
+    e'=  & e+ \delta_{\max} + \\
+    & \min \{
+  \sup_{t \geq 0}[ \frac{\alpha(t+ \delta) }{r}- t] ,  \\
+    &\;\;\sup_{0 \leq t \leq \delta}
+  [ \frac{\alpha_0(t)+ \alpha_0(\delta)}{r}- t] \}
+  \end{array}
+$$
+with $\alpha_0(u)=\min[\alpha(u+)- l_{\min}, \alpha(u)]$.
+
+\section{Comparison of GR and PSRG} \mylabel{sec-grc}
+First, we know that a PSRG node is GR with the same
+parameters. This can be used to obtain delay and backlog
+bounds for arrival curve constrained input traffic. Compare
+however \thref{theo-grgps} to \thref{theo-ascgps}: the PSRG
+characterization has a larger latency $e$ than the GR
+characterization, so it is better not to use the two
+characterizations separately: GR to obtain delay and backlog
+bounds, PSRG to obtain delay-from-backlog bounds.
+
+Second, we have shown  that for GR there cannot exist a
+delay-from-backlog bound as in \thref{theo-delfrbknf}.
+
+Third, there are similar concatenation results as for PSRG in
+\thref{theo-nfgrvd}. The value of latency increase $e'$ for
+the composite node is the same for PSRG and GR when the total
+incoming rate $\rho$ is less than the scheduler rate $r$.
+However, the guarantee expressed by PSRG is stronger than that
+of GR. Thus the stronger guarantee of PSRG comes at no cost,
+in that case.
+
+
+%
+%The delay bound is the same, whether we have the (old) guaranteed
+%rate clock definition, or the (new) packet identity aware
+%definition. The results about concatenation with a variable delay
+%node are also the same for a guaranteed rate clock model.
+\section{Proofs} \mylabel{sec-ascproof}
+
+\subsection{Proof of \lref{lem-psrgmaxplus}} In order to
+simplify the notation, we use, locally to this proof, the
+ following convention: first, $\vee$ has precedence over $\wedge$; second, we denote $A \vee B$ with
+ $A B$. Thus, in this proof only, the expression
+ $$
+ A  B \wedge C D
+ $$ means
+  $$
+ (A \vee B) \wedge (C \vee D)
+ $$
+ The reason for this convention is to simplify the use of the distributivity
+ of $\vee$ with respect to $\wedge$ \cite{maxPlus}, which
+ is here written as
+ $$
+ A ( B \wedge C) = A B \wedge A C
+ $$
+
+Our convention is typical of ``min-max" algebra, where $\min$
+takes the role of addition and $\max$ the role of
+multiplication. Armed with this facilitating notation, the
+proof becomes simple, but lengthy, calculus. In the rest of
+the proof we consider some fixed $n$ and drop superscript
+$^n$.
+
+For $0 \leq j\leq n-1$, define
+$$F_j=f_j + m_{j+1} + ... + m_n
+$$
+and let $F_n=f_n$. Also let $D_0=d_0 + m_1 + ...+ m_n = m_1 +
+...+ m_n$
+
+First note that for all $j \geq 1$:
+$$
+f_j = \left(a_j + m_j \right) \vee \left[\left(f_{j-1} + m_j
+\right) \wedge \left(d_{j-1} + m_j \right)  \right]
+$$
+then, by adding $m_{j+1}+...+m_n$ to all terms of the right
+hand side of this equation, we find
+$$
+F_j = A_j \vee (F_{j-1} \wedge D_{j-1})
+$$
+or, with our notation:
+$$
+F_j = A_j   \left(F_{j-1} \wedge D_{j-1}\right)
+$$
+and by distributivity:
+\begin{equation}\mylabel{eq-maxpluspsrg22}
+  F_j = A_j F_{j-1} \wedge A_j D_{j-1}
+\end{equation}
+Now we show by downwards induction on $j= n-1, ...,0$ that
+\begin{eqnarray}
+  f_n  =  & \; & A_n A_{n-1} ... A_{j+1}F_j \nonumber \\
+  &   \wedge & A_n A_{n-1} ... A_{j+1}D_j \nonumber \\
+  &  \wedge & ...\nonumber \\
+  &  \wedge &A_n A_{n-1} ... A_{k+1} D_k  \nonumber \\
+  &  \wedge & ...\nonumber \\
+  &  \wedge & A_n A_{n-1} D_{n-2} \nonumber \\
+  &  \wedge & A_n D_{n-1} \mylabel{eq-maxplusleme1}
+\end{eqnarray}
+where $k$ ranges from $j$ to $n-1$. For $j=n-1$, the property
+follows from \eref{eq-maxpluspsrg22} applied for $j=n$. Assume
+now that \eref{eq-maxplusleme1} holds for some $j \in \{1,
+..., n-1\}$. By \eref{eq-maxpluspsrg22}, we have
+\begin{eqnarray*}
+\lefteqn{ A_n A_{n-1} ... A_{j+1}F_j = }\\ & & A_n A_{n-1} ...
+A_{j+1} (A_j F_{j-1} \wedge A_j D_{j-1} )
+\end{eqnarray*}
+thus
+\begin{eqnarray*}
+\lefteqn{ A_n A_{n-1} ... A_{j+1}F_j =} \\
+ & & A_n A_{n-1} ... A_{j+1}
+A_j F_{j-1} \wedge A_n A_{n-1} ... A_{j+1}  A_j D_{j-1}
+\end{eqnarray*}
+which, combined with \eref{eq-maxplusleme1} for $j$ shows the
+property for $j-1$.
+
+Now we apply \eref{eq-maxplusleme1} for $j=0$ and find
+$$
+  \begin{array}{l}
+   f_n= A_n A_{n-1} ... A_{1}F_0  \wedge A_n A_{n-1} ... A_{1}
+  D_0 \wedge ... \\
+   \;\; \wedge A_n A_{n-1} D_{n-2} \wedge A_n D_{n-1}
+  \end{array}
+$$
+First note that $F_0=D_0$ so we can remove the first term in
+the right hand side of the previous equation. Second, it
+follows from $a_1 \geq 0$ that $D_0 \leq A_1$ thus
+$$A_n A_{n-1} ... A_{1}  D_0 = A_n A_{n-1} ... A_{1}$$
+thus finally
+\begin{eqnarray*}
+\lefteqn{ f_n = A_n A_{n-1} ... A_{1}\wedge A_n A_{n-1} ...
+A_{2}
+  D_1 \wedge  ... }\\
+  & & \wedge A_n A_{n-1} D_{n-2}
+\wedge A_n D_{n-1}
+\end{eqnarray*}
+which is precisely the required formula.
+\subsection{Proof of \thref{theo-psrgmaxplus}} First, assume that the packet scale
+rate guarantee holds. Apply \lref{lem-psrgmaxplus} with
+$m_n=\frac{l_n}{r}$. It follows that, for $1\leq j\leq n-1$.
+$$
+f_n \leq \max\left[ A_n^n , A_{n-1}^n , ... , A_{j+1}^n ,
+D_j^n \right]
+$$
+thus $f_n$ is bounded by one of the terms in the right hand
+side of the previous equation. If it is the last term, we have
+$$
+f_n \leq D_j^n= d_j + \frac{l_{j+1} + ... + l_n}{r}
+$$
+now $d_n \leq f_n + e$, which shows \eref{eq-psrgmaxplus1}.
+Otherwise, there is some $k \in \{j+1, ..., n\}$ such that
+$$
+f_n \leq A_{k}^n =  a_k + \frac{l_k + ... + l_n}{r}
+$$ which shows \eref{eq-psrgmaxplus2}.
+For $j=0$, \lref{lem-psrgmaxplus} implies that
+$$
+f_n \leq \max\left[A_n^n , A_{n-1}^n, ... , A_1^n \right]
+$$ and the rest follows similarly.
+
+Second, assume conversely that \eref{eq-psrgmaxplus1} or
+\eref{eq-psrgmaxplus2} holds. Consider some fixed $n$, and
+define $A_j^n, D_j^n, F_j^n$ as in \lref{lem-psrgmaxplus},
+with $m_n=\frac{l_n}{r}$. For $1 \leq j\leq n-1$, we have
+$$
+d_n -e \leq \max\left[ A_n^n , A_{n-1}^n , ... , A_{j+1}^n ,
+D_j^n \right]
+$$
+and for $j=0$:
+ $$
+d_n -e \leq \max\left[A_n^n , A_{n-1}^n , ... , A_1^n\right]
+ $$
+thus $d_n -e$ is bounded by the minimum of all right-handsides
+in the two equations above, which, by  \lref{lem-psrgmaxplus},
+is precisely $f_n$.
+
+\subsection{Proof of
+\thref{theo-ascgps}} We first prove that for all $i \geq 0$
+\begin{equation}\mylabel{eq-asc-c2}
+  f_i \geq g_i - e_1
+\end{equation}
+where $f_i$ is  defined by \eref{eq-psrg-def}. Indeed, if
+\eref{eq-asc-c2} holds, then by \eref{eq-asc-eq6}):
+$$
+d_{i}  \leq g_i + e_2 \leq f_i + e_1 + e_2 $$ which means that
+the scheduler offers the packet scale rate guarantee with rate
+$r$ and latency $e= e_1 + e_2$.
+
+Now we prove \eref{eq-asc-c2} by induction. \eref{eq-asc-c2}
+trivially holds for $i=0$.
+
+Suppose now that it holds for $i-1$, namely,
+$$f_{i-1} \geq g_{i-1} -e_1$$
+By hypothesis, \eref{eq-asc-eq6} holds:
+$$d_{i-1} \geq g_{i-1} - e_1$$
+thus
+\begin{equation}\mylabel{eq-asc-c4a}
+ \min [f_{i-1}, d_{i-1}]  \geq g_{i-1} - e_1
+\end{equation}
+Combining this with \eref{eq-psrg-def}, we obtain
+\begin{equation}\mylabel{eq-asc-c5a}
+  f_i \geq g_{i-1} - e_1 + \frac{L(i)}{R}
+\end{equation}
+Again from \eref{eq-psrg-def} we have
+\begin{equation}\mylabel{eq-asc-c6a}
+  \begin{array}{rl}
+   f_i \geq & a_i+ \frac{l_i}{r}\\
+   \geq &a_i - e_1 + \frac{l_i)}{r}
+  \end{array}
+\end{equation}
+Now by \eref{eq-mr-def}
+\begin{equation}\mylabel{eq-asc-c3a}
+  g_i \leq \max [ a_i, g_{i-1}] + \frac{l_i}{r}
+\end{equation}
+
+ Combining  \eref{eq-asc-c5a}),
+\eref{eq-asc-c6a}) and (\ref{eq-asc-c3a}) gives
+$$f_i \geq g_i-e_1$$
+\qed
+
+\subsection{Proof of \thref{theo-delfrbknf}}
+Consider a fixed packet $n$ which is present at time $t$. Call
+$a_j$ [resp. $d_j$] the arrival [resp. departure] time of
+packet $j$. Thus $a_n\leq t \leq d_n$. Let $\calB$ be the set
+of packet numbers that are present in the system at time $t$,
+in other words:
+$$
+\calB = \left\{k \geq 1 | a_k \leq t \leq d_k \right\}
+$$
+The backlog at time $t$ is $ Q= \sum_{i \in \calB} l_i$. The
+absence of FIFO assumption means that $\calB$ is not
+necessarily a set of consecutive integers. However, define $j$
+as the minimum packet number such that the interval $[j,n]$ is
+included in $\calB$. There is such a $j$ because $n \in
+\calB$. If $j \geq 2$ then $j-1$ is not in $\calB$ and
+$a_{j-1} \leq a_n \leq t$ thus necessarily
+\begin{equation}\mylabel{eq-kjas881}
+ d_{j-1} < t
+\end{equation}
+If $j=1$, \eref{eq-kjas881} also holds with our convention
+$d_0=0$. Now we apply the alternate characterization of packet
+scale rate guarantee (\thref{theo-psrgmaxplus}) to $n$ and
+$j-1$. One of the two following equations must hold:
+\begin{equation}\mylabel{eq-myxpoik21}
+  d_n \leq e + d_{j-1} + \frac{l_j + ... + l_n}{r}
+\end{equation}
+or there exists a $k \geq j$, $k\leq n$ with
+\begin{equation}\mylabel{eq-myxpoik22}
+  d_n \leq e + a_{k} + \frac{l_k + ... + l_n}{r}
+\end{equation}
+Assume that \eref{eq-myxpoik21} holds. Since $[j,n] \subset
+\calB$, we have $Q_n \geq l_j + ... + l_n $. By
+\eref{eq-kjas881} and \eref{eq-myxpoik21} it follows that
+$$
+ d_n \leq e + t + \frac{Q}{r}
+$$ which shows the result in this case. Otherwise, use
+\eref{eq-myxpoik22}; we have $Q \geq l_k + ... + l_n$ and $a_k
+\leq t$ thus
+$$
+ d_n \leq e + t + \frac{Q}{r}
+$$
+
+\subsection{Proof of \thref{theo-ascconc}}
+ Consider some fixed but arbitrary times $s\leq t$ and let $u
+ \in [s,t]$. We have
+ $$
+ R_1(u) \geq \left[R_1(s) + \tilde{\beta}(u-s) \right]
+ \wedge
+ \inf_{v \in [s,u]} \left[ R(v) + \beta_1(u-v)\right]
+ $$
+ thus
+ $$
+  \begin{array}{rl}
+   R_1(u)  + \beta_2(t-u) &\geq
+    \left[R_1(s) + \tilde{\beta}(u-s)+\beta_2(t-u)
+ \right]
+ \wedge \\
+ &\inf_{v \in [s,u]} \left[ R(v) + \beta_1(u-v)
+ +\beta_2(t-u)\right]
+  \end{array}
+ $$
+ and
+ \begin{eqnarray*}
+  \lefteqn{\inf_{u \in [s,t]} \left[R_1(u) + \beta_2(t-u)\right]
+  \geq  } \\
+  & & \inf_{u \in [s,t]}
+ \left[R_1(s) + \tilde{\beta}(u-s)+\beta_2(t-u) \right]\\
+  & &
+ \wedge
+ \inf_{u \in [s,t], v \in [s,u]}
+ \left[ R(v) + \beta_1(u-v) +\beta_2(t-u)\right]
+ \end{eqnarray*}
+ After re-arranging the infima, we find
+ \begin{eqnarray*}
+  \lefteqn{
+ \inf_{u \in [s,t]} \left[R_1(u) + \beta_2(t-u)\right]
+ \geq } \\
+ & &   \left(R_1(s) +
+  \inf_{u \in [s,t]} \left[\tilde{\beta}(u-s)+\beta_2(t-u)
+  \right]\right)
+ \wedge \\
+& & \inf_{v \in [s,t]}\left( R(v) + \inf_{u \in [v,t]} \left[
+\beta_1(u-v) +\beta_2(t-u)\right]\right)
+\end{eqnarray*}
+which can be rewritten as
+ \begin{eqnarray*}
+  \lefteqn{\inf_{u \in [s,t]} \left[R_1(u) + \beta_2(t-u)\right]
+  \geq}\\
+ & &  \left( R_1(s) + (\tilde{\beta_1} \mpc \beta_2) (t-s)
+ \right) \wedge\\
+ & & \inf_{v \in [s,t]}\left[R(v) + \beta(t-v)\right]
+\end{eqnarray*}
+Now by hypothesis we have
+$$
+R^*(t) \geq \left( R^*(s) + \tilde{\beta_2}(t-s)\right) \wedge
+\inf_{u \in [s,t]}[R(u)+\beta_2(t-u)]
+$$
+Combining the two gives
+\begin{eqnarray*}
+  \lefteqn{
+R^*(t) \geq }\\
+ & & \left( R^*(s) + \tilde{\beta_2}(t-s)\right) \wedge
+\left( R_1(s) + (\tilde{\beta_1} \mpc \beta_2) (t-s) \right)\\
+ & & \wedge
+ \inf_{v \in [s,t]}\left[R(v) + \beta(t-v)\right]
+\end{eqnarray*}
+Now $R_1(s) \geq R^*(s)$ thus
+\begin{eqnarray*}
+  \lefteqn{
+R^*(t) \geq }\\ & & \left( R^*(s) +
+\tilde{\beta_2}(t-s)\right) \wedge\left( R^*(s) +
+(\tilde{\beta_1} \mpc \beta_2) (t-s)\right)\\
+ & & \wedge
+ \inf_{v \in [s,t]}\left[R(v) + \beta(t-v)\right]
+\end{eqnarray*}
+ \qed
+
+\subsection{Proof of \thref{theo-ascdelay}}
+If the virtual delay at time $t$ is larger than $t+ \tau$ for
+some $\tau \geq 0$, then we must have
+\begin{equation}\mylabel{eq-ascdel01}
+  R^*(t+ \tau) < R(t)
+\end{equation}
+
+By hypothesis
+\begin{equation}\mylabel{eq-ascdel1}
+ R^*(t + \tau) \geq \left(R^*(t) + \tilde{\beta} (\tau) \right)
+\wedge \inf_{[u \in[t, t + \tau]} \left[ R(u) + \beta(t+
+\tau-u)\right]
+\end{equation}
+now for $u \in[t, t + \tau]$
+$$
+ R(u) + \beta(t+\tau-u) \geq R(t) + \beta(0) \geq R^*(t + \tau)
+$$
+thus \eref{eq-ascdel1} implies that
+$$
+R^*(t + \tau) \geq R^*(t) + \tilde{\beta} (\tau)
+$$
+combining with \eref{eq-ascdel01} gives
+$$
+Q(t)=R(t)-R^*(t) \geq \tilde{\beta} (\tau)
+$$
+thus the virtual delay is bounded by $\sup\{\tau:
+\tilde{\beta}(\tau) > Q(t) \}$ which is equal to
+$\tilde{\beta}^{-1}(Q(t))$. \qed
+
+
+\subsection{Proof of \thref{theo-ascpack}}
+ \pr
+ Let $s \leq t$. By hypothesis we have
+ $$
+R^*(t) \geq \left( R^*(s) + \tilde{\beta}(t-s)\right)  \wedge
+\inf_{u \in [s,t]}[R(u)+\beta(t-u)]
+ $$
+ We do the proof when the $\inf$ in the above formula is a
+ minimum, and leave it to the alert reader to extend it to the
+ general case. Thus assume that for some $u_0 \in [s,t]$:
+ $$
+\inf_{u \in [s,t]}[R(u)+\beta(t-u)] = R(u_0) +  \beta(t-u_0)
+ $$
+it follows that either
+$$ R^*(t) - R^*(s) \geq \tilde{\beta}(t-s)
+$$
+or
+$$
+R^*(t) \geq R(u_0) + \beta(t-u_0)
+$$
+Consider the former case. We have $R'(t) \geq R^*(t) -
+l_{\max}$ and $R'(s) \leq R^*(s)$ thus
+$$ R'(t) \geq R^*(t) - l_{\max} \geq R'(s) + \tilde{\beta}(t-s) - l_{\max}
+$$
+Now also obviously $R'(t) \geq R'(s)$, thus finally
+$$ R'(t) \geq R'(s) +\max[0,  \tilde{\beta}(t-s) -
+l_{\max}]=R'(s)+\tilde{\beta}'(t-s)
+$$
+Consider now the latter case. A similar reasoning shows that
+$$ R'(t) \geq R(u_0) + \beta(t-u_0) - l_{\max}
+$$
+but also
+$$
+R^*(t) \geq R(u_0)
+$$
+now the input is $L$-packetized. Thus
+$$
+R'(t)=P^L(R^*(t)) \geq P^L(R(u_0))=R(u_0)
+$$
+from which we conclude that $R'(t) \geq R(u_0) +
+\beta'(t-u_0)$.
+
+ Combining the two cases provides the required adaptive
+guarantee.
+ \qed
+
+%%%ici
+
+\subsection{Proof of \thref{theo-ascrep}} The first part uses
+the min-max expansion of packet scale rate guarantee in
+\lref{lem-psrgmaxplus}. The second part relies on the
+reduction to the minimum rate server.
+
+We use the same notation as in \dref{def-psrg}.
+ $L(i)=\sum_{j=1}^i l_j$ is the cumulative packet length.
+
+ \paragraph{Item 1: } Define the sequence of times $f_k$ by
+ \eref{eq-psrg-def}. Consider now some fixed but arbitrary packet index $n\geq
+ 1$.
+ By the FIFO assumption, it is sufficient to show that
+\begin{equation}\mylabel{eq-ascpr9832}
+  R^*(t) \geq L(n)
+\end{equation}
+ with $t=f_n+e$. By \lref{lem-psrgmaxplus}, there is some
+ index $1 \leq j \leq n$ such that
+\begin{equation}\mylabel{eq-maxplusasc1}
+ f_n=
+ \left( s +\frac{ L(n) -L(j-1)}{r} \right)
+  \bigvee
+      \max_{k=j+1}^i \left(a_k + \frac{L(n)-L(k-1)}{r}
+       \right)
+\end{equation}
+with $$s=a_j \vee d_{j-1}$$ and with the convention that
+$d_0=0$.
+
+Let us now apply the definition of an adaptive guarantee to
+the time interval $[s,t]$:
+$$
+R^*(t) \geq A \wedge B
+$$
+with
+ $$
+ A:=R^*(s) + r(t-s-e)^+ \mand
+B:=\inf_{u \in [s,t]} B(u)
+ $$
+ where
+ $$B(u):=\left(
+ R(u) + r(t-u-e)^+
+ \right)
+ $$
+ Firstly, since $s \geq d_{j-1}$, we have $R^*(s) \geq L(j-1)$. By
+ \eref{eq-maxplusasc1}, $f_n \geq s +\frac{ L(n) -L(j-1)}{r}$
+ thus $t \geq s +\frac{ L(n) -L(j-1)}{r} + e$. It follows that
+ $$
+ t-s-e \geq \frac{ L(n) -L(j-1)}{r}
+ $$
+ and thus $A\geq L(n)$.
+
+ Secondly, we show that $B\geq L(n)$ as well. Consider some $u \in
+ [s,t]$. If $u\geq a_n$ then $R(u) \geq L(n)$ thus $B(u) \geq
+ L(n)$. Otherwise, $u<a_n$; since $s\geq a_{j}$, it follows that
+ $a_{k-1} \leq u <a_{k}$ for some $k \in\{j+1, ..., n\}$ and
+ $R(u) = L(k-1)$. By \eref{eq-maxplusasc1},
+ $$
+ f_n \geq a_k + \frac{L(n)-L(k-1)}{r}
+ $$
+ thus
+ $$
+ t-u-e \geq \frac{L(n)-L(k-1)}{r}
+ $$
+ It follows that $B(u) \geq L(n)$ also in that case. Thus we have
+ shown that $B\geq L(n)$.
+
+ Combining the two shows that $R^*(t) \geq L(n)$ as required.
+
+ \paragraph{Item 2: }
+ We use a reduction to a minimum rate server as follows. Let
+ $d'_i:=\min(d_i, f_i)$ for $i\geq 0$. By \eref{eq-psrg-def} we
+ have
+\begin{equation}\mylabel{eq-ascpr98132}
+  a_i \leq d'_i \leq \max(a_i, d'_{i-1}) + \frac{l_i}{r}
+\end{equation}
+and
+\begin{equation}\mylabel{eq-ascpr98133}
+  d'_i \leq d_i \leq d'_i + e
+\end{equation}
+The idea of the proof is now to interpret $d'_i$ as the output
+time for packet $i$ out of a virtual minimum rate server.
+
+Construct a virtual node $\calR$ as follows. The input is the
+original input $R(t)$. The output is defined as follows. The
+number of bits of packet $i$ that are output up to time $t$ is
+$\psi_i(t)$, defined by
+ $$\bracket{
+ \mif t > d'_i \mthen \psi_i(t)=L(i) \\
+ \melse \mif a_i< t \leq d'_i \mthen \psi_i(t)=\left[L(i) -r (d'_i -t)\right]^+
+ \\
+ \melse \psi_i(t)=0
+}
+$$
+so that the total output of $\calR$ is $R_1(t)=\sum_{i\geq
+1}\psi_i(t)$.
+
+The start time for packet $i$ is thus
+$\max[a_i,d'_i-\frac{l_i}{r}]$ and the finish time is $d'_i$.
+Thus $\calR$ is causal (but not necessarily FIFO, even if the
+original system would be FIFO).  We now show that during any
+busy period, $\calR$ has an output rate at least equal to $r$.
+
+Let $t$ be during a busy period. Consider now some time $t$
+during a busy period. There must exist some $i$ such that $a_i
+\leq t \leq d'_i$. Let $i$ be the smallest index such that
+this is true. If $a_i \geq d'_{i-1}$ then by
+\eref{eq-ascpr98132} $d'_i-t \leq \frac{l_i}{r}$ and thus
+$\psi'_r(t) =r$ where $\psi'_r$ is the derivative of $\psi_i$
+to the right. Thus the service rate at time $t$ is at least
+$r$.
+
+Otherwise, $ a_i < d'_{i-1}$. Necessarily (because we number
+packets in order of increasing $a_i$'s -- this is not a FIFO
+assumption) $a_{i-1} \leq a_i$; since $i$ is the smallest
+index such that $a_i \leq t < d'_i$, we must have $t\geq
+d'_{i-1}$. But then  $d'_i-t \leq \frac{l_i}{r}$ and the
+service rate at time $t$ is at least $r$. Thus, node $\calR$
+offers the strict service curve $\lambda_r$ and
+\begin{equation}\mylabel{eq-ascpr287}
+  R \rightarrow (\lambda_r) \rightarrow R_1
+\end{equation}
+
+
+
+Now define node $\calD$. Let $\delta(i):=d_{i}-d'_i$, so that
+$0 \leq \delta(i) \leq E$.  The input of $\calD$ is the output
+of $\calR$. The output is as follows; let a bit of packet $i$
+arrive at time $t$; we have $t\leq d'_{i}\leq d_{i}$. The bit
+is output at time $t'=\max[\min[d_{i-1}, d_{i}],t+\delta_i]$.
+Thus all bits of packet $i$ are delayed in $\calD$ by at most
+$\delta(i)$, and if $d_{i-1}<d_{i}$ they depart after $d_{i}$.
+It follows that the last bit of packet $i$ leaves $\calD$ at
+time $d_{i}$. Also, since $t'\geq t$, $\calD$ is causal.
+Lastly, if the original system is FIFO, then $d_{i-1}<d_{i}$,
+all bits of packet $i$ depart after $d_{i-1}$ and thus the
+concatenation of $\calR$ and $\calD$ is FIFO. Note that
+$\calR$ is not necessarily FIFO, even if the original system
+is FIFO.
+
+
+The aggregate output of $\calD$ is
+$$
+R_2(t)\geq \sum_{i\geq 1}\psi_i(t-\delta(i))\geq R_1(t-e)
+$$
+
+thus the virtual delay for $\calD$ is bounded by $e$ and
+\begin{equation}\mylabel{eq-ascpr288}
+  R_1 \rightarrow (\delta_e) \rightarrow R_2
+\end{equation}
+Now we plug the output of $\calD$ into an $L$-packetizer.
+Since the last bit of packet $i$ leaves $\calD$ at time $d_i$,
+the final output is $R^*$. Now it follows from
+\eref{eq-ascpr287}, \eref{eq-ascpr288} and
+\thref{theo-ascconc} that
+ $$R \rightarrow (\lambda_r \mpc \delta_e) \rightarrow R_2
+ $$
+\qed
+
+\subsection{Proof of \thref{theo-nfvd}}
+
+We first introduce some notation (see \fref{fig-expsrgnf}).
+Call $a_n \geq 0$ the arrival times for the fresh input.
+Packets are numbered in order of arrival, so $0 \leq a_1 \leq
+a_2 \leq ...$. Let $l_n$ be the size of packet $n$. Call $b_n$
+the arrival time for packet $n$ at the second component; $b_n$
+is not assumed to be monotonic with $n$, but for all $n$:
+\begin{equation}\mylabel{eq-Elkxj872}
+ a_n \leq b_n \leq a_n + \delta
+\end{equation}
+Also call $d_n$ the departure time of packet $n$ from the
+second component. By convention, $a_0=d_0=0$.
+
+Then, define
+$$e_1=e+ \delta_{\max} +
+  \sup_{t \geq 0}[ \frac{\alpha(t+ \delta) - l_{\min}}{r}- t]
+$$
+and
+$$
+e_2
+=
+e+ \delta_{\max} +
+ \sup_{0 \leq t \leq \delta}
+  [ \frac{\alpha(t)+ \alpha(\delta) -
+l_{\min}}{r}- t]
+$$
+so that $e'= \min[e_1, e_2]$. It is sufficient to show that
+the combined node separately satisfies the packet scale rate
+guarantee with rate $r$ and with latencies $e_1$ and $e_2$. To
+see why, define $f_n$ by \eref{eq-psrg-def}. If $d_n - f_n
+\leq e_1$ and $d_n - f_n \leq e_2$ for all $n$, then $d_n -
+f_n \leq e'$.
+
+\textbf{Part 1: }We show that the combined node satisfies the
+packet scale rate guarantee with rate $r$ and latency $e_1$.
+
+An arrival curve for the input traffic to the second component
+is $\alpha_2(t)=\alpha(t+ \delta)$. Thus, by
+\thref{theo-grcdelaybound}, $d_n \leq b_n + D_2$, with
+$$
+d_n \leq b_n + e +  \sup_{t \geq 0}[ \frac{\alpha(t+
+\delta)}{r}- t]
+$$
+By \eref{eq-Elkxj872}:
+$$d_n -a_n \leq e+ \delta_{\max}+ \sup_{t \geq 0}[ \frac{\alpha(t+ \delta)}{r}- t]
+$$
+Now we apply \lref{lem-vdpsrg} which ends the proof for this
+part.
+
+\textbf{Part 2: }We show that the combined node satisfies the
+packet scale rate guarantee with rate $r$ and latency $e_2$.
+
+Let $\delta_{\min}= \delta_{\max}-\delta$ the constant part of
+the delay. We do the proof for $\delta_{\min}=0$ since we can
+eliminate the constant delay by observing packets
+$\delta_{\min}$ time units after their arrival, and adding
+$\delta_{\min}$ to the overall delay.
+
+\textbf{Part 2A:}
+
+We assume in this part that there cannot be two arrivals at
+the same instant; in part 2B, we will show how to relax this
+assumption.
+%also assume in a
+%first pthat there cannot be two arrivals at the same instant --
+%since we use a continuous time model, this is not really a
+%limitation.
+
+For a time interval $(s,t]$ (resp. $[s,t]$), define $A(s,t]$
+as the total number of bits at the fresh input during the
+interval $(s,t]$ (resp. $[s,t]$); similarly, define $B(s,t]$
+and $B[s,t]$ at the input of the second node. We have the
+following relations:
+$$
+A(s,t] = \sum_{n\geq 1} 1_{\{ s<a_n \leq t]\}} l_n \;,\;
+ A[s,t] =
+\sum_{n\geq 1} 1_{\{ s \leq a_n \leq t]\}} l_n
+$$
+$$
+B(s,t] = \sum_{n\geq 1} 1_{\{ s<b_n \leq t]\}} l_n \;,\;
+ B[s,t] =
+\sum_{n\geq 1} 1_{\{ s \leq b_n \leq t]\}} l_n
+$$
+Note that
+$$A(a_j,a_n]=\sum_{i=j+1}^n l_i$$
+but, by lack of FIFO assumption, there is no such relation for
+$B$.
+
+
+By definition of an arrival curve, we have $A(s,t] \leq
+\alpha(t-s)$.
+ \nfs{
+\begin{lemma}
+\mylabel{lem-arrcur0}For $0\leq t, u$, $A[t,t+u) \leq
+\alpha(u)$
+\end{lemma}
+\begin{preuve}
+ $A[t,t+u)=\lim_{n \rightarrow
++\infty}A(t-\frac{1}{n}, t+u-\frac{1}{n}]$ and
+$A(t-\frac{1}{n}, t+u-\frac{1}{n}]\leq \alpha(u)$.\end{preuve}
+}
+
+\begin{lemma}
+\mylabel{lem-arrcur}For $0\leq t, u$ and $0\leq v \leq t$, if
+there is an arrival at $t$, then $A(t,t+u] \leq \alpha(u) -
+l_{\min}$ and $A[t-v,t) \leq \alpha(v) - l_{\min}$
+\end{lemma}
+\begin{preuve} First note that $A[t,t+u]\leq \inf_{\epsilon
+> 0} A(t-\epsilon, t+u]\leq \inf_{\epsilon > 0}
+\alpha(u+\epsilon)=\alpha(u)$  (the last equality is because
+$\alpha$ is continuous).
+
+Second, let $l$ be the packet length for one packet arriving
+at time $t$. Then
+ $A(t,t+u]+l\leq A[t, t+u]\leq \alpha(u)$ thus $A(t,t+u]\leq \alpha(u)-l \leq \alpha(u) -
+l_{\min}$. The same reasoning shows the second inequality in
+the lemma. \end{preuve}
+
+Now we apply \thref{theo-psrgmaxplus}. Consider some fixed
+packets numbers $0\leq j<n$. We have to show that one of the
+following holds:
+\begin{equation}\mylabel{eq-psrgmaxplus1p}
+ d_n \leq e_2 + d_j + \frac{A(a_j, a_n]}{r}
+ \end{equation}
+or there is some $k \in \{j+1, ..., n\}$ such that
+\begin{equation}\mylabel{eq-psrgmaxplus2p}
+ d_n \leq e_2 + a_k + \frac{A[a_k, a_n]}{r}
+\end{equation}
+
+\textbf{(Case 1:)} Assume that $b_j \geq b_n$. Since the
+second node is FIFO, we have
+$$
+d_n \leq d_j
+$$
+and thus \eref{eq-psrgmaxplus1p} trivially holds.
+
+\textbf{(Case 2:)} Assume that $b_j < b_n$. By
+\thref{theo-psrgmaxplus} applied to the second node, we have
+\begin{equation}\mylabel{eq-jpoiuwejfhn81}
+  d_n \leq e+ d_j + \frac{1}{r} B(b_j,b_n]
+\end{equation}
+or there exists some $k$ such that $b_j \leq b_k \leq b_n$ and
+\begin{equation}\mylabel{eq-jpoiuwejfhn82}
+  d_n \leq e+ b_k + \frac{1}{r} B[b_k,b_n]
+\end{equation}
+
+\textbf{(Case 2a: )} Assume that \eref{eq-jpoiuwejfhn81}
+holds. By \eref{eq-Elkxj872}, any packet that arrives at node
+2 in the interval $(b_j,b_n]$ must have arrived at node $1$ in
+the interval $(a_j - \delta, b_n] \subset (a_j - \delta,
+a_n+\delta]$. Thus
+$$
+  \begin{array}{l}
+    B(b_j,b_n] \leq A(a_j - \delta, a_n+\delta] \\
+     \leq A(a_j,a_n] + A[a_j -\delta, a_j)+
+    A(a_n, a_n + \delta]\\
+    \leq
+A(a_j,a_n]+ 2 \alpha(\delta) -2 l_{\min}
+  \end{array}
+$$
+the last part being due to \lref{lem-arrcur}. Thus
+$$
+\begin{array}{l}
+ d_n \leq e + \delta + \frac{\alpha(\delta)}{r}- \delta +
+  \frac{\alpha(\delta)}{r} +
+ d_j \\
+  \;\; \;\; \;\; \;\;+ \frac{1}{r} A(a_j,a_n] -2 l_{\min} \\
+ \leq e_2 +
+ d_j + \frac{1}{r} A(a_j,a_n]
+ \end{array}
+$$
+which shows \eref{eq-psrgmaxplus1p}.
+
+\textbf{(Case 2b: )} Assume that \eref{eq-jpoiuwejfhn82}
+holds. Note that we do not know the order of $k$ with respect
+to $j$ and $n$. However, in all cases, by \eref{eq-Elkxj872}:
+\begin{equation}\mylabel{eq-dsakl8236}
+  B[b_k, b_n] \leq A[b_k-\delta, a_n + \delta]
+\end{equation}
+
+We further distinguish three cases.
+
+\textbf{(Case 2b1: )}   $ k \leq j $:
+
+Define
+\begin{equation}\mylabel{eq-defuaiw8927}
+  u=  a_j -b_k +\delta
+\end{equation}
+By hypothesis, $a_k\leq a_j$ and $b_k -\delta \leq  a_k$ so
+that $u \geq 0$. Note also that $a_j\leq b_j
+ \leq b_k$ and thus $u \leq \delta$.
+
+ By \eref{eq-dsakl8236}:
+ $$
+B[b_k, b_n] \leq A[b_k - \delta, a_j) + A[a_j, a_n] + A(a_n,
+a_n + \delta ]
+ $$
+ Now by
+\lref{lem-arrcur} $A(a_n, a_n + \delta ] \leq \alpha(\delta)$
+and $A[b_k - \delta, a_j) \leq \alpha(u)- l_{\min}$. Thus
+$$
+B[b_k, b_n] \leq A[a_j, a_n]+ \alpha(u) + \alpha(\delta) - 2
+l_{\min}
+$$
+Combine with \eref{eq-jpoiuwejfhn82}, \eref{eq-defuaiw8927}
+and obtain
+$$
+d_n  \leq a_j + \frac{A[a_j, a_n]}{r} + e_2
+$$
+which shows that \eref{eq-psrgmaxplus2p} holds.
+
+\textbf{(Case 2b2: )} $j < k  \leq n$:
+
+Define $u= \delta -b_k + a_k$. By \eref{eq-dsakl8236}
+$$B[b_k,b_n] \leq A[a_k,a_n]+ \alpha(u) +\alpha(\delta) -2 l_{\min}
+$$
+which shows that
+$$
+d_n \leq e_2 + a_k +\frac{1}{r}A[a_k, a_n]
+$$
+
+\textbf{(Case 2b3: )} $k >n$:
+
+Define $u=\delta - b_k + a_n$. By $b_k \leq b_n$ and $b_n \leq
+a_n + \delta$ we have $u \geq 0$. By $b_k \geq a_k$ and $a_k
+\geq a_n$ we have $u \leq \delta$.
+
+Now by \eref{eq-jpoiuwejfhn82}:
+$$
+ d_n \leq e+ b_k + \frac{1}{r} B[b_k, b_n]
+ = e + \delta - u + a_n +  \frac{1}{r} B[b_k, b_n]
+$$
+By \eref{eq-dsakl8236}
+$$
+  \begin{array}{l}
+    B[b_k, b_n] \leq A[a_n -u , a_n +
+ \delta]\\
+   =A[a_n -u , a_n) + l_n + A(a_n,a_n +
+ \delta]\\
+ \leq \alpha(u) + l_n + \alpha(\delta) -2 l_{\min}
+  \end{array}
+$$
+which shows that
+$$
+d_n \leq e_2 + a_n + \frac{l_n}{r}
+$$
+
+\textbf{Part 2B:}
+ %\iffullText {
+Now it remains to handle the case where packet arrivals at
+either component may be simultaneous. We assume that packets
+are ordered at component 2 in order of arrival, with some
+unspecified mechanism for breaking ties. Packets also have a
+label which is their order of arrival at the first component;
+we call $(k)$ the label of the $k$th packet in this order (see
+\fref{fig-expsrgnf} for an illustration).
+
+Call $\calS$ the original system. Fix some arbitrary integer
+$N$. Consider the truncated system $\calS^N$ that is derived
+from the original system by ignoring all packets that arrive
+at the first component after time $a_N + \delta$. Call $a^N_n,
+b^N_n, d^N_n, f^N_n$ the values of arrival, departure, and
+virtual finish times in the truncated system (virtual finish
+times are defined by \eref{eq-psrg-def}). Packets with numbers
+$\leq N$ are not affected by our truncation, thus $a^N_n=a_n,
+b^N_n=b_n, d^N_n=d_n, f^N_n=f_n$ for $n \leq N$. Now the
+number of arrival events at either component 1 or 2 in the
+truncated system is finite; thus we can find a positive number
+$\eta$ which separates arrival events. Formally: for any $m,n
+\leq N$:
+$$a_m=a_n \mor |a_m -a_n|> \eta$$
+and
+$$b_m=b_n \mor |b_m -b_n|> \eta$$
+Let $\epsilon < \frac{\eta}{2}$. We define a new system,
+called $\calS^{N,\epsilon}$, which is derived from $\calS^N$
+as follows.
+\begin{itemize}
+  \item We can find some sequence of numbers $x_n \in (0, \epsilon)$,
+  $n\leq N$ such that:  (1) they are all distinct; (2) if the
+  packet
+  labeled $m$ is ordered before the packet labeled  $n$ in the order of arrival
+  at the second
+  component, then $x_m < x_n$. Building such a sequence is easy,
+  and any sequence satisfying (1) and (2) will do. For example, take
+  $x_n =\frac{k}{N+1}
+  \epsilon$ where $k$ is the order of arrival of packet $n$ (in other words, $(k)=n$).
+  \item Define the new arrival and departure times by
+  $$
+  a_n^{\epsilon}= a_n + x_n \; , \;
+  b_n^{\epsilon}= b_n + x_n \; , \;
+  d_n^{\epsilon}= d_n + x_n
+  $$
+It follows from our construction that all $a_n^{\epsilon}$ are
+distinct for $n\leq N$,
+  and the same holds for $b_n^{\epsilon}$. Also, the arrival order of
+  packets at the second component is the same as in the original system.
+  \end{itemize}
+Thus we have built a new system $\calS^{N,\epsilon}$ where all
+arrivals times are distinct, the order of packets at the
+second component is the same as in $\calS^{N}$, arrival and
+departure times are no earlier than in $\calS^{N}$, and differ
+by at most $\epsilon$.
+
+For $k \leq N$, call $F_{(k)}^{\epsilon}$ the virtual finish
+times at the second component. By definition:
+$$
+\bracket{
+ F_{(0)}^{\epsilon} =0\\
+ F_{(k)}^{\epsilon}= \max \left[
+ b_{(k)}^{\epsilon}, \min \left(d_{(k-1)}^{\epsilon}, F_{(k-1)}^{\epsilon} \right)\right]
+ \\ \;\;+ \frac{l_{(k)}}{r} \mfor
+ k \geq 1
+ }
+$$
+and a similar definition holds for $F_{(k)}$ by dropping
+$\epsilon$. It follows by induction that
+$$
+F_{(k)}^{\epsilon} \geq  F_{(k)}
+$$
+thus
+$$ d_{(k)}^{\epsilon} \leq d_k +  \epsilon  \leq e+ F_{(k)}
+\leq e+ F_{(k)}^{\epsilon} +
+  \epsilon $$
+Similarly, $b_{k}^{\epsilon} \leq a_k^{\epsilon} + \delta$.
+This shows that $\calS^{N,\epsilon}$ satisfies the assumptions
+of the theorem, with $e$ replaced by $e+
+  \epsilon$
+
+Thus the conclusion of Part 2A holds for $\calS^{N,\epsilon}$.
+Define now $f_n^{\epsilon}$ by \eref{eq-psrg-def} applied to
+$a_n^{\epsilon}$ and $d_n^{\epsilon}$. We have:
+\begin{equation}\mylabel{eq-kjas823}
+ d_n^{\epsilon} \leq f_n^{\epsilon} + e_2 + \epsilon
+\end{equation}
+It also follows by induction that
+$$
+f_n^{\epsilon} \leq f_n + \epsilon
+$$
+Now $d_n\leq d_n^{\epsilon}$ thus
+$$d_n - f_n \leq d_n^{\epsilon} - f_n^{\epsilon} + \epsilon
+$$
+Combining with \eref{eq-kjas823} gives:
+$$
+d_n - f_n \leq e_2 + 2\epsilon
+$$
+Now $\epsilon$ can be arbitrarily small, thus we have shown
+that for all $n\leq N$:
+$$
+d_n - f_n \leq e_2
+$$
+Since $N$ is arbitrary, the above is true for all $n$.
+
+
+\subsection{Proof of \pref{prop-psrgtight}}
+\begin{preuve}
+Case $\rho \leq r$: Assume that the source is greedy from time
+0, with packet $n=1$, of size $l_1=l_{\min}$, $a_1=0$,
+$b_1=\delta_{\max}$. Assume all subsequent packets have a
+delay in the first component equal to $\delta_{\max}-\delta$.
+We can build an example where packet $1$ is overtaken by
+packets $n=2, ...,n_1$ that arrive in the interval $(0,
+\delta]$, with $l_2 + ... + l_{n_1}= \rho \delta + \sigma -
+l_1$. Assume that packet $1$ undergoes the maximum delay
+allowed by PSRG at the second component. It follows after some
+algebra that $d_1=e+ \delta_{\max}+\frac{\rho \delta +
+\sigma}{r}$. Now $f_1=\frac{ l_{\min}}{r}$ thus $d_1-f_1=e'$
+and the characterization is tight.
+
+Case $\rho > r$: We build a worst case scenario as follows. We
+let $e=0$, without loss of generality (add a delay element to
+this example and obtain the general case). The principle is to
+first build a maximum size burst which is overtaken by a
+tagged packet $j$. Later, a tagged packet $n$ is overtaken by
+a second maximum size burst. Between the two, packets arrive
+at a data rate $r$; the second burst is possible because $r<
+\rho$ and $a_n-a_j$ is long enough. Details are in
+\fref{fig-wc} and \tref{tab-wc}. We find finally $d_n-f_n=
+2(\rho \delta +\sigma - l_{\min})/r$ which shows that the
+bound is achieved.
+\begin{figure}[!htbp]
+ \insfig{expsrgnf2}{0.5}
+  \mycaption{Worst-case example for \thref{theo-nfvd}.
+  All packets have $0$ delay through the first component except packets $1 ... j-1$ and $n$.}
+  \mylabel{fig-wc}
+\end{figure}
+{\small
+
+\begin{table*}[!htbp]
+ \hspace{-1cm}
+   $$\begin{array}{|c|c|c|c|c|c|}
+    % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+ \hline
+  k & a_k & l_k & b_k & f_k & d_k \\
+ \hline
+ \hline
+ 1 & 0 & \sigma -  l_{\min} & \delta^+ & \mbox{not relevant} & d_j+l_1/r\\
+ 2 & l_2/\rho & l_{2} & \delta^+ & \mbox{not relevant} & d_j+(l_1+l_2)/r\\
+ ... & ... & ... & ... &... & ... \\
+ j-1 &  \delta & l_{j-1} & \delta^+ & \mbox{not relevant} & d_j +A \\
+ \hline
+ j & \delta & l_{\min} & \delta & \geq \delta +l_{\min}/r  & \delta +l_{\min}/r \\
+ \hline
+ j+1& \delta+l_{\min}/r & l_{\min} & a_{j+1} & \delta+2 l_{\min}/r
+ & f_{j+1} + A \\
+ ... & ... & ... & ... &... & ... \\
+ n-1 & \delta+ (n-j-1)l_{\min}/r & l_{\min} & a_{n-1} & \delta+(n-j) l_{\min}/r & f_{n-1} + A \\
+ \hline
+ n & \delta+ (n-j)l_{\min}/r & l_{\min} & a_n + \delta & \delta+(n-j+1) l_{\min}/r & f_n + 2 A \\
+ \hline
+ n+1 & a_n^+ & \sigma - l_{\min} & a_{n+1} & \mbox{not relevant} & f_{n-1}+A+(\sigma - l_{\min} )/r\\
+ n+2 & a_n+a_2 & l_{2} & a_{n+2} & \mbox{not relevant} & f_{n-1}+A+(\sigma - l_{\min}+l_2 )/r\\
+ ... & ... & ... & ... &... &...  \\
+ n+j-1 & (a_n + \delta)^- & l_{j-1} & (a_n +\delta)^- & \mbox{not relevant} & f_{n-1}+2A\\
+ \hline
+ \multicolumn{6}{|l|}{
+\mbox{Notes: } A=(\rho \delta +\sigma - l_{\min})/r }\\
+ \multicolumn{6}{|l|}{
+%\nu \mbox{ is defined by } \nu = (\lfloor\sigma + \rho \delta -
+%l_{\min}) \bmod l_{\min}. l_1 \mbox{is feasible because
+%}l_{\max}\geq 2 l_{\min}
+  (j, l_2,...,l_{j-1}) \mbox{ is a solution to } l_2 + ... + l_{j-1}= \rho \delta,
+  \mbox{ sc }  l_2, ..., l_{j-1}\in [l_{\min}, l_{\max}].
+  \mbox{ For example, let }j=2+\lfloor \frac{\rho
+  \delta}{l_{\min}}\rfloor,}\\
+  \multicolumn{6}{|l|}{l_2=\rho \delta-(j-3)l_{\min},
+  l_3=...=l_{j-1}=l_{\min}. \mbox{ We have }l_2\leq l_{\max} \mbox{ because }l_{\max}\geq 2 l_{\min}}\\
+ \hline
+  \end{array}
+  $$
+  \mycaption{Details for \fref{fig-wc}. Assume for this table that
+  $\sigma - l_{\min}\leq  l_{\max}$, otherwise replace packets $1$ and $n+1$ by a number
+  of smaller packets arriving in batch.}
+  \mylabel{tab-wc}
+\end{table*}
+}
+\end{preuve}
+
+
+\section{Bibliographic Notes}
+
+The concept of adaptive service curve was introduced in Okino's
+dissertation in \cite{oki98} and was published by Agrawal, Cruz,
+Okino and Rajan in \cite{cruzADAP}, which contains most results in
+\sref{sec-ascprop}, as well as an application to a window flow
+control problem that extends \sref{sec:windowflowcontrol1} on
+\pgref{sec:windowflowcontrol1}. They call $\tilde{\beta}$ an
+``adaptive service curve" and $\beta$ a ``partial service curve".
+
+The packet scale rate guarantee was first defined
+independently of adaptive service guarantees in
+\cite{lebinfocom2001}. It serves as a basis for the definition
+of the Expedited Forwarding capability of the Internet.
+
+\section{Exercises}
+\input{temp/L23-1}
+\input{temp/L23-2}

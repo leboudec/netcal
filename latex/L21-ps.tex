@@ -1,0 +1,119 @@
+\subsection{GPS and a Practical Implementation (PGPS)}
+\mylabel{sec-gpsdet}
+
+A GPS node serves several flows in parallel, and has a total
+output rate equal to $c$ b/s. A flow $i$ is allocated a given
+weight, say $\phi_i$. Call $R_i(t), R^*_i(t)$ the input and output
+functions for flow $i$. The guarantee is that at any time $t$, the
+service rate offered to flow $i$ is 0 is flow $i$ has no backlog
+(namely, if $R_i(t)=R_i^*(t)$), and otherwise is equal to
+$\frac{\phi_i}{\sum_{j \in B(t)} \phi_{j}}c$, where $B(t)$ is the
+set of backlogged flows at time $t$. Thus
+ $$R^*_i(t) = \int_0^t \frac{\phi_i}{\sum_{j \in B(s)} \phi_{j}} 1_{\{i \in B(s)\}}ds
+ $$
+ In the formula, we used the indicator function
+ $1_{\{\mbox{\emph{expr}}\}}$, which is equal to $1$ if $\mbox{\emph{expr}}$ is
+ true, and $0$ otherwise.
+
+It follows immediately that the GPS node offers to flow $i$ a
+service curve equal to $\lambda_{r_i c}$, with $r_i=\frac{\phi_i
+C}{\sum_{j} \phi_{j}}$. It is shown in \cite{pg94} that a better
+service curve can be obtained for every flow if we know some
+arrival curve properties for all flows; however the simple
+property is sufficient to understand the integrated service model.
+
+GPS satisfies the requirement of isolating flows and providing
+differentiated guarantees. We can compute the delay bound and
+buffer requirements for every flow if we know its arrival curve,
+using the results of Chapter~\ref{L20}. However, a GPS node is a
+theoretical concept, which is not really implementable, because it
+relies on a fluid model, and assumes that packets are infinitely
+divisible. How can we make a practical implementation of GPS ? One
+simple solution would be to use the virtual finish times as we did
+for the buffered leaky bucket controller in \sref{sec-psps}: for
+every packet we would compute its finish time $\theta$ under GPS,
+then at time $\theta$ present the packet to a multiplexer that
+serves packets at a rate $c$. \fref{fig-pgps} (left) shows the
+finish times on an example. It also illustrates the main drawback
+that this method would have: at times 3 and 5, the multiplexer
+would be idle, whereas at time 6 it would have a burst of 5
+packets to serve. In particular, such a scheduler would not be
+work conserving.
+
+This is what motivated researchers to find other practical
+implementations of GPS. We study here one such implementation of
+GPS, called
+packet by packet generalized processor sharing (PGPS)~\cite{pg93}. %
+\index{PGPS: packet generalized processor sharing}%
+Other implementations of GPS are discussed in
+Section~\ref{sec-gr}.
+
+PGPS emulates GPS as follows. There is one FIFO queue per flow.
+The scheduler handles packets one at a time, until it is fully
+transmitted, at the system rate $c$. For every packet, we compute
+the finish time that it would have under GPS (we call this the
+``GPS-finish-time"). Then, whenever a packet is finished
+transmitting, the next packet selected for transmission is the one
+with the earliest GPS-finish-time, among all packets present.
+Figure~\ref{fig-pgps} shows one example. We see that, unlike the
+simple solution discussed earlier, PGPS is work conserving, but
+does so at the expense of maybe scheduling a packet \emph{before}
+its finish time under GPS.
+\begin{figure}[!htbp]
+  \insfig{pgps}{0.7}
+  \mycaption{Scheduling with GPS (left) and PGPS (right).
+  Flow 0 has weight 0.5, flows 1 to 5 have weight 0.1. All packets
+  have the same transmission time equal to 1 time unit.}
+  \mylabel{fig-pgps}
+\end{figure}
+
+We can quantify the difference between PGPS and GPS in the
+following proposition. In \sref{sec-gr}, we will see how to derive
+a service curve property.
+\begin{proposition}[\cite{pg93}]
+The finish time for PGPS is at most the finish time of GPS plus
+$\frac{L}{c}$, where $c$ is the total rate and $L$ is the maximum
+packet size.
+ \mylabel{prop-pgps}
+\end{proposition}
+\pr Call $D(n)$ the finish time of the $n$th packet for the
+aggregate
+ input flow under PGPS, in the order of departure, and $\theta(n)$ under GPS.
+ Call $n_0$ the
+ number of the packet that started the busy period in which packet
+ $n$ departs. Note that PGPS and GPS have the same busy periods,
+ since if we observe only the aggregate flows, there is no
+ difference between PGPS and GPS.
+
+ There may be some packets that
+ depart before packet $n$ in PGPS, but that nonetheless have a
+ later departure time under GPS.
+ Call $m_0 \geq n_0$ the largest packet
+ number for which this occurs, if any; otherwise let $m_0=n_0-1$.
+ In this proposition, we call $l(m)$ the length in bits of packet $m$.
+ Under PGPS, packet $m_0$ started service at
+ $D(m_0)- \frac{l(m_0)}{c}$, which must be earlier than the
+ arrival times of packets $m= m_0+1, ..., n$.
+ Indeed, otherwise, by definition of PGPS, the
+ PGPS scheduler would have scheduled packets $m= m_0+1, ..., n$
+ before packet $m_0$. Now let us observe the GPS system. Packets $m= m_0+1, ...,
+ n$ depart no later than packet $n$, by definition of $m_0$; they
+ have arrived after $D(m_0)- \frac{l(m_0)}{c}$. By expressing the amount of
+ service in the interval $[D(m_0)- \frac{l(m_0)}{c}, \theta(n)]$
+ we find thus
+ $$ \sum_{m=m_0 +1}^n l(m) \leq c \left(\theta(n) - D(m_0)+ \frac{l(m_0)}{c}\right)
+ $$
+Now since packets $m_0, ..., n$ are in the same busy period, we
+have
+ $$D(n) = D(m_0) + \frac{\sum_{m=m_0 +1}^n l(m)}{c}$$
+By combining the two equations above we find $D(n) \leq \theta(n)
++ \frac{l(m_0)}{c}$, which shows the proposition in the case where
+$m_0 \geq n_0$.
+
+ If $m_0 = n_0-1$, then all packets $n_0,...,n$ depart before packet $n$
+ under GPS and thus the same reasoning shows that
+ $$ \sum_{m=n_0}^n l(m) \leq c \left(\theta(n) - t_0\right) $$
+ where $t_0$ is the beginning of the busy period, and that
+ $$D(n) = t_0 + \frac{\sum_{m=n_0 }^n l(m)}{c}
+ $$
+ Thus $D(n) \leq \theta(n)$ in that case. \qed

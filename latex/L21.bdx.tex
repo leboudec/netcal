@@ -1,0 +1,242 @@
+\problemfile{L21-1}
+\begin{problem}
+\begin{enumerate}
+    \item Assume $K$ connections, each with peak rate $p$, sustainable rate
+    $m$ and burst tolerance $b$, are offered to a trunk with constant
+    service rate $P$ and FIFO buffer of capacity $X$. Find the
+    conditions on $K$ for the system to be loss-free.
+    \item If $Km =P$, what is the condition on $X$ for $K$
+    connections to be accepted ?
+    \item What is the maximum number of connection if $p$ = 2 Mb/s,
+    $m$ = 0.2 Mb/s, $X= 10 $MBytes, $b=1 $Mbyte and $P=$ 0.1, 1, 2 or
+    10 Mb/s ?
+    \item For a fixed buffer size $X$, draw the acceptance
+    region when $K$ and $P$ are the variables.
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-2}
+\begin{problem}
+    Show the formulas giving the expressions for $f_B(R)$ and
+    $f_B(\alpha)$.
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-3}
+\begin{problem}
+\begin{enumerate}
+    \item What is the effective bandwith for a connection with $p$ = 2 Mb/s,
+    $m$ = 0.2 Mb/s,  $b=$ 100 Kbytes when $D=$ 1msec, 10 msec, 100 msec,
+    1s ?
+    \item Plot the effective bandwidth $e$ as a function of the delay
+    constraint in the general case of a connection with parameters $p,
+    m, b$.
+\end{enumerate}
+\end{problem}
+\end{filecontents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-4}
+\begin{problem}
+\begin{enumerate}
+    \item Compute the effective bandwidth for a mix of VBR
+    connections $1, \ldots, I$.
+
+    \item Show how the homogeneous case can be derived from your formula
+
+    \item Assume $K$ connections, each with peak rate $p$, sustainable rate
+    $m$ and burst tolerance $b$, are offered to a trunk with constant
+    service rate $P$ and FIFO buffer of capacity $X$. Find the
+    conditions on $K$ for the system to be loss-free.
+
+    \item  Assume that there are two classes of connections, with
+    $K_{i}$ connections in class $i$, $i=1,2$, offered to a trunk with constant
+    service rate $P$ and FIFO buffer of infinite capacity $X$. The
+    connections are accepted as long as their queuing delay does
+    not exceed some value $D$.
+    Draw the acceptance region, that is, the set of $(K_{1}, K_{2})$
+    that are accepted by CAC2. Is the
+    acceptance region convex ? Is the complementary of the
+    acceptance region in the positive orthant convex ? Does this
+    generalize to more than two classes ?
+\end{enumerate}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-11}
+\begin{problem}
+Consider a guaranteed rate scheduler, with rate $R$ and delay $v$,
+that receives a packet flow with cumulative packet length $L$. The
+(packetized) scheduler output is fed into a constant bit rate
+trunk with rate $c > R$ and propagation delay $T$.
+\begin{enumerate}
+  \item Find a minimum service curve for the complete system.
+ \sol{~\\
+ The system is modelled by the concatenation
+ $(N)(P^L)(S_{c,T})(P^L)$, where $N$ represents the scheduler.
+ A minimum service curve for $(N)(P^L)$ is
+ $S_{R,v+\frac{l_{\max}}{R}}$ and for $(\lambda_c)(P^L)$ is
+ $S_{c,T+\frac{l_{\max}}{c}}$. Thus an end-to-end service curve is
+ $S_{R,v+T+\frac{l_{\max}}{R}+\frac{l_{\max}}{c}}$.
+ }
+  \item Assume the flow of packets is $(r,b)$-constrained, with
+  $b>l_{\max}$. Find a bound on the end-to-end delay and delay
+  variation.
+  \sol{~\\
+  For the end-to-end delay is bound, we may omit the last packetizer. Thus
+  a bound on the end-to-end delay is
+  $$h(\gamma_{r,b}, S_{R,v+T+\frac{l_{\max}}{R}})
+   = T+\frac{b+l_{\max}}{R}
+  $$
+  The minimum delay is $T + \frac{l_{\min}}{c}$ thus a bound on
+  delay variation is
+  $$
+  v+\frac{b+l_{\max}}{R} - \frac{l_{\min}}{c}
+  $$
+}
+\end{enumerate}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-12}
+\begin{problem}
+Assume all nodes in a network are of the GR type with rate $R$ and latency $T$. A
+  flow with T-SPEC $\alpha(t)=\min(rt+b, M+pt)$
+  has performed a reservation with rate
+  $R$ across a sequence of $H$ nodes, with $p\geq R$. Assume no reshaping is done.
+  What is the buffer requirement at the $h$th node along the path,
+  for $h=1,...H$~?
+  \sol{~\\
+An arrival curve for the input to the $h$th node is $\alpha_{h-1}$, obtained as the
+deconvolution of $\alpha$ and a service curve $\beta_{h-1}$ for the concatenation of $h-1$
+nodes. We have: $\beta_{h-1}$ is rate-latency, with rate $R$ and latency $(h-1)T'$, with $T'=T+
+l_{\max}/R$. Thus, by basic network calculus:
+$$
+\alpha_{h-1}(t) = \min \left( b_{h-1} + rt, M_{h-1}+Rt \right)
+$$
+with
+$$
+b_{h-1}=b+ (h-1) r T'
+$$
+and
+$$
+M_{h-1}= (h-1)R T' + M +  \frac{b-M}{p-r}(p-R)
+$$
+The buffer requirement at node $h$, $v_h$, is the vertical distance $v(\alpha_{h-1},
+\beta_{R,T'})$. As an intermediate step, consider the case $\alpha(t)=\min(b+rt,M+Rt)$ and
+compute $v=v(\alpha, \beta_{R,T'})$. Define $\theta=\left[\frac{b-M}{R-r}\right]^+$; a simple
+analysis gives
+$$
+\mif \theta \leq T' \mthen v=b+rT' \melse v=M+RT'
+$$
+In our case we have
+$$
+\theta=\frac{b-M}{p-r}-(h-1)T'
+$$
+whence we derive
+$$
+\mif \frac{b-M}{p-r} \leq h T' \mthen v_h = b + h r T' \melse v_h= M +  \frac{b-M}{p-r}(p-R) +
+h R T'
+$$
+Thus for both small and large $h$, $v_h$ depends linearly on $h$.}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-13}
+\begin{problem}
+Assume all nodes in a network are made of a GR type with rate $R$ and latency $T$, before which
+a re-shaper with
+  shaping curve $\sigma=\gamma_{r,b}$ is inserted. A
+  flow with T-SPEC $\alpha(t)=\min(rt+b, M+pt)$
+  has performed a reservation with rate
+  $R$ across a sequence of $H$ such nodes, with $p\geq R$.  What is a buffer requirement at the $h$th node along the path,
+  for $h=1,...H$~?
+\sol{~\\ An arrival curve for the input to the $h$th GR component is $\gamma_{r,b}$; thus the
+buffer required at the GR component (excluding the shaper) is $B_1=v(\gamma_{r,b}, \beta)$,
+where $\beta$ is the rate-latency service curve with with rate $R$ and latency
+$T'=T+l_{\max}/R$. Thus $B_1=b+rT'$.\\ However, we also need to allow some buffer for the
+shaper. It is equal to $v(\alpha_{h-1}, \gamma_{r,b})$, where $\alpha'$ is an arrival curve for
+the output of the $(h-1)$th node. We have
+$$
+\alpha' = \gamma_{r,b} \mpd \beta = \gamma_{r, b +rT'}
+$$
+Thus a buffer bound at the shaper is $B_2=rT'$. A total buffer bound is $B=b+ 2rT'$. Note that
+it is independent of $h$.\\ We might also assume that the node employs buffer sharing between
+the shaper and the GR component. If so, a buffer bound is obtained by viewing the complete node
+as a concatenation of two service curve components; the bound is then
+$$v_h= v(\alpha', \gamma_{r,b} \mpc
+\beta )$$ In this particular case however, this does not improve the bound.\\ A more
+sophisticated bound can be found if we account for the original peak rate limitation $(p,M)$.}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-14}
+\begin{problem}
+Assume all nodes in a network are made of a shaper followed by a
+FIFO multiplexer. Assume that flow $I$ has T-SPEC,
+$\alpha_i(t)=\min(r_it+b_i, M+p_it)$, that the shaper at every
+node uses the shaping curve $\sigma_i=\gamma_{r_i,b_i}$ for flow
+$i$. Find the schedulability conditions for every node.
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-15}
+\begin{problem}
+A network consists of two nodes in tandem. There are $n_1$ flows
+of type $1$ and $n_2$ flows of type $2$. Flows of type $i$ have
+arrival curve $\alpha_i(t)=r_it+b_i$, $i=1,2$. All flows go
+through nodes $1$ then $2$. Every node is made of a shaper
+followed by an EDF scheduler. At both nodes, the shaping curve for
+flows of type $i$ is some $\sigma_i$ and the delay budget for
+flows of type $i$ is $d_i$. Every flow of type $i$ should have a
+end-to-end delay bounded by $D_i$. Our problem is to find good
+values of $d_1$ and $d_2$.
+\begin{enumerate}
+  \item We assume that $\sigma_i=\alpha_i$. What are the
+  conditions on $d_1$ and $d_2$ for the end-to-end delay bounds to
+  be satisfied ? What is the set of $(n_1, n_2)$ that are
+  schedulable ?
+  \item Same question if we set $\sigma_i=\lambda_{r_i}$
+\end{enumerate}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-16}
+\begin{problem}
+Consider the scheduler in \thref{theo-grissched}. Find an
+efficient algorithm for computing the deadline of every packet.
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-17}
+\begin{problem}
+Consider a SCED scheduler with target service curve for flow $i$
+given by
+$$\beta_i= \gamma_{r_i, b_i}\mpc \delta_{d_i}
+$$
+Find an efficient algorithm for computing the deadline of every
+packet.
+
+Hint: use an interpretation as a leaky bucket. \sol{See page 69 of
+\cite{saro96}}
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-18}
+\begin{problem}
+Consider the example of \fref{fig-dsnet1}. Apply the method of
+\sref{sec-timestoppingm} but express now that the fraction of
+input traffic to node $i$ that originates from another node must
+have $\lambda_C$ as an arrival curve . What is the upper-bound on
+utilization factors for which a bound is obtained ?
+\end{problem}
+\end{filecontents}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\problemfile{L21-19}
+\begin{problem}
+Consider the delay bound in \thref{theo-qofisbound}. Take the same
+assumptions but assume also that the network is feedforward. Which
+better bound can you give ?
+\end{problem}
+\end{filecontents}%

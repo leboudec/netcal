@@ -1,0 +1,815 @@
+\chapter{Systems with Losses}
+\mylabel{L30}
+
+All chapters have dealt up to now with lossless systems. This
+chapter shows that network calculus can also be applied to lossy
+systems, if we model them as a lossless system preceded by a
+`clipper' \cite{CCLBT,CruzTaneja}, which is a controller dropping
+some data when a buffer is full, or when a delay constraint would
+otherwise be violated. By applying once again
+Theorem~\ref{thm:spacemethod}, we obtain a representation formula
+for losses. We use this formula to compute various bounds. The
+first one is a bound on the loss rate in an element when both an
+arrival curve of the incoming traffic and a minimum service curve
+of the element are known. We use it next to bound losses in a
+complex with a complex service curve (e.g., VBR shapers) by means
+of losses with simpler service curves (e.g., CBR shapers).
+Finally, we extend the clipper, which models data drops due to
+buffer overflow, to a `compensator', which models data accrual to
+prevent buffer underflow, and use it to compute explicit solutions
+to Skorokhod reflection mapping problem with two boundaries.
+
+\section{A Representation Formula for Losses}
+
+\subsection{Losses in a Finite Storage Element}
+
+We consider a network element offering a service curve $\beta$, and having a finite storage capacity (buffer) $X$. We denote by $a$ the incoming traffic.
+
+We suppose that the buffer is not large enough to avoid losses for
+all possible input traffic patterns,
+and we would like to compute the amount of data lost at time $t$,
+with the convention that
+the system is empty at time $t=0$. We model losses as shown in
+Figure~\ref{fig:lossyshaper}, where
+$x(t)$ is the data that has actually entered the system in the time
+interval $[0,t]$.
+The amount of data lost during the same period is therefore $L(t) = a(t) - x(t)$.
+
+The model of Figure~\ref{fig:lossyshaper} replaces the original
+lossy element, by an equivalent concatenation a controller or
+regulator that separates the incoming flow $a$ in two separate
+flows, $x$ and $L$, and that we call {\em clipper}, following the
+denomination introduced in \cite{CruzTaneja}, together with the
+original system, which is now lossless for flow $x$.
+
+\begin{figure}[!h]
+\insfig{FTSloss}{0.7}
+    \mycaption{System with losses}
+    \protect\mylabel{fig:lossyshaper}
+\end{figure}
+
+The amount of data $(x(t) - x(s))$ that actually entered the system
+in any time interval $(s,t]$ is always
+bounded above by the total amount of data $(a(t) - a(s))$  that has
+arrived in the system during the same period.
+Therefore, for any $0 \leq s \leq t$, $x(t) \leq
+x(s) + a(t) - a(s)$ or equivalently, using the linear idempotent operator
+introduced by Definition~\ref{def:minplusidempotentoperator},
+\begin{equation}
+\mylabel{eq:losseq1}
+x(t) \leq \inf_{0 \leq s \leq t}
+               \left\{ a(t) - a(s) + x(s) \right\} = h_{a}(x)(t).
+\end{equation}
+
+On the other hand, $x$ is the part of $a$ that does actually enter
+the system. If $y$ denotes its output, there is no loss for $x$ if
+$x(t) - y(t) \leq X$ for any $t$. We do not know the exact mapping
+$y = \Pi(x)$ realized by the system, but we assume that $\Pi$ is
+isotone. So at any time $t$
+\begin{equation}
+\mylabel{eq:losseq2}
+x(t) \leq y(t) + X = \Pi(x)(t) + X
+\end{equation}
+
+The data $x$ that actually enters the system is therefore the maximum
+solution to (\ref{eq:losseq1}) and (\ref{eq:losseq2}), which we can recast as
+\begin{equation}
+\mylabel{eq:losseq3}
+x \leq a \wedge \left\{ \Pi(x) + X \right\}  \wedge h_{a}(x),
+\end{equation}
+and which is precisely the same equation as (\ref{eq:windowflowcontrol2}) with $W=X$ and $M = a$.
+Its maximal solution is given by
+%\begin{equation}
+%\mylabel{eq:losseq4}
+$$x = \overline{ \left( \left\{ \Pi + X \right\}  \wedge h_{a} \right) } (a), $$
+%\end{equation}
+or equivalently, after applying Corollary~\ref{cor:minimumoperatorclosure}, by
+\begin{equation}
+\mylabel{eq:closure-loss-eq}
+x = \left( \overline{(h_a \circ (\Pi + X))} \circ h_{a} \right) (a) =  \left( \overline{(h_a \circ (\Pi + X))} \right) (a)
+\end{equation}
+where the last equality follows from $h_a(a) = a$.
+
+We do not know the exact mapping $\Pi$, but we know that $\Pi \geq \calC_{\beta}$.
+We have thus that
+\begin{equation}
+\mylabel{eq:closure-loss-ineq}
+x \geq  \overline{ ( h_{a} \circ \calC_{\beta + X} )}(a).
+\end{equation}
+
+The amount of lost data in the interval $[0,t]$ is therefore given by
+\begin{eqnarray*}
+\lefteqn{L(t) = a(t) - x(t)} \\
+     &  & =a(t) - \overline{  h_{a} \circ \{ \calC_{\beta + X} \}}(a)(t) =
+a(t) - \inf_{n \in \Nats} \left\{ \left( h_{a} \circ \calC_{\beta + X} \right)^{(n)} \right\}(a)(t) \nonumber \\
+ & & =\sup_{n \in \Nats} \left\{ a(t) - \left( h_{a} \circ
+\calC_{\beta + X} \right)^{(n)}(a)(t) \right\} \nonumber \\
+ &  & = \sup_{n \geq 0} \{ a(t) - \inf_{0 \leq s_{2n} \leq \ldots
+\leq s_2 \leq s_1 \leq t}
+\{ a(t) - a(s_1) + \beta(s_1-s_2) + X \\
+  & & \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;  + a(s_2) - \ldots +
+a(s_{2n}) \} \} \nonumber \\
+ &  & = \sup_{n \in \Nats}   \{ \sup_{0 \leq s_{2n} \leq \ldots \leq
+s_2 \leq s_1 \leq t}
+ \{ a(s_1) - \beta(s_1-s_2) - a(s_2) \\
+ & & + \ldots - a(s_{2n}) - nX
+\} \}.
+\end{eqnarray*}
+Consequently, the loss process can be represented by the following
+formula:
+$$
+ L(t) \leq
+ $$
+\begin{equation}
+\sup_{n \in \Nats}  \left\{ \sup_{0 \leq s_{2n} \leq \ldots \leq
+s_2 \leq s_1 \leq t}
+  \left\{
+  \sum_{i=1}^n \left[ a(s_{2i-1}) - a(s_{2i}) -
+\beta(s_{2i-1}-s_{2i}) - X \right] \right\} \right\}
+\mylabel{eq:losses-at-time-t}
+\end{equation}
+ If the network element is a greedy
+shaper, with shaping curve $\beta$, then $\Pi(x) = \calC_{\beta}$,
+and the inequalities in (\ref{eq:closure-loss-ineq}) and
+(\ref{eq:losses-at-time-t}) become equalities.
+
+What the formula says is that losses up to time $t$ are obtained
+by summing the losses over all intervals $[s_{2i-1},s_{2i}]$,
+where $s_{2i}$ marks the end of an overflow period, and where $s_{2i-1}$ is the last time before $s_{2i}$ when the buffer was empty. These intervals are therefore larger then the congestion intervals, and their number $n$ is smaller or eqaul to the number of congestion intervals. Figure~\ref{fig:lossrepresentation} shows an example where $n = 2$ and where there are three congestion periods.
+
+\begin{figure}[!h]
+\insfig{Lossrepresentation}{0.7}
+    \mycaption{Losses in a constant rate shaper ($\beta = \lambda_C$). Fresh traffic $a$ is represented with a thin, solid line; accepted traffic $x$ is represented by a bold, solid line; the output process $y$ is represented by a bold, dashed line.}
+    \protect\mylabel{fig:lossrepresentation}
+\end{figure}
+
+We will see in the next sections how %the model of Figure~\ref{fig:lossyshaper}, and
+the losses representation formula (\ref{eq:losses-at-time-t}), can help us to obtain deterministic bounds on the loss process in some systems.
+
+\subsection{Losses in a Bounded Delay Element}
+
+Before moving to these applications, we first derive a representation formula
+for a similar problem, where data are discarded not because of a  finite buffer limit,
+but because of a delay constraint: any entering data must
+have exited the system after
+at most $d$ unit of time, otherwise it is discarded. Such discarded
+data are called losses due to
+a delay constraint of $d$ time units.
+
+As above, let $x$ be the part of $a$ that does actually enter the
+system, and let $y$ be its output. All the data
+$x(t)$ that has entered
+the system during $[0,t]$ must therefore have left at time $t+d$ at
+the latest, so that
+$x(t) - y(t+d) \leq 0$ for any $t$. Thus
+\begin{equation}
+\mylabel{eq:lossdelayeq1}
+x(t) \leq y(t+d) = \Pi(x)(t+d) = (\calS_{-d} \circ \Pi)(x)(t),
+\end{equation}
+where
+$\calS_{-d}$ is the shift operator (with forward shift of $d$ time units)
+given by Definition~\ref{def:vectorshiftoperator}.
+
+On the other hand, as in the previous example,
+the amount of data $(x(t) - x(s))$ that actually
+entered the system in any time interval $(s,t]$ is always
+bounded above by the total amount of data $(a(t) - a(s))$
+that has arrived in the system during the same period. Therefore
+the data $x$ that actually enters the system is therefore the maximum
+solution to
+\begin{equation}
+\mylabel{eq:lossdelayeq3}
+x \leq a \wedge (\calS_{-d} \circ \Pi)(x)  \wedge h_{a}(x),
+\end{equation}
+which is
+$$x = \overline{ \left( \left\{ \calS_{-d} \circ \Pi \right\}  \wedge h_{a} \right) } (a), $$
+%\end{equation}
+or equivalently, after applying Corollary~\ref{cor:minimumoperatorclosure}, by
+\begin{equation}
+\mylabel{eq:closure-delayloss-eq}
+x = \left( \overline{  h_{a} \circ \left( \{\calS_{-d} \circ \Pi \} \right)}  \circ h_{a} \right) (a) = \left( \overline{ h_{a} \circ \calS_{-d} \circ \Pi} \right) (a).
+\end{equation}
+Since $\Pi \geq \calC_{\beta}$, we also have,
+\begin{equation}
+\mylabel{eq:closure-lossdelay-ineq}
+x \geq   \left( \overline{  h_{a} \circ \calS_{-d} \circ \calC_{\beta} } \right)(a).
+\end{equation}
+
+The amount of lost data in the interval $[0,t]$ is therefore given by
+%\begin{eqnnarray*}
+$$L(t)  \leq  \sup_{n \in \Nats} \left\{ a(t) - \left( h_{a} \circ
+\calS_{-d} \circ \calC_{\beta} \right)^{(n)}(a)(t) \right\} $$ %\nonumber \\
+% & = & \sup_{n \geq 0} \left\{ a(t) - \inf_{0 \leq s_{2n} \leq \ldots
+%\leq s_2 \leq s_1 \leq t}
+%\left\{ a(t) - a(s_1) + \beta(s_1+d-s_2) + a(s_2) - \ldots +
+%a(s_{2n}) \right\} \right\} \nonumber \\
+% & = & \sup_{n \in \Nats}  \left\{ \sup_{0 \leq s_{2n} \leq \ldots \leq
+%s_2 \leq s_1 \leq t}
+% \left\{ a(s_1) - \beta(s_1+d-s_2) - a(s_2) + \ldots - a(s_{2n}) - nX
+%\right\} \right\}
+%\end{eqnarray*}
+which can be developed as
+$$  L(t) \leq $$
+\begin{equation}
+\sup_{n \in \Nats}  \left\{ \sup_{0 \leq s_{2n} \leq \ldots \leq
+s_2 \leq s_1 \leq t}
+  \left\{
+  \sum_{i=1}^n \left[ a(s_{2i-1}) - a(s_{2i}) -
+\beta(s_{2i-1}+d-s_{2i}) \right] \right\} \right\}
+\mylabel{eq:lossesdelay-at-time-t}
+\end{equation}
+Once again, if $\Pi = \calC_{\beta}$, then (\ref{eq:lossesdelay-at-time-t}) becomes an equality.
+
+We can also combine a delay constraint with a buffer constraint, and repeat
+the same reasoning, starting from
+\begin{equation}
+\mylabel{eq:lossfulleq3}
+x \leq a \wedge \left\{ \Pi(x) + X \right\} \wedge (\calS_{-d} \circ \Pi)(x)  \wedge h_{a}(x).
+\end{equation}
+to obtain
+\begin{eqnarray}
+\mylabel{eq:lossesdelaybuffer-at-time-t}
+L(t) & \leq & \sup_{n \in \Nats}  \{ \sup_{0 \leq s_{2n} \leq \ldots
+\leq s_2 \leq s_1 \leq t}
+  \{ \sum_{i=1}^n [ a(s_{2i-1}) - a(s_{2i})  \nonumber \\
+      & &  - (\beta(s_{2i-1}+d-s_{2i}) \wedge \{ \beta(s_{2i-1}-s_{2i}) + X \})] \} \}.
+\end{eqnarray}
+This can be recast as a recursion on time if $t \in \Nats$, following the time method to solve (\ref{eq:lossfulleq3}) instead of the space method. This recurstion is established in \cite{CCLBT}.
+
+\section{Application 1: Bound on Loss Rate}
+
+Let us return to the case of losses due to buffer overflow,
+and suppose that in this section fresh  traffic $a$ is constrained by an arrival
+curve $\alpha$. %, which as usual is assumed to be a ``good'' function.
+
+%We obtain directly from (\ref{eq:losses-at-time-t}) that the following bound
+%for the loss process:
+%\begin{equation}
+%\mylabel{eq:lossbound-with-arrivalcurve}
+%L(t) \leq \sup_{n \geq 0}  \left\{ \sup_{u_1, \ldots, u_n \geq 0;
+%\;\; \sum_{i=1}^n u_{i} \leq t}
+%  \left\{ \sum_{i=1}^n \left[ \alpha(u_i) - \beta(u_i) \right]
+%\right\} - nX \right\}.
+%\end{equation}
+
+%A more interesting bound is the one given on the loss rate, that is,
+%on the ratio $L(t) / a(t)$. The following theorem provide such a bound.
+
+The following theorem provide a bound on the loss rate $l(t) = L(t)/a(t)$, and is a direct
+consequence of the loss representation (\ref{eq:losses-at-time-t}).
+
+\begin{theorem}[Bound on loss rate]
+\mylabel{thm:lossratebound}
+Consider a system with storage capacity $X$, offering a service curve $\beta$ to a flow constrained by an arrival curve $\alpha$. Then the loss rate $l(t) = L(t)/a(t)$ is bounded above by
+\begin{equation}
+\mylabel{eq:lossratebound}
+\hat{l}(t) = \left[ 1 - \inf_{0 < s \leq t} \frac{\beta(s) + X}{\alpha(s)} \right]^{+} .
+\end{equation}
+\end{theorem}
+
+\pr With $\hat{l}(t)$ defined by (\ref{eq:lossratebound}), we have that for any $0 \leq u < v \leq t$,
+$$ 1 - \hat{l}(t) = \inf_{0 < s \leq t} \frac{\beta(s) + X}{\alpha(s)}
+                  \leq  \frac{\beta(v-u) + X}{\alpha(v-u)}
+                  \leq  \frac{\beta(v-u) + X}{a(v)-a(u)} $$
+because $a(v)-a(u) \leq \alpha(v-u)$ by definition of an arrival curve.
+Therefore, for any $0 \leq u \leq v \leq t$,
+$$ a(v)-a(u)- \beta(v-u) - X \leq  \hat{l}(t) \cdot [a(v) - a(u)]. $$
+For any $n \in \Nats_0=\{1,2,3,...\}$\index{1Nats0@$\Nats_0$}, and
+any sequence $\{ s_k \}_{1 \leq k \leq 2n}$, with $0 \leq s_{2n}
+\leq \ldots \leq s_1 \leq t$, setting $v = s_{2i-1}$ and $u =
+s_{2i}$ in the previous equation, and summing over $i$, we obtain
+$$ \sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})- \beta(s_{2i-1}-s_{2i}) - X \right] \leq  \hat{l}(t) \cdot  \sum_{i=1}^{n} \left[ a(s_{2i-1}) - a(s_{2i}) \right]. $$
+Because the $s_k$ are increasing with $k$, the right hand side of this inequality
+is always less than, or equal to, $\hat{l}(t) \cdot a(t)$.
+%By taking the supremum over all $n$ and all sequences $\{ s_k \}_{1 \leq k \leq 2n}$,
+%the left hand side is larger than $L(t)$, because of (\ref{eq:losses-at-time-t}).
+Therefore we have
+\begin{eqnarray*}
+ L(t) & \leq & \sup_{n \in \Nats}  \left\{ \sup_{0 \leq s_{2n} \leq \ldots \leq
+s_1 \leq t} \left\{ \sum_{i=1}^n \left[ a(s_{2i-1}) - a(s_{2i}) -
+\beta(s_{2i-1}-s_{2i}) - X \right] \right\} \right\} \\
+& \leq & \hat{l}(t) \cdot a(t),
+\end{eqnarray*}
+ which shows that $\hat{l}(t) \geq l(t) = L(t)/a(t)$.
+\qed
+
+To have a bound independent of time $t$, we take the sup over all $t$ of (\ref{eq:lossratebound}),
+to get
+\begin{equation}
+\mylabel{eq:lossratebound2}
+\hat{l} = \sup_{t \geq  0} \hat{l}(t) = \left[ 1 - \inf_{t > 0} \frac{\beta(t) + X}{\alpha(t)} \right]^{+} ,
+\end{equation}
+and retrieve the result of Chuang \cite{Chuang}.
+
+A similar result for losses due to delay constraint $d$, instead of finite buffer $X$,
+can beeasily obtained too:
+\begin{eqnarray}
+\mylabel{eq:lossratedelaybound}
+\hat{l}(t) & = &  \left[ 1 - \inf_{0 < s \leq t} \frac{\beta(s+d)}{\alpha(s)} \right]^{+} \\
+\mylabel{eq:lossratedelaybound2}
+\hat{l} & = &  \left[ 1 - \inf_{t > 0} \frac{\beta(t+d)}{\alpha(t)} \right]^{+} .
+\end{eqnarray}
+
+
+\section{Application 2: Bound on Losses in Complex Systems}
+
+As a particular application  of the loss representation formula (\ref{eq:losses-at-time-t}),
+we show how it is possible to bound the losses in a system offering a somewhat complex service curve $\beta$, by losses in simpler systems. The first application is the bound on the losses
+in a shaper by a system that segregates the resources (buffer, bandwidth) between
+a storage system and a policer. The second application deals with a VBR shaper,
+which is compared with two CBR shapers. For both applications,
+the losses in the original system are bounded along every sample path by the losses
+in the simpler systems. For congestion times however, the same conclusion does not always
+hold.
+
+
+\subsection{Bound on Losses by Segregation between Buffer and Policer}
+\mylabel{sec:lossesbufferandpolicer}
+
+We will first compare the losses in two systems,
+having the same input flow $a(t)$.
+
+The first system is the  one of Figure~\ref{fig:lossyshaper} with
+service curve $\beta$ and buffer $X$, whose losses $L(t)$
+are therefore given by (\ref{eq:losses-at-time-t}).
+
+The second system is made of two parts, as shown in
+Figure~\ref{fig:LoPsegregated}(a). The first part is a  system
+with storage capacity $X$, that realizes some mapping $\Pi'$ of
+the input that is not explicitly given, but that is assumed to be
+isotone, and not smaller than $\Pi$
+ ($\Pi' \geq \Pi$).
+We also know that a first clipper discards data as soon as the
+total backlogged data in this system exceeds $X$. This operation
+is called {\em buffer discard}. The amount of buffer discarded
+data in $[0,t]$ is denoted by $L_{\mathrm{Buf}}(t)$. The second
+part is a policer without buffer, whose output is the min-plus
+convolution of the accepted input traffic by the policer by
+$\beta$. A second clipper discards data as soon as the total
+output flow of the storage system exceeds the maximum input
+allowed by the policer. This operation is called {\em policing
+discard}. The amount of discarded data by policing in $[0,t]$ is
+denoted by $L_{\mathrm{Pol}}(t)$.
+
+\begin{figure}[!h]
+\insfig{LoPsegregatedsystemab}{0.7}
+    \mycaption{A storage/policer system with separation between losses due
+to buffer
+discard and to policing discard (a) A virtual segregated system for 2
+classes of traffic, with buffer discard and policing discard, as used
+by Lo Presti et al \protect\cite{LOP98} (b)}
+    \protect\mylabel{fig:LoPsegregated}
+\end{figure}
+
+\begin{theorem} \mylabel{thm:lossSegregated}
+Let $L(t)$ be the amount of lost data in the original system, with service curve $\beta$
+and buffer~$X$.
+
+Let $L_{\mathrm{Buf}}(t)$ (resp. $L_{\mathrm{Pol}}(t)$) be the amount of data lost
+in the time interval $[0,t]$ by buffer (resp. policing) discard, as defined above.
+
+Then $L(t) \leq L_{\mathrm{Buf}}(t) + L_{\mathrm{Pol}}(t)$.
+\end{theorem}
+
+\pr
+Let $x$ and $y$ denote respectively the admitted and output flows of the
+ buffered part of the second system. Then the policer implies that $y = \beta \otimes x$,
+and any time $s$ we have
+\[ a(s) - L_{\mathrm{Buf}}(s) - X = x(s) - X \leq y(s) \leq x(s) =
+a(s) - L_{\mathrm{Buf}}(s). \]
+which implies that for any $0 \leq u \leq v \leq t$,
+\begin{eqnarray*}
+\lefteqn{y(v) - y(u) - \beta(v-u)} \\
+ & \geq &  (a(v) - L_{\mathrm{Buf}}(v) -X)  - (a(u) - L_{\mathrm{Buf}}(u))  - \beta(v-u) \\
+ & = & a(v) - a(u)  - \beta(v-u) - X - (L_{\mathrm{Buf}}(v) - L_{\mathrm{Buf}}(u)).
+\end{eqnarray*}
+We use the same reasoning as in the proof of Theorem~\ref{thm:lossratebound}: we
+pick any $n \in \Nats_0$ and any increasing sequence $\{ s_k \}_{1 \leq k \leq 2n}$, with $0 \leq s_{2n} \leq \ldots \leq s_1 \leq t$. Then we set $v = s_{2i-1}$ and $u = s_{2i}$ in the previous
+inequality, and we sum over $i$, to obtain
+\begin{eqnarray*}
+\lefteqn{ \sum_{i=1}^{n} \left[ y(s_{2i-1})-y(s_{2i})-
+\beta(s_{2i-1}-s_{2i}) \right] \geq } \\
+ && \sum_{i=1}^{n} \left[
+a(s_{2i-1})-a(s_{2i})- \beta(s_{2i-1}-s_{2i}) - X \right] \\ && -
+\sum_{i=1}^{n} \left[ (L_{\mathrm{Buf}}(s_{2i-1}) -
+L_{\mathrm{Buf}}(s_{2i})) \right].
+\end{eqnarray*}
+By taking the supremum over all $n$ and all sequences $\{ s_k
+\}_{1 \leq k \leq 2n}$, the left hand side is equal to
+$L_{\mathrm{Pol}}(t)$,  because of (\ref{eq:losses-at-time-t}) (we
+can replace the inequality in (\ref{eq:losses-at-time-t}) by an
+equality, because the output of the policer is $y = \beta \otimes
+x$). Since $\{ s_k \}$ is a wide-sense increasing sequence, and
+since $L_{\mathrm{Buf}}$ is a wide-sense increasing function, we
+obtain therefore
+\begin{eqnarray*}
+\lefteqn{L_{\mathrm{Pol}}(t)  \geq}\\
+ & & \sup_{n \in \Nats}  \left\{ \sup_{0 \leq
+s_{2n} \leq \ldots \leq s_1 \leq t} \left[ a(s_{2i-1})-a(s_{2i})- \beta(s_{2i-1}-s_{2i}) - X \right] \right\} -  L_{\mathrm{Buf}}(t) \\
+& = & L(t) - L_{\mathrm{Buf}}(t),
+\end{eqnarray*}
+which completes the proof.
+\qed
+
+Such a separation of resources between the ``buffered system'' and
+``policing system'' is used in the estimation of loss probability
+for devising statistical CAC (Call Acceptance Control) algorithms as
+proposed by Elwalid et al \cite{Elwalid}, Lo Presti
+et al. \cite{LOP98}.
+The incoming traffic is separated in two classes.
+All variables relating to the first (resp. second) class are marked
+with an index 1 (resp. 2),
+so that $a(t) = a_1(t) + a_2(t)$.
+The original system is a CBR shaper ($\beta = \lambda_C$) and the storage system
+is a virtually segregated system as in Figure~\ref{fig:LoPsegregated}(b),
+made of 2 shapers with rates $C_1^v$ and $C_2^v$ and buffers $X_1^v$ and $X_2^v$.
+The virtual shapers are large enough to ensure that no loss occurs
+for all possible arrival functions $a_1(t)$ and $a_2(t)$.
+ The total buffer space (resp. bandwidth) is larger
+ than the original buffer space (resp. bandwidth):
+ $X_1^v + X_2^v \geq X$ ($C_1^v + C_2^v \geq C$).
+However, the buffer controller discards data as soon as the total backlogged
+data in the virtual system exceeds $X$ and the policer controller
+discards data as soon as the total output rate of the virtual system exceeds $C$.
+
+%We have shown that the losses in this system are indeed an upper
+%bound on the losses
+%in the original CBR shaper with rate $C$ and buffer $X$. However,
+%this is not true for congestion times, at least along all
+%sample paths of the process.
+
+%Ross \cite{Rossprivate} has indeed provided an example where the sum
+%of congestion times in the virtual system due
+%to buffer and policing discards is not an upper bound to the sum of
+%congestion times in the original system.
+
+\subsection{Bound on Losses in a VBR Shaper}
+\mylabel{sec:lossVBRbuffer}
+
+In this second example, we consider  of a ``buffered leaky bucket'' shaper \cite{leb96}
+with buffer $X$, whose output must conform to a VBR shaping curve
+with peak rate $P$, sustainable rate $M$ and burst tolerance $B$ so
+that here the mapping of the element is $\Pi = \calC_{\beta}$ with
+$\beta = \lambda_P \wedge \gamma_{M,B}$.
+We will consider two systems to bound these losses: first two CBR
+shapers
+in parallel (Figure~\ref{fig:VBRby2CBR}(a)) and second two CBR shapers
+in tandem (Figure~\ref{fig:VBRby2CBR}(b)). Similar results also holds for losses due to a delay constraint \cite{TimeSpac}.
+
+
+\begin{figure}[!h]
+\insfig{VBRbytwoCBR}{0.7} \mycaption{Two CBR shapers in parallel
+(a) and in tandem (b).} \protect\mylabel{fig:VBRby2CBR}
+\end{figure}
+
+%\subsubsubsection{Bound by two CBR shapers in parallel}
+%\noindent \textbf{i) Bound by two CBR shapers in parallel}
+We will first show that the {\em amount of losses} during $[0,t]$ in this system
+is bounded by the sum of losses in two CBR shapers in parallel,
+as shown in Figure~\ref{fig:VBRby2CBR}(a): the first one has buffer
+of size $X$ and rate $P$,
+whereas the second  one has buffer of size $X+B$ and rate $M$.
+Both receive the same arriving traffic $a$ as the original VBR
+shaper.
+%All variables without prime refer to the original VBR shaper,
+%variables with one prime to the first CBR shaper and variables with a
+%double prime to the second
+%CBR shaper.
+
+\begin{theorem} \mylabel{thm:lossVBR}
+Let $L_{\mbox{{\tiny VBR}}}(t)$ be the amount of lost data in the time interval
+$[0,t]$ in a VBR shaper
+with buffer $X$ and shaping curve $\beta = \lambda_P \wedge \gamma_{M,B}$,
+when the data that has arrived in $[0,t]$ is $a(t)$.
+
+Let $L_{\mbox{{\tiny CBR}}^{\prime}}(t)$ (resp. $L_{\mbox{{\tiny CBR}}^{\prime \prime}}(t)$) be the amount of lost data
+during $[0,t]$ in a CBR shaper with buffer $X$ (resp. $(X+B)$) and
+shaping curve $\lambda_P$ (resp. $\lambda_M$) with the same incoming traffic $a(t)$.
+
+Then $ L_{\mbox{{\tiny VBR}}}(t) \leq L_{\mbox{{\tiny CBR}}^{\prime}}(t) + L_{\mbox{{\tiny CBR}}^{\prime \prime}}(t)$.
+\end{theorem}
+
+\pr The proof is again a direct application of (\ref{eq:losses-at-time-t}).
+Pick any $0 \leq u \leq v \leq t$. Since $\beta = \lambda_P \wedge \gamma_{M,B}$,
+\begin{eqnarray*}
+\lefteqn{a(v) - a(u) - \beta(v-u) - X = }\\ && \{ a(v) - a(u) -
+P(v-u) - X \} \vee \{ a(v) - a(u) - M(v-u) - B - X \}
+\end{eqnarray*}
+Pick any $n \in \Nats_0$ and any increasing sequence $\{ s_k \}_{1 \leq k \leq 2n}$, with $0 \leq s_{2n} \leq \ldots \leq s_1 \leq t$. Set $v = s_{2i-1}$ and $u = s_{2i}$ in the previous equation, and sum over $i$, to obtain
+ \begin{eqnarray*}
+ \lefteqn{\sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})-
+ \beta(s_{2i-1}-s_{2i}) -X \right]} \\
+ & = & \sum_{i=1}^{n} [ \{ a(s_{2i-1})-a(s_{2i})- P(s_{2i-1}-s_{2i}) - X \} \\
+ & & \;\;\;\;\;\;\vee \{ a(s_{2i-1})-a(s_{2i})- M(s_{2i-1}-s_{2i}) -B - X \} \\
+ & \leq & \sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})- P(s_{2i-1}-s_{2i}) -
+ X \right] \\
+ & & \;\;\;\;\;\;+ \sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})-
+ M(s_{2i-1}-s_{2i}) -B - X \right] \\
+ & \leq &  L_{\mbox{{\tiny CBR}}^{\prime}}(t) + L_{\mbox{{\tiny
+ CBR}}^{\prime \prime}}(t),
+\end{eqnarray*}
+%
+%
+%
+%\begin{eqnarray*}
+%\lefteqn{\sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})- \beta(s_{2i-1}-s_{2i}) -X \right]} \\
+%& \leq & \sum_{i=1}^{n} [ \{ a(s_{2i-1})-a(s_{2i})- P(s_{2i-1}-s_{2i}) - X \} \\
+%& & \;\;\;\;\;\;\wedge \{ a(s_{2i-1})-a(s_{2i})- M(s_{2i-1}-s_{2i}) -B - X \} \\
+%& \leq & \sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})- P(s_{2i-1}-s_{2i}) - X \right] \\
+%& & \;\;\;\;\;\;+ \sum_{i=1}^{n} \left[ a(s_{2i-1})-a(s_{2i})- M(s_{2i-1}-s_{2i}) -B - X \right] \\
+%& \leq &  L_{\mbox{{\tiny CBR}}^{\prime}}(t) + L_{\mbox{{\tiny CBR}}^{\prime \prime}}(t),
+%\end{eqnarray*}
+because of (\ref{eq:losses-at-time-t}). By taking the supremum over all $n$ and all sequences $\{ s_k \}_{1 \leq k \leq 2n}$ in the previous inequality, we get the desired result.
+\qed
+
+
+A similar exercise shows that the amount of losses during
+$[0,t]$ in the VBR system is also bounded above by the sum
+of losses in two CBR shapers in cascade as
+shown in Figure~\ref{fig:VBRby2CBR}(b):
+ the first one has buffer of size $X$
+and rate $P$, and receives the same arriving traffic $a$ as the
+original VBR shaper,
+whereas its output is fed into the second  one with buffer of size
+$B$ and rate $M$.
+%All variables without prime refer to the original VBR shaper,
+%variables with one prime to the first CBR shaper and variables with a
+%triple prime to the second
+%CBR shaper.
+
+\begin{theorem} \mylabel{thm:lossVBRtandem}
+Let $L_{\mbox{{\tiny VBR}}}(t)$ be the amount of lost data in the time interval
+$[0,t]$ in a VBR shaper
+with buffer $X$ and shaping curve $\beta = \lambda_P \wedge \gamma_{M,B}$,
+when the data that has arrived in $[0,t]$ is $a(t)$.
+
+Let $L_{\mbox{{\tiny CBR}}^{\prime}}(t)$ (resp. $L_{\mbox{{\tiny CBR}}^{\prime \prime}}(t)$) be the amount of lost data
+during $[0,t]$ in a CBR shaper with buffer $X$ (resp. $B$) and
+shaping curve $\lambda_P$ (resp. $\lambda_M$) with the same incoming traffic $a(t)$ (resp. the output traffic of
+the first CBR shaper).
+
+Then $ L_{\mbox{{\tiny VBR}}}(t) \leq L_{\mbox{{\tiny CBR}}^{\prime}}(t) + L_{\mbox{{\tiny CBR}}^{\prime \prime}}(t)$.
+\end{theorem}
+
+The proof is left as an exercise.
+
+Neither of the two systems in Figure~\ref{fig:VBRby2CBR} gives the better
+bound for any arbitrary traffic
+pattern. For example, suppose that the VBR system parameters are
+$P=4$, $M=1$, $B=12$ and $X=4$,
+and that the traffic is a single burst of data sent at rate $R$
+during four time units, so that
+%\begin{equation}
+%\mylabel{eq:exa(t)}
+$$a(t) = \left\{ \begin{array}{lll} R \cdot t & \mbox{ if } & 0 \leq t
+\leq 4 \\
+                  4R &  \mbox{ if } & t \geq 4
+                    \end{array} \right.
+$$ %\end{equation}
+
+If $R=5$, both the VBR system and the parallel set of the two
+$\mathrm{CBR'}$ and $\mathrm{CBR''}$ systems are lossless, whereas
+the amount of lost data  after five units of time in the tandem of the
+two $\mathrm{CBR'}$ and $\mathrm{CBR'''}$ systems is equal to three.
+
+On the other hand, if $R=6$, the amount of lost data  after five units
+of time in the VBR system,
+the parallel system ($\mathrm{CBR'}$ and $\mathrm{CBR''}$) and the
+tandem system ($\mathrm{CBR'}$ and $\mathrm{CBR'''}$) are
+respectively equal to four, eight and seven.
+
+Interestingly enough, whereas both systems of Figure~\ref{fig:VBRby2CBR}
+will bound the {\em amount of losses in the original system}, it is no longer so
+for the {\em congestion periods}, i.e. the time intervals during which
+losses occur. The tandem system does not offer a bound on the congestion periods,
+contrary to the parallel system \cite{TimeSpac}.
+
+\section[Skohorkhod's Reflection Problem]{Solution to Skohorkhod's Reflection Problem with Two Boundaries}
+
+To obtain the model  of Figure~\ref{fig:lossyshaper}, we have
+added a regulator -- called {\em clipper} --  before the system
+itself, whose input $x$ is the maximal input ensuring a lossless
+service, given a finite storage capacity $X$. The clipper
+eliminates the fraction of fresh traffic $a$ that exceeds $x$. We
+now generalize this model by adding a second regulator
+\emph{after} the lossless system, whose output is denoted with
+$y$, as shown on Figure~\ref{fig:Skorokhod}. This regulator
+complements $y$, so that the output of the full process is now a
+given function $b \in \calF$. The resulting process $N = y - b$ is
+the amount of traffic that needs to be fed to prevent the storage
+system to enter in starvation. $N$ compensates for possible buffer
+underflows, hence we name this second regulator {\em compensator}.
+
+\begin{figure}[!h]
+\insfig{Reflectionmapping}{0.7}
+    \mycaption{A storage system representing the variables used to solve
+Skorokhod's reflection problem with
+two boundaries}
+    \protect\mylabel{fig:Skorokhod}
+\end{figure}
+
+We can explicitly compute the loss process $L$ and the
+``compensation'' process $N$, from the arrival process $a$ and the
+departure process $b$, using, once again,
+Theorem~\ref{thm:spacemethod}. We are looking for the maximal
+solution
+$$ \vec{x}(t) = [x(t) \;\;\;\; y(t)]^T, $$
+where $T$ denotes transposition, to the set of inequalities
+\begin{eqnarray}
+\mylabel{eq:xa}
+x(t) & \leq & \inf_{0 \leq s \leq t} \{a(t) - a(s) + x(s)\} \\
+\mylabel{eq:xy}
+x(t) & \leq & y(t) + X \\
+\mylabel{eq:yx}
+y(t) & \leq & x(t) \\
+\mylabel{eq:yb}
+y(t) & \leq & \inf_{0 \leq s \leq t} \{b(t) - b(s) + y(s)\}.
+\end{eqnarray}
+The two first inequalities are identical to (\ref{eq:losseq1}) and to (\ref{eq:losseq2}).
+The two last inequalities are the dual constraints on $y$.
+We can therefore recast this system as
+\begin{eqnarray}
+\mylabel{eq:Skox}
+x & \leq & a \wedge h_a(x) \wedge \{ y + X \} \\
+\mylabel{eq:Skoy}
+y & \leq & b \wedge x \wedge h_b(x).
+\end{eqnarray}
+This is a system of min-plus linear inequalities, whose solution is
+$$ \vec{x} =  \overline{\calL}_{H} (\vec{a})=  \calL_{\overline{H}} (\vec{a}), $$
+where $H$ and $\vec{a}$ are defined as
+$$ \begin{array}{rcl}
+\vec{a}(t) & = & [ a(t)  \; \; \; \; b(t)  ]^T \\ \\
+H(t,s) & = & \left[ \begin{array}{cc} a(t) - a(s) & \delta_0(t-s) + X \\
+                    \delta_0(t-s) & b(t) - b(s)  \end{array} \right].
+\end{array} $$
+for all $0 \leq s \leq t$. Instead of computing $\overline{H}$, we go faster by first computing the maximal solution
+of (\ref{eq:Skoy}). Using properties of the linear idempotent operator, we get
+$$ y = \overline{h}_b(x \wedge b) = h_{b}(x \wedge b) = h_b(x) \wedge h_b(b) =  h_b(x). $$
+Next we replace $y$ by $h_b(x)$ in (\ref{eq:Skox}), and we compute its maximal solution, which is
+$$ x = \overline{h_a \wedge \{ h_b + X \}} (a). $$
+We work out the sub-additive closure using Corollary~\ref{cor:minimumoperatorclosure}, and  we obtain
+\begin{equation}
+\mylabel{eq:closure-Sko1}
+x = \overline{  \left(  h_{a} \circ \{h_b + X \} \right) } (a)
+\end{equation}
+and thus
+\begin{equation}
+\mylabel{eq:closure-Sko2} y = \left( h_b \circ \overline{   h_{a}
+\circ \{h_b + X \}  }  \right) (a).
+\end{equation}
+%
+%
+%\begin{equation} \mylabel{eq:closure-Sko2} y = h_b \circ
+%\overline{  h_{a} \circ \left( \{h_b + X \} \right) } (a).
+%\end{equation}
+After some manipulations, we get
+%\begin{eqnarray}
+$$N(t)  =  b(t) - y(t) = $$
+\begin{equation}
+ \mylabel{eq:Ndev}
+\sup_{n \in \Nats}  \left\{ \sup_{0  \leq s_{2n+1} \leq \ldots
+\leq s_2 \leq s_1 \leq t}
+  \left\{ \sum_{i=1}^{2n+1} (-1)^{i} (a(s_{i}) -b(s_i)) \right\} - nX
+\right\}
+\end{equation}
+$$L(t)  =  a(t) - x(t) = $$
+  \begin{equation}
+\mylabel{eq:Ldev}
+ \sup_{n \in \Nats}  \left\{ \sup_{0  \leq s_{2n} \leq \ldots
+\leq s_2 \leq s_1 \leq t}
+  \left\{ \sum_{i=1}^{2n} (-1)^{i+1} (a(s_{i}) - b(s_i)) \right\} -
+nX \right\}.
+\end{equation}
+
+Interestingly enough, these two functions are the solution of the so-called Skorokhod
+reflection problem with two fixed boundaries \cite{Skorokhod,Harrison}.
+
+Let us describe this reflection mapping  problem following the
+exposition of \cite{Konstanto95}.
+ We are given  a lower boundary that will be taken
+here as the origin, an upper boundary $X>0$, and a {\em free process}
+$z(t) \in \Reals$ such that $0 \leq z(0-) \leq X$.
+Skorokhod's reflection problem looks for functions
+$N(t)$ ({\em lower boundary process}) and $L(t)$ ({\em upper boundary
+process}) such that
+\begin{enumerate}
+\item
+The {\em reflected process}
+\begin{equation}
+\mylabel{eq:reflectedprocess}
+W(t) = z(t) + N(t) - L(t)
+\end{equation}
+is in $[0,X]$ for all $t \geq 0$.
+
+\item
+Both $N(t)$ and $L(t)$ are non decreasing with $N(0-) = L(0-) = 0$,
+and $N(t)$ (resp.  $L(t)$) increases only when $W(t) = 0$ (resp.
+$W(t)=X$), i.e.,
+with $1_A$ denoting the indicator function of $A$
+\begin{eqnarray}
+\mylabel{eq:lowerprocesscond}
+\int_0^{\infty} 1_{\{ W(t) > 0 \} } dN(t) & = & 0 \\
+\mylabel{eq:upperprocesscond}
+\int_0^{\infty} 1_{\{ W(t) < X \} } dL(t) & = & 0
+\end{eqnarray}
+\end{enumerate}
+
+The solution to this problem exists and is unique \cite{Harrison}.
+When only one boundary is present, explicit formulas are available.
+For instance,
+if $X \rightarrow \infty$, then there is only one lower boundary, and
+the solution
+is easily found to be
+\begin{eqnarray*}
+N(t) & = & -\inf_{0 \leq s \leq t} \{ z(s) \} \\
+L(t) & = & 0.
+\end{eqnarray*}
+If $X <  \infty$, then the solution can be constructed by successive
+approximations
+but, to our knowledge,  no solution has been explicitly obtained.
+The following theorem gives such explicit solutions for a continuous
+VF function $z(t)$.
+A VF function (VF standing for Variation Finie \cite{Harrison,
+Royden}) $z(t)$ on $\Reals^+$ is a function such that for all $t > 0$
+\[ \sup_{n \in \Nats_0} \; \sup_{0 = s_n < s_{n-1} < \ldots < s_1 < s_0
+=t} \left\{ \sum_{i=0}^{n-1} |z(s_i) - z(s_{i+1})| \right\} <
+\infty .\] VF functions have the following property \cite{Royden}:
+$z(t)$ is a VF function on $\Reals^+$ if and only if it can be
+written as the difference of two wide-sense increasing functions
+on $\Reals^+$.
+
+\begin{theorem}[Skorokhod's reflection mapping] \mylabel{thm:Skorokhod}
+Let the free process $z(t)$ be a continuous VF function on $\Reals^+$.
+Then the solution to Skorokhod's reflection problem on $[0,X]$ is
+\begin{eqnarray}
+\mylabel{eq:N(t)}
+N(t) & = & \sup_{n \in \Nats}  \left\{ \sup_{0  \leq s_{2n+1} \leq
+\ldots \leq s_2 \leq s_1 \leq t}
+  \left\{ \sum_{i=1}^{2n+1} (-1)^{i} z(s_{i}) \right\} - nX \right\}
+\\
+\mylabel{eq:L(t)}
+L(t) & = & \sup_{n \in \Nats}  \left\{ \sup_{0  \leq s_{2n} \leq \ldots
+\leq s_2 \leq s_1 \leq t}
+  \left\{ \sum_{i=1}^{2n} (-1)^{i+1} z(s_{i}) \right\} - nX \right\}.
+\end{eqnarray}
+\end{theorem}
+
+
+\pr
+As $z(t)$ is a VF function on $[0,\infty)$, there exist two
+increasing functions $a(t)$ and $b(t)$ such that $z(t)= a(t) -
+b(t)$ for all $t \geq 0$. As $z(0) \geq 0$, we can take $b(0) = 0$
+and $a(0) = z(0)$. Note that $a, b \in \calF$.
+
+We will show now that $L = a -x$ and $N = b - y$, where $x$ and
+$y$ are the maximal solutions of (\ref{eq:Skox}) and
+(\ref{eq:Skoy}), are the solutions of Skorokhod's reflection
+problem.
+%
+%We will show now that $L = a -x$ and $N = b -y$, where $x$ and $y$
+%are the maximal solutions of (\ref{eq:Skox}) and  (\ref{eq:Skoy},
+%are the solutions of  Skorokhod's reflection problem.
+
+First note that
+\[ W(t) = z(t) + N(t) - L(t) = (a(t) - b(t)) + (b(t) - y(t)) - (a(t)
+- x(t)) = x(t) - y(t) \]
+is in $[0,X]$ for all $t \geq 0$ because of (\ref{eq:xy}) and
+(\ref{eq:yx}).
+
+Second, because of (\ref{eq:yb}), note that $N(0) = b(0) - y(0) = 0$
+and that for any $t > 0$
+and $0 \leq s < t$, $N(t) - N(s) = b(t) -b(s) +y(s) - y(t) \geq 0$,
+which shows that $N(t)$ is
+non decreasing. The same properties can be deduced for $L(t)$ from
+(\ref{eq:xa}).
+
+Finally, if $W(t) = x(t) - y(t) > 0$, there is some $s^\star \in
+[0,t]$ such that $y(t) = y(s^\star) + b(t) - b(s^\star)$ because
+$y$ is the maximal solution satisfying (\ref{eq:yx}) and
+(\ref{eq:yb}). Therefore for all $s \in [s^\star ,t]$,
+\[ 0 \leq N(t) - N(s) \leq N(t) - N(s^\star) = b(t) - b(s^\star) +
+y(s^\star) - y(t) = 0 \]
+which shows that $N(t) - N(s) = 0$ and so that $N(t)$ is non
+increasing if $W(t) > 0$.
+A similar reasoning shows that $L(t)$ is non increasing if $W(t) < X$.
+
+Consequently, $N(t)$ and $L(t)$ are the lower and upper reflected
+processes that we are looking for. We have already computed them:
+they are given by (\ref{eq:Ndev}) and  (\ref{eq:Ldev}).
+Replacing $a(s_i) - b(s_i)$ in these two expressions by $z(s_i)$,
+we establish (\ref{eq:N(t)}) and (\ref{eq:L(t)}).
+\qed
+
+
+\section{Bibliographic Notes}
+\mylabel{sec:L30biblionotes}
+
+The clipper was introduced by Cruz and Tenaja, and was extended to
+get the loss representation formula presented in this chapter in
+\cite{CCLBT,TimeSpac}. Explicit expressions when operator $\Pi$ is
+a general, time-varying operator, can be found in \cite{CCLBT}. We
+expect results of this chapter to form a starting point for
+obtaining bounds on probabilities of loss or congestion for lossy
+shapers with complex shaping functions; the method would consist
+in applying known bounds to virtual systems and take the minimum
+over a set of virtual systems.

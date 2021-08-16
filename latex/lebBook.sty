@@ -1,0 +1,189 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% This is Leb's usual stuff  %%%%%%%%%%%%%
+%%%%%%%%     for books              %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\usepackage{newlfont,xthesis,xtocinc,xsrcltx} % obsolete
+ \oddsidemargin   0cm
+ \evensidemargin  0cm
+ \topmargin       -1.10 cm
+% \oddsidemargin   -0.5cm
+% \evensidemargin  -0.5cm
+% \topmargin       -1.10 cm
+%  \topmargin       0.10 cm
+ \headheight      0.0cm
+ \headsep         1cm
+ \textheight      24cm
+% \textheight      22.0cm
+ \textwidth       16.5cm
+% \textwidth       15.5cm
+ \parskip         0.15cm
+ \parindent       0.00cm
+ \footskip        1.0cm
+
+
+\usepackage{ifthen, epsfig, times, subfigure} % use in all cases
+\usepackage{amsthm,amsfonts,amssymb} % I used this for the net cal book
+\usepackage{makeidx,subfigure,verbatimfiles} % I used this for the perf eval lecture notes
+
+% modified Feb 2015 to have same style in perfeval online as publisher version
+\newtheorem{st}{\sc Student Tutorial}[section]
+\newtheorem{exo}{\sc Exercise}[chapter]
+\newtheorem{theorem}{\sc Theorem}[section]
+\newtheorem{lemma}{\sc Lemma}[section]
+\newtheorem{proposition}{\sc Proposition}[section]
+\newtheorem{corollary}{\sc Corollary}[section]
+\newtheorem{definition}{\sc Definition}[section]
+\newtheorem{conj}{\sc Conjecture}[section]
+\newtheorem{claim}{\sc Claim}[section]
+\newtheorem{remark}{\sc Remark}[section]
+\newtheorem{fact}{\sc Fact}[section]
+\newtheorem{conjecture}{\sc Conjecture}[section]
+%\newtheorem{ex}{Example}[chapter]
+\newtheorem{problem}{\sc Exercise}[chapter]
+\newtheorem{hypo}{\sc Hypothesis}[section]
+
+%
+%\newtheorem{st}{\sc Student Tutorial}[section]
+%\newtheorem{exo}{\sc Exercise}[section]
+%\newtheorem{theorem}{\sc Theorem}[section]
+%\newtheorem{lemma}{\sc Lemma}[section]
+%\newtheorem{proposition}{\sc Proposition}[section]
+%\newtheorem{corollary}{\sc Corollary}[section]
+%\newtheorem{definition}{\sc Definition}[section]
+%\newtheorem{conj}{\sc Conjecture}[section]
+%\newtheorem{claim}{\sc Claim}[section]
+%\newtheorem{remark}{\sc Remark}[section]
+%\newtheorem{fact}{\sc Fact}[section]
+%\newtheorem{conjecture}{\sc Conjecture}[section]
+%%\newtheorem{ex}{Example}[chapter]
+%\newtheorem{problem}{\sc Exercise}[chapter]
+%\newtheorem{hypo}{\sc Hypothesis}[chapter]
+%
+
+%% Environments for examples
+% usage: \begin{ex}{} or \begin{ex}{Nom de l'example}
+\usepackage{color,pstcol,pstricks}
+\newgray{backgroundgray}{0.90}
+\definecolor{backgroundgray}{gray}{0.90}
+\usepackage{xspace}
+\newcounter{ex}[chapter]
+\renewcommand{\theex}{\arabic{chapter}.\arabic{ex}}
+\newlength{\labelexample}
+\setlength{\labelexample}{2cm}
+%\setlength{\labelexample}{\textwidth}
+\newenvironment{ex}[1]
+{%\begin{quote}
+ \sffamily \small
+\refstepcounter{ex}\par\noindent{\gray\rule{\labelexample}{1pt}}\par\vspace*{-.2\baselineskip}\noindent\textsc{Example~\theex:\xspace}\ifthenelse{\equal{#1}{}}{}{{\sc\blue~#1.
+}}}
+{%\end{quote}
+\nobreak\par\nobreak{\gray\hfill\rule{\labelexample}{1pt}}\par} %\vspace{-.5\baselineskip}
+
+
+% modified LEB feb 2015 to align online book on PPUR book numbering - exnn is now same as ex
+%% non numbered example
+\newenvironment{exnn}[1]
+{%\begin{quote}
+ \sffamily \small
+\refstepcounter{ex}\par\noindent{\gray\rule{\labelexample}{1pt}}\par\vspace*{-.2\baselineskip}\noindent\textsc{Example~\theex:\xspace}\ifthenelse{\equal{#1}{}}{}{{\sc\blue~#1.
+}}}
+{%\end{quote}
+\nobreak\par\nobreak{\gray\hfill\rule{\labelexample}{1pt}}\par} %\vspace{-.5\baselineskip}
+
+%{%\begin{quote}
+%\sffamily \small
+%\par\noindent{\gray\rule{\labelexample}{1pt}}\par\vspace*{-.2\baselineskip}\noindent\textsc{Example:~}\ifthenelse{\equal{#1}{}}{}{{\sc\blue#1.}}}
+%{%\end{quote}
+%\nobreak\par\nobreak{\gray\hfill\rule{\labelexample}{1pt}}\par} %\vspace{-.5\baselineskip}
+
+%
+%--------------------------------------------
+% CHAPTER STYLE from BREMAUD
+\makeatletter
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter
+        \sc \huge\bfseries \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 20\p@
+      \fi
+    \fi
+    \interlinepenalty\@M
+   {\color{backgroundgray}
+\rule{\linewidth}{1mm}}
+    \Huge \bfseries \textcolor{blue}{ \sc #1} \\
+    \vskip -14\p@
+   {\color{backgroundgray}
+\rule{\linewidth}{1mm}}
+    \par\nobreak
+    \vskip 40\p@
+  }}
+\makeatother
+
+
+% My Section Styles -------------------------------------
+\makeatletter
+\def\@part[#1]#2{%
+    \ifnum \c@secnumdepth >-2\relax
+      \refstepcounter{part}%
+      \addcontentsline{toc}{part}{\thepart\hspace{1em}#1}%
+    \else
+      \addcontentsline{toc}{part}{#1}%
+    \fi
+    \markboth{}{}%
+    {\centering
+     \interlinepenalty \@M
+     \normalfont
+     \ifnum \c@secnumdepth >-2\relax
+       \sc \huge\bfseries \partname\nobreakspace\thepart
+       \par
+       \vskip 20\p@
+     \fi
+     \Huge \bfseries #2\par}%
+    \@endpart}
+\def\@spart#1{%
+    {\centering
+     \interlinepenalty \@M
+     \normalfont
+     \Huge \bfseries #1\par}%
+    \@endpart}
+\def\@endpart{\vfil\newpage
+              \if@twoside
+               \if@openright
+                \null
+                \thispagestyle{empty}%
+                \newpage
+               \fi
+              \fi
+              \if@tempswa
+                \twocolumn
+              \fi}
+
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\Large\sc\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\large\sc\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalsize\sc\bfseries}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+                                    {3.25ex \@plus1ex \@minus.2ex}%
+                                    {-1em}%
+                                    {\normalsize\sc\bfseries}}
+\renewcommand\subparagraph{\@startsection{subparagraph}{5}{\parindent}%
+                                       {3.25ex \@plus1ex \@minus .2ex}%
+                                       {-1em}%
+                                      {\normalsize\sc\bfseries}}
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%  End of Leb's usual stuff  %%%%%%%%%%%%%
+%%%%%%%%                            %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

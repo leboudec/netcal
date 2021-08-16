@@ -1,0 +1,233 @@
+
+\documentclass[11pt,twoside,onecolumn,a4paper]{book}
+
+%% put "oui" in the following line to see labels and other debugging text
+\newcommand{\imprimeTexteSecret}{non}
+%% put "oui" in the following line to see solutions
+\newcommand{\imprimeTexteCache}{non}
+
+
+%%% the following lines controls whether exercises are included
+%%% in order to exclude exercises, replace \exostrue by \exosfalse
+\newif\ifexos
+\exosfalse
+
+\usepackage{lebBook}
+\input{lebstuff}
+%\input{layoutLNCS.tex}
+%\input{layoutOnline.tex}
+
+\UseRawInputEncoding
+
+\usepackage{makeidx}
+\makeindex
+\input{L10.bdx.tex}
+\input{L20.bdx.tex}% this imports the database called  "L20.bdx.tex"
+                     % and creates one file per exercise in the temporary
+                     % directory defined in lebstuff.tex
+                     % this is normally the directory called "temp" in
+                     % the father of the directory where the main file
+                     % was found by Latex
+\input{L21.bdx.tex}
+\input{L23.bdx.tex}
+\input{L24.bdx.tex}
+%\renewtheorem{problem}{Exercise}[chapter]
+
+
+
+\begin{document}
+%\pagenumbering{arabic}
+
+
+
+ \title{
+ %\hrulefill\\
+ \noindent{\Huge {  NETWORK CALCULUS  }}\\
+ ~\\
+ A Theory of Deterministic Queuing Systems for the Internet\\
+  %\hrulefill\\
+ }
+ \author{ {\sc Jean-Yves Le Boudec}  \\{\sc Patrick Thiran}\\
+ \vspace{3cm}\\
+ ~
+ Online Version of the Book Springer Verlag - LNCS 2050
+ }
+
+% \date{\insfig{smoothingsetting}{0.7}}
+\date{Version \today}
+
+ \maketitle
+\frontmatter
+
+\begin{titlepage}
+  %~\newpage
+ \begin{center}
+ {\it
+ A Annelies\\A Joana, Ma\"{e}lle, Audraine et Elias\\
+ A ma m\`{e}re\\
+ \hspace{1cm} ---- JL\\
+ ~\\
+ A mes parents\\
+ \hspace{1cm} ---- PT\\
+ }
+ \vspace{7cm}
+ Pour \'{e}viter les grumeaux\\
+ Qui encombrent les r\'{e}seaux\\
+ Il fallait, c'est compliqu\'{e},\\
+ Ma\^{\i}triser les seaux perc\'{e}s\\
+ ~\\
+  Branle-bas dans les campus \\
+  On pourra dor\'{e}navant\\
+  Calculer plus simplement\\
+ Gr\^{a}ce \`{a} l'alg\`{e}bre Min-Plus\\
+ ~\\
+  Foin des obscures astuces\\
+ Pour estimer les d\'{e}lais\\
+ Et la gigue des paquets\\
+ Place \`{a} ``Network Calculus"\\
+ ~\\
+ {\it \hspace{2cm} ---- JL}
+ \end{center}
+ %\end{flushright}
+\setcounter{page}{5}
+\end{titlepage}
+
+\textbf{Summary of Changes}
+\begin{description}
+ \item[2002 Jan 14, JL] Chapter 2: added a better coverage of GR
+ nodes, in particular equivalence with service curve. Fixed bug in Proposition 1.4.1
+  \item[2002 Jan 16, JL] Chapter 6: M. Andrews brought convincing
+  proof that conjecture 6.3.1 is wrong. Redesigned Chapter 6 to
+  account for this. Removed redundancy between Section 2.4 and
+  Chapter 6. Added SETF to Section 2.4
+   \item[2002 Feb 28, JL] Bug fixes in Chapter 9
+   \item[2002 July 5, JL] Bug fixes in Chapter 6; changed format for a better printout on most
+   usual printers.
+   \item[2003 June 13, JL] Added concatenation properties of non-FIFO GR nodes to Chapter
+   2. Major upgrade of Chapter 7.
+   Reorganized Chapter 7. Added new developments in Diff Serv.
+   Added properties of PSRG for non-FIFO nodes.
+   \item[2003 June 25, PT] Bug fixes in chapters 4 and 5.
+   \item[2003 Sept 16, JL] Fixed bug in proof
+   of theorem 1.7.1, proposition 3. The bug was
+   discovered and brought to our attention by Fran\c{c}ois Larochelle.
+   \item[2004 Jan 7, JL] Bug fix in Proposition 2.4.1 ($\nu >
+\frac{1}{h-1}$ instead of $\nu < \frac{1}{h-1}$)
+   \item[2004, May 10, JL] Typo fixed in Definition 1.2.4 (thanks
+   to Richard Bradford)
+   \item[2005, July 13, JL] Bug fixes (thanks
+   to Mehmet Harmanci)
+   \item[2011, August 17, JL] Bug fixes (thanks
+   to Wenchang Zhou)
+   \item[2011, Dec 7, JL] Bug fixes (thanks
+   to Abbas Eslami Kiasari)
+   \item[2012, March 14, JL] Fixed Bug in Theorem 4.4.1
+   \item[2012, April 26, JL] Fixed Typo in Section 5.4.2 (thanks to Yuri Osipov)
+   \item[2019, March 14, JL] Fixed Typos in Sections 1.4.4 and 2.4.4.
+   \item[2019, March 14, JL] Fixed a bug in Proposition 1.3.7. The service curve property is strict only for the high priority flow.
+   \item[2019, March 27, JL] Changed the numbering of theorems so that it is the same as with the publisher's version.
+   \item[2019, October 1, JL] Fixed typo in Equation (6.2).
+   \item[2019, November 26, JL] Fixed typos in Section 1.4.1 ``An ATM Example" (thanks to Hermes Hofmeister Ferreira).
+
+   \item[2019, November 26, JL] Added a comment in Section 1.5.2, ``Example: Buffer Sizing at a Re-shaper" (observe that we
+need to make sure that $\sigma(t) = 0$) (triggered by an observation by Hermes Hofmeister Ferreira).
+    \item[2019, November 26, JL] Section 1.1.2 clarified that, for left-continuous input and output functions, the delay for a bit that arrives at time $t$ is the limit from the right of $d(t)$, i.e. $d_r(t)\eqdef\limit{s}{t, s>t}d(s)$.
+    \item[2019, November 27, JL] Section 1.6.1, Theorem 1.6.3 (minimum delay bound). Modified the statement of the theorem and expanded the proof (triggered by an observation by Hermes Hofmeister Ferreira).
+    \item[2019, November 27, JL] Section 1.6.1, Numerical Example after Theorem 1.6.3, corrected bugs (thanks to Hermes Hofmeister Ferreira).
+     \item[2019, November 27, JL] Section 1.7.2, Definition 1.7.1, added the condition $\limit{n}{\infty}L(n)=+\infty$ (thanks to Hermes Hofmeister Ferreira).
+
+     \item[2019, November 27, JL] Section 1.7.2, before Equation (1.23) added the condition $r\leq R$ (thanks to Hermes Hofmeister Ferreira).
+
+     \item[2019, November 27, JL] Fixed several typos: in the proofs of Theorem 1.4.7, of Lemma 1.5.1 and of Theorem 1.7.2; and on pages 40 and 45 (thanks to Hermes Hofmeister Ferreira).
+     \item[2019, December 9, JL] Added an argument that was implicit in the proof of Theorem 1.7.2.
+     \item[2019, December 11, JL] Cosmetic change to the proof of Theorem 1.7.6.
+    \item[2019, December 13, JL] Added a missing argument $(t)$ in Definition 3.1.14.
+        \item[2020, January 7, JL] Fixed a typo in Section 2.4.3 (thanks to Alaeddine El Fawal).
+    \item[2020, September 24, JL] Fixed typos in Theorems 1.6.3; in Theorem 4.3.1, added ``isotone".
+
+    \item[2020, September 25, JL] Fixed typo in Figure 3.3 (thanks to Ludovic Thomas).
+    \item[2020, October 12, JL] Fixed typos in: text before Proposition 1.2.1; text before Equation (1.8); proof of Theorem 3.1.11; a few lines after Equation (3.22); last line of proof of Theorem 4.1.4; line before Definition 4.2.2; Table number in Section 4.5; line before Equation (6.8); text between Equations (6.8) and (6.9); notation for max-plus deconvolution in index; text after Definition 7.3.2; Theorem 7.5.1; bullet before Theorem 6.4.1.
+        (Thanks to Luxi Zhang.)
+        %(Thanks to Zhangjiayi (Jiayi) and the Chinese translators).
+
+        \item[2020, October 13, JL] Replaced the notation $\alpha(t^+)$ by $\alpha_r(t)$ in the proof of Theorem 2.1.4. Changed ``limit to the left" to ``limit from the left". Fixed notation in the proof of Theorem 7.4.5, Item 2. Fixed some formatting issues in the bibliography. (Thanks to Luxi Zhang.)
+        \item[2021, June 21, JL] In Section 2.2.5, replaced ``algorithm 3" by ``the algorithm in Definition 2.2.1"
+
+
+\end{description}
+%\end{titlepage}
+
+
+
+
+
+
+ \hyphenation{Networks}
+\tableofcontents
+ \hyphenation{Net-works}
+
+\nfs{\textbf{Version 4}}
+
+\nfs{\textbf{History of Changes}}
+
+\nfs{\textbf{Bug Fixes}}
+
+\nfs{Proposition 1.4.1 corrig\'{e}e}
+
+\nfs{Section 2.4 redesign\'{e}e (diff serv), SETF ajoute, formule
+qofis corrig\'{e}e }
+
+\nfs{Section 2.1.3 refaite (GR node)}
+
+
+\input{L0} % LEB introduction
+ \mainmatter
+\part{A First Course in Network Calculus}
+\input{L20}% LEB: netcal basics
+\input{L21}% LEB: appli to Intserv
+% remove the following block except for the online version %%%%%%%%%%%%%%%%%%%%
+\newpage
+\thispagestyle{plain}
+\chapter*{~}
+\begin{center}
+
+
+ \noindent{\Huge {  NETWORK CALCULUS  }}\\
+ ~\\
+ {\Huge {  Parts II and III  }}\\ ~\\
+ {\LARGE
+ A Theory of Deterministic Queuing Systems for the Internet\\
+
+  %\hrulefill\\
+
+ {\sc Jean-Yves Le Boudec}  \\{\sc Patrick Thiran}\\
+ \vspace{3cm}
+
+ Online Version of the Book Springer Verlag - LNCS 2050\\
+ Reformatted for improved online viewing and printing\\
+
+
+
+% \date{\insfig{smoothingsetting}{0.7}}
+ Version \today
+ }
+
+
+\end{center}
+%%%%%%%%%%%%%%%%%%%%%%%%%% end of block for online version %%%%%%%%%%%%%%%%%
+\part{Mathematical Background}
+
+\input{L10}% THI: basic min plus and max plus calculus
+\input{L11}% THI: advanced min plus and max plus calculus
+%Put exo L30-33 in chapter advanced min plus and max plus calculus
+\part{A Second Course in Network Calculus}
+\input{L22}% THI: smoothers
+\input{L24}% LEB: FIFO
+\input{L23}% LEB:   asc + application a Diff serv
+\input{L23b}% LEB: time varying
+\input{L30}% THI: lossy systems
+%\backmatter
+\bibliography{leb}
+\bibliographystyle{plain}
+\printindex
+\end{document}

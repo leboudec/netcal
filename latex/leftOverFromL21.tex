@@ -1,0 +1,524 @@
+
+%leftover from old chpater2, to be put into chapter aggregate scheduling
+\section{Application to Differentiated Services} \mylabel{sec-ds}
+\subsection{Differentiated Services}
+\mylabel{sec-dsgen}
+
+\subsection{A Bounding Method for Aggregate Scheduling}
+\mylabel{sec-timestoppingm}
+Consider a node $m$. If all traffic
+entering the node is access traffic only (no transit traffic) then
+an arrival curve for the aggregate traffic entering the node is
+$\sum_{i \in F_m} \alpha_i$, where $F_m$ is the set of flows that
+enter the network at this node. The aggregate flow is guaranteed a
+service curve $S_m$, thus, from \sref{3bornes}, the total required
+buffer is bounded by $v(\sum_{i \in F_m} \alpha_i, S_m)$, and the
+delay by $v(\sum_{i \in F_m} \alpha_i, S_m)$.
+
+In order to use \sref{3bornes} we need now to find an arrival
+curve for the traffic exiting node $m$. This in general requires
+more assumptions on the aggregate scheduler. We examine in
+\cref{L24} the properties of FIFO schedulers and will find there
+some strong, but complex results. We have a simple result if the
+service curves are \emph{strict}, as defined in \sref{def-sercur};
+this applies to many practical cases, in particular to all
+variable capacity nodes and priority schedulers.
+\begin{theorem}
+Consider a node serving two flows in an aggregate manner. Assume
+the aggregate is guaranteed a \emph{strict} service curve $\beta$.
+Assume also that the second flow is $\alpha_2$-smooth. Then the
+first flow is guaranteed a minimum service curve $\beta^*_1$ given
+by
+ $$
+\beta^*_1(t)= [\beta(t) - \alpha_2(t)]^+
+ $$
+ \mylabel{theo-wcl}
+\end{theorem}
+\pr
+Call $R_i$ and $R'_i$ the input and output, for $i=1,2$. Fix some
+arbitrary $t$ and call $s$ the beginning of the busy period (for
+the aggregate). Thus
+$$
+R'_1(t) + R'_2(t) \geq R_1(s) + R_2(s) + \beta(t-s)
+$$
+Now
+$$
+R'_2 (t) \leq R_2(t) \leq R_2(s) + \alpha_2(t-s)
+$$
+thus
+\begin{equation}\mylabel{eq-diffserv-1}
+  R'_1(t)  \geq R_1(s) + \beta(t-s) - \alpha_2(t-s)
+\end{equation}
+Since $s$ is the beginning of the busy period, we have
+$R'_1(s)+R'_2(s)=R_1(s)+R_2(s)$ and therefore $R'_1(s)=R_1(s)$.
+Thus
+$$
+ R'_1(t)  \geq R'_1(s) =R_1(s)
+$$
+combining this with \eref{eq-diffserv-1}, we find
+$$
+R'_1(t)  \geq R_1(s) + [\beta(t-s) - \alpha_2(t-s)]^+
+$$
+which proves the service curve property. \qed
+
+If the arrival curves are affine, then the following corollary of
+\thref{theo-wcl} expresses the burstiness increase due to
+multiplexing.
+\begin{corollary}
+Consider a node serving two flows in an aggregate manner. Assume
+the aggregate is guaranteed a \emph{strict} service curve
+$\beta_{R,T}$. Assume also that flow $i$ is constrained by one
+leaky bucket with parameters $(r_i,b_i)$. The output of the first
+flow is constrained by a leaky bucket with parameters $(r_1,
+b^*_1)$ with
+$$
+b^*_1 = b_1 + r_1 T + r_1 \frac{b_2+ r_2 T}{R-r_2}
+$$
+ \mylabel{coro-wcl}
+\end{corollary}
+Note that the burstiness increase contains a term $r_1 T$ that is
+found even if there is no multiplexing; the second term $r_1
+\frac{b_2+ r_2 T}{R-r_2}$ comes from multiplexing with flow 2.
+Note also that if we further assume that the node is FIFO, then we
+have a better bound (\cref{L24}).
+\pr
+From \thref{theo-wcl}, the first flow is guaranteed a service
+curve $\beta_{R', T'}$ with $R'=R-r_2$ and $T'= \frac{b_2 +T
+r_2}{R-r_2}$. The result follows from a direct application of
+\thref{theo-output}. \qed
+
+We could think of using \coref{coro-wcl} to analyze the general
+network in \fref{fig-diffservmod}. However, this would work only
+in a \emph{feed-forward} network, namely, a network where we can
+number nodes such that the sequence of node numbers followed by
+any flow is always increasing. Equivalently, this means that there
+is no cycle for the relation between nodes defined by $m
+\rightarrow m'$ iff among the flows entering $m'$, at least one
+exits $m$. In a feed-forward, we can recursively apply
+\coref{coro-wcl} and find arrival curve constraints at all nodes,
+thus backlog and delay bounds.
+
+However, feed-forward topologies are very restrictive, and most
+networks are not feedforward. We show now an analysis method that
+can be applied to non-feedforward networks.
+
+\paragraph{Assumptions and notation}
+
+We consider in the rest of this subsection the case where all
+fresh arrival curves $\alpha_i$ have the form
+$$
+\alpha_i=\gamma_{r_i, b_i}$$ In other words, the constraints are
+expressed by a single leaky bucket. To simplify the notation, we
+consider that the nodes are are constant rate, work conserving
+servers, with rate $C_m$ for node $m$. We assume that there is no
+loop on the path followed by any flow. We use the notation $m \in
+i$ or $i\ni m$ to express that node $m$ is on the path of flow
+$i$.
+
+We call ``utilization factor"%
+\index{utilization factor}%
+ at link $l$ the ratio
+$$\nu_l= \frac{\sum_{i \ni m} r_i}{C_l} $$
+We also assume that the network is ``sub-critical", that is, for
+all node $m$:
+\begin{equation}\mylabel{eq-ds-condrates}
+  \nu_l < 1
+\end{equation}
+
+We will illustrate the method on a specific example, shown on
+\fref{fig-dsnet1}.
+
+
+In a non-feedforward network, we cannot directly apply
+\coref{coro-wcl}. However, we can use the following trick, called
+the ``time stopping method", which was introduced in
+\cite{cru91b}. The method has two steps. First, we assume that
+there is a finite burstiness bound for all flows;  using
+\coref{coro-wcl} we obtain some equations for computing these
+bounds. Second, we use the same equations to show that, under some
+conditions, finite bounds exist.
+
+\begin{figure}[!htbp]
+  \insfig{dsnet1}{0.7}
+  \mycaption{A simple example with aggregate scheduling, used to
+   illustrate the bounding method. There are three nodes numbered
+   $0,1,2$ and six flows, numbered $0,...,5$.
+   For $i=0,1,2$, the path of flow $i$ is $i, (i+1) \mod 3, (i+2) \mod
+   3$ and the path of flow $i+3$ is $i, (i+2) \mod 3, (i+1) \mod
+   3$. The fresh arrival curve is the same
+for all flows, and is given by $\alpha_i=\gamma_{\rho,\sigma}$.
+All nodes are constant rate, work conserving servers, with rate
+$C$. The utilization factor at all nodes is $6\frac{\rho}{C}$.}
+  \mylabel{fig-dsnet1}
+\end{figure}
+
+\paragraph{First step: inequations for the bounds}
+
+
+For any flow $i$ and any node $m \in i$, define $b_i^m$ as the
+maximum backlog that this flow would generate in a constant rate
+server with rate $r_i$. By convention, the fresh inputs are
+considered as the outputs of a virtual node numbered $-1$. In this
+first step, we assume that $b_i^m$ is finite for all $i$ and $m
+\in i$.
+
+From \lref{lem-buf-simple} on \pgref{lem-buf-simple}, $b_i^m$ is
+the smallest value such that the output of node $m$ is constrained
+by the leaky bucket with parameters $(r_i, b_i^m) $. By applying
+\coref{coro-wcl} we find that for all $i$ and $m \in i$:
+\begin{equation}\mylabel{eq-ds-lin}
+\bracket{
+ b_i^0 \leq b_i \\
+b_i^m = b_i^{\mbox{pred}_i(m)} + r_i \frac{
+ \sum_{j \ni m, j \neq i}b_j^{\mbox{pred}_j(m)}
+ }
+ {C-\sum_{j \ni m, j \neq i} r_j}
+ }
+\end{equation}
+where $\mbox{pred}_i(m)$ is the predecessor of node $m$. If $m$ is
+the first node on the path of flow $i$, we set by convention
+$\mbox{pred}_i(m)=-1$ and $b_i^{-1}=b_i$.
+
+Now put all the $b_i^m$, for all $(i,m)$ such that $m \in i$, into
+a vector $\vec{x}$ with one column and $n$ rows, for some
+appropriate $n$. We can re-write \eref{eq-ds-lin} as
+\begin{equation}\mylabel{eq-ds-lin2}
+\vec{x} \leq A \vec{x} + \vec{a}
+\end{equation}
+where $A$ is an $n \times n$, non-negative matrix and $\vec{a}$ is
+a non-negative vector depending only on the known quantities
+$b_i$. The method now consists in assuming that the spectral
+radius of matrix $A$ is less than $1$. In that case the power
+series $I + A + A^2 + A^3 + ...$ converges and is equal to
+$(I-A)^{-1}$, where $I$ is the $n \times n$ identity matrix. Since
+$A$ is non-negative, $(I-A)^{-1}$ is also non-negative; we can
+thus multiply \eref{eq-ds-lin} to the left by $(I-A)^{-1}$ and
+obtain:
+\begin{equation}\mylabel{eq-ds-lin3}
+\vec{x} \leq (I-A)^{-1} \vec{a}
+\end{equation}
+which is the required result, since $\vec{x}$ describes the
+burstiness of all flows at all nodes. From there we can obtain
+bounds on delays and backlogs.
+
+Let us apply this step to our network example. By symmetry, we
+have only two unknowns $x$ and $y$, defined as the burstiness
+after one and two hops:
+$$\bracket{
+x=b_0^0=b^1_1=b_2^2=b_3^0=b_4^2=b_5^1\\
+y=b_0^1=b^2_1=b_2^0=b_3^2=b_4^1=b_5^0
+ }
+$$
+\eref{eq-ds-lin} becomes
+$$
+\bracket{
+ x \leq \sigma + \frac{\rho}{C -5 \rho} ( \sigma + 2x + 2y)\\
+ y \leq x + \frac{\rho}{C -5 \rho} ( 2 \sigma +  x + 2y)
+  }
+$$
+Define $\eta=\frac{\rho}{C-5 \rho}$; from \eref{eq-ds-condrates}
+we conclude that $0 \leq \eta <1$. We can now write
+\eref{eq-ds-lin2} with
+$$
+ \vec{x}=\left(
+  \begin{array}{c}
+    x\\y
+  \end{array}\right)
+  ,\;
+ A= \left(\begin{array}{c c}
+    2 \eta &  2 \eta\\1 + \eta & 2 \eta
+  \end{array}\right)
+  ,\;
+   \vec{a}=\left(
+  \begin{array}{c}
+    \sigma (1 + \eta)\\ 2 \sigma \eta
+  \end{array}\right)
+$$
+Some remnant from linear algebra, or a symbolic computation
+software, tells us that
+$$
+(I-A)^{-1}=\left(\begin{array}{c c}
+    \frac{1-2  \eta}{1-6  \eta+2
+{\eta^2}} & \frac{2  \eta}{1-6  \eta+2  {\eta^2}}  \\
+   \frac{1+\eta}{1-6  \eta+2
+{\eta^2}}& \frac{1-2  \eta}{1-6  \eta+2  {\eta^2}}
+  \end{array}\right)
+$$
+If $\eta < \frac{1}{2} (3 -\sqrt{7}) \approx 0.177$ then
+$(I-A)^{-1}$ is positive. This is the condition for the spectral
+radius of $A$ to be less than 1. The corresponding condition on
+the utilization factor $\nu= \frac{6\rho}{C}$ is
+\begin{equation}\mylabel{eq-example-ds-1}
+ \nu <2 \frac{8-\sqrt{7}}{19} \approx 0.564
+\end{equation}
+Thus, for this specific example, if \eref{eq-example-ds-1} holds,
+and if the burstiness terms $x$ and $y$ are finite, then they are
+bounded as given in \eref{eq-ds-lin3}, with $(I-A)^{-1}$ and
+$\vec{a}$ given above.
+
+\paragraph{Second Step: time stopping}
+
+We now prove that there is a finite bound if the spectral radius
+of $A$ is less than 1. For any time $\tau>0$, consider the virtual
+system made of the original network, where all sources are stopped
+at time $\tau$. For this network the total number of bits in
+finite, thus we can apply the conclusion of step 1, and the
+burstiness terms are bounded by \eref{eq-ds-lin3}. Since the
+right-handside \eref{eq-ds-lin3} is independent of $\tau$, letting
+$\tau$ tend to $+\infty $ shows the following.
+\begin{proposition}
+With the notation in this section, if the spectral radius of $A$
+is less than $1$, then the burstiness terms $b^m_i$ are bounded by
+the corresponding terms in \eref{eq-ds-lin3}.
+\mylabel{prop-stoppingTimeMethod}
+\end{proposition}
+Back to the example of \fref{fig-dsnet1}, we find that if the
+utilization factor $\nu$ is less than $0.564$, then the burstiness
+terms $x$ and $y$ are bounded by
+$$
+\bracket{
+ x \leq 2 \sigma \frac{18 -33 \nu + 16 \nu^2}
+ {36 -96 \nu + 57 \nu^2 }\\
+ y \leq  2 \sigma \frac{18 - 18  \nu + \nu^2}
+ {36 -96 \nu + 57 \nu^2}
+ }
+$$
+The aggregate traffic at any of the three nodes is $\gamma_{6\rho,
+b}$-smooth with $b=2(\sigma + x + y)$. Thus a bound on delay is
+(see also \fref{fig-L21-ds}):
+$$
+ d=\frac{b}{C}= 2 \frac{\sigma}{C}
+ \frac{108 - 198 \nu + 91 \nu^2}{36 - 96 \nu + 57 \nu^2}
+$$
+
+\begin{figure}[!htbp]
+  \insfig{L21-ds}{0.5}
+  \mycaption{The bound $d$ on delay at any node obtained by the method
+  presented here for the network of
+  \fref{fig-dsnet1}  (thin line).
+  The graph shows $d$ normalized by $\frac{\sigma}{C}$
+  (namely, $\frac{d C}{\sigma}$),
+  plotted as a function of
+  the utilization factor. The thick line is a delay bound
+  obtained if every flow is re-shaped at every output.}
+  \mylabel{fig-L21-ds}
+\end{figure}
+
+\paragraph{What happens when the bound is infinite ?}
+Call $\nu_0$ the upper bound on utilization factors for which the
+method in \sref{sec-timestoppingm} finds a finite bound. In the
+example, we found $\nu_0\approx 0.564$, which is much less than
+$1$. Does it mean that no finite bound exists when $\nu_0 <1$ ?
+The answer to this question is not clear.
+
+First, the $\nu_0$ found with the method can be improved if we
+express more arrival constraints. Consider our particular example:
+we have not exploited the fact that the fraction of input traffic
+to node $i$ that originates from another node has to be
+$\lambda_C$-smooth. If we do so, we will obtain better bounds.
+Second, if we know that nodes have additional properties, such as
+FIFO, then we may be able to find better bounds.
+
+In general, the issue of stability, or existence of finite bounds,
+for a given network with aggregate multiplexing is still
+unresolved. The question of delay bounds for a network with
+aggregate scheduling was first raised in \cite{cha91}. We will see
+in \cref{L24} that if the network is a ring of constant bit rate
+servers, then $\nu_0=1$, in other words, we can find a bound for
+any $\nu<1$ \cite{tg96}. However, the proof does not extend to
+general service curve guarantees, even strict service curves. In
+\cite{andrews00}, the author exhibits an unstable network similar
+to ours, with $\nu=1$ (a ``critical'' network), and claims that
+this also holds for some sub-critical networks, but the proof is
+not conclusive. In addition, a startling fact referred to as a
+``non-monotone property'' of FIFO networks is described in
+\cite{andrews00}, where it is shown that a network that is
+\emph{stable} with a set of sessions with given rates may become
+\emph{unstable} if the rates of some of these sessions are
+\emph{reduced} for a period of time. On the other side of the
+spectrum, we will also see in \cref{L24} strong and explicit
+results \cite{leb99,CFZF98} with FIFO multiplexing.
+
+\paragraph{The price for aggregate scheduling}
+Consider again the example on \fref{fig-dsnet1}, but assume now
+that every flow is reshaped at every output. This is not possible
+with differentiated services, since there is no per-flow
+information at nodes other than access nodes. However, we use this
+scenario as a benchmark that illustrates the price we pay for
+aggregate scheduling.
+
+With this assumption, every flow has the same arrival curve at
+every node. Thus we can compute a service curve $\beta_1$ for flow
+$1$ (and thus for any flow) at every node, using \thref{theo-wcl};
+we find that $\beta_1$ is the rate-latency function with rate $(C-
+5 \rho)$ and latency $\frac{5 \sigma}{C-5 \rho}$. Thus a delay
+bound for flow at any node, including the re-shaper, is
+$h(\alpha_1, \alpha_1 \mpc \beta_1)= h(\alpha_1,
+\beta_1)=\frac{6C}{C- 5 \rho}$ for $\rho \leq \frac{C}{6}$.
+\fref{fig-L21-ds} shows this delay bound, compared to the delay
+bound we found if no reshaper is used. As we already know, we see
+that with per-flow information, we are able to guarantee a delay
+bound for any utilization factor $\leq 1$. However, note also that
+for relatively small utilization factors, the bounds are very
+close.
+
+\subsection{An Explicit Delay Bound for Differentiated Services Networks}
+\mylabel{bounds-lossless}
+
+%
+%
+%\mylabel{sec-networkgrand}
+\begin{proposition}\cite{lebinfocom2001, qofis2000}
+With the assumptions of \thref{theo-qofisbound}, if $\nu <
+\frac{1}{h-1}$, then for any $D' >0$, there is a network in which
+the worst case delay is at least $D'$. \mylabel{prop-grand}
+\end{proposition}
+In other words, the worst case queuing delay can be made
+arbitrarily large; thus if we want to go beyond
+\thref{theo-qofisbound}, any bound for differentiated services
+must depend on the network topology or size, not only on the
+utilization factor and the number of hops.
+
+\pr
+We build a family of networks, out of which, for any $D'$, we can
+exhibit an example where the queuing delay is at least $D'$.
+
+The thinking behind the construction is as follows. All flows are
+low priority flows. We create a
+  hierarchical network, where at the first level of the
+  hierarchy we choose one ``flow" for which its first
+  packet happens to encounter just \emph{one} packet of every
+  other flow whose route it intersects, while its next packet
+  does not encounter any queue at all.  This causes the first
+  two packets of the chosen flow to come back-to-back after
+  several hops.  We then construct the second level of the
+  hierarchy by taking a new flow and making sure that its
+  first packet encounters \emph{two} back-to-back packets of each
+  flow whose routes it intersects, where the two back-to-back
+  packet bursts of all these flows come from the output of a
+  sufficient number of networks constructed as described at
+  the first level of the hierarchy. Repeating this process
+  recursively sufficient number of times,  for any chosen
+  delay value $D$ we can create deep enough hierarchy so that
+  the queuing delay of the first packet of some flow
+  encounters a queuing delay more than $D$ (because it
+  encounters a large enough back-to-back burst of packets
+  of every other flow constructed in the previous iteration),
+  while the second packet does not suffer any queuing delay
+  at all.   We now describe in detail how to construct such a
+  hierarchical network (which is really a family of networks)
+  such that utilization factor of any link does not exceed a
+  given factor $\nu$, and no flow traverses more than $h$ hops.
+
+Now let us describe the networks in detail. We consider a family
+of networks with a single traffic class and constant rate links,
+all with same bit rate $C$. The network is assumed to be made of
+infinitely fast switches, with one output buffer per link. Assume
+that sources are all leaky bucket constrained, but are served in
+an aggregate manner, first in first out. Leaky bucket constraints
+are implemented at the network entry; after that point, all flows
+are aggregated. Without loss of generality, we also assume that
+propagation delays can be set to 0; this is because we focus only
+on queuing delays. As a simplification, in this network, we also
+assume that all packets have a unit size. We show that for any
+fixed, but arbitrary delay budget $D$, we can build a network of
+that family where the worst case queueing delay is larger than
+$D$, while each flow traverses at most a specified number of hops.
+
+A network in our family is called $\calN(h, \nu, J)$ and has three
+parameters: $h$ (maximum hop count for any flow), $\nu$
+(utilization factor) and $J$ (recursion depth). We focus on the
+cases where $h \geq 3$ and $\frac{1}{h-1}< \nu <1$, which implies
+that we can always find some integer $k$ such that
+\begin{equation}\mylabel{eqk}
+  \nu > \frac{1}{h-1}\frac{kh+1}{kh-1}
+\end{equation}
+Network $\calN(h, \nu, J)$ is illustrated in
+Figures~\ref{fig-grand1} and \ref{fig-grand2}; it is a collection
+of identical building blocks, arranged in a tree structure of
+depth $J$. Every building block has one internal source of traffic
+(called ``transit traffic"), $kh(h-1)$ inputs (called the
+``building block inputs"), $kh(h-1)$ data sinks, $h-1$ internal
+nodes, and one output. Each of the $h-1$ internal nodes receives
+traffic from $kh$ building block inputs plus it receives transit
+traffic from the previous internal node, with the exception of the
+first one which is fed by the internal source. After traversing
+one internal node, traffic from the building block inputs dies in
+a data sink. In contrast, transit traffic is fed to the next
+internal node, except for the last one which feeds the building
+block output (\fref{fig-grand1}).
+\begin{figure}[!htbp]
+  \insfig{bb1}{0.7}
+  \mycaption{The internal node (top) and the building block (bottom)
+  used in our network example.}
+  \mylabel{fig-grand1}
+\end{figure}
+\fref{fig-grand2} illustrates that our network has the structure
+of a complete tree, with depth $J$. The building blocks are
+organized in levels $j=1,...,J$. Each of the inputs of a level $j$
+building block ($j\geq 2$) is fed by the output of one level $j-1$
+building block. The inputs of level $1$ building blocks are data
+sources. The output of one $j-1$ building block feeds exactly one
+level $j$ building block input. At level $J$, there is exactly one
+building block, thus at level $J-1$ there are $kh(h-1)$ building
+blocks, and at level $1$ there are $(kh(h-1))^{J-1}$ building
+blocks.
+\begin{figure}[!htbp]
+  \insfig{grandnet}{0.7}
+  \mycaption{The network made of building blocks from \fref{fig-grand1}}
+  \mylabel{fig-grand2}
+\end{figure}
+All data sources have the same rate $r=\frac{\nu C}{kh+1}$ and
+burst tolerance $b=1$~packet. In the rest of this section we take
+as a time unit the transmission time for one packet, so that
+$C=1$. Thus any source may transmit one packet every $\theta =
+\frac{kh+1}{\nu}$ time units. Note that a source may refrain from
+sending packets, which is actually what causes the large delay
+jitter. The utilization factor on every link is $\nu$, and every
+flow uses $1$ or $h$ hops.
+
+Now consider the following scenario. Consider some arbitrary level
+1 building block. At time $t_0$, assume that a packet fully
+arrives at each of the building block inputs of level $1$, and at
+time $t_0+1$, let a packet fully arrive from each data source
+inside every level $1$ building block (this is the first transit
+packet). The first transit packet is delayed by $hk-1$ time units
+in the first internal node. Just one time unit before this packet
+leaves the first queue, let one packet fully arrive at each input
+of the second internal node. Our first transit packet will be
+delayed again by $hk-1$ time units. If we repeat the scenario
+along all internal nodes inside the building block, we see that
+the first transit packet is delayed by $(h-1)(hk-1)$ time units.
+Now from \eref{eqk}, $\theta < (h-1)(hk-1)$, so it is possible for
+the data source to send a second transit packet at time
+$(h-1)(hk-1)$. Let all sources mentioned so far be idle, except
+for the emissions already described. The second transit packet
+will catch up to the first one, so the output of any level $1$
+building block is a burst of two back-to-back packets. We can
+choose $t_0$ arbitrarily, so we have a mechanism for generating
+bursts of 2 packets.
+
+Now we can iterate the scenario and use the same construction at
+level $2$. The level-2 data source sends exactly three packets,
+spaced by $\theta$. Since the internal node receives $hk$ bursts
+of two packets originating from level 1, a judicious choice of the
+level 1 starting time lets the first level 2 transit packet find a
+queue of $2hk -1$ packets in the first internal node. With the
+same construction as in level 1, we end up with a total queuing
+delay of $(h-1)(2hk -1) > 2(h-1)(hk-1)> 2\theta$ for that packet.
+Now this delay is more than $2 \theta$, and the first three
+level-2 transit packets are delayed by the same set of non-transit
+packets; as a result, the second and third level-2 transit packets
+will eventually catch up to the first one and the output of a
+level 2 block is a burst of three packets. This procedure easily
+generalizes to all levels up to $J$. In particular, the first
+transit packet at level $J$ has an end-to-end delay of at least
+$J\theta$. Since all sources become idle after some time, we can
+easily create a last level $J$ transit packet that finds an empty
+network and thus a zero queuing delay.
+
+Thus there are two packets in network $\calN(h, \nu, J)$, with one
+packet having a delay larger than $J \theta$, and the other packet
+has zero delay. This establishes that a bound on queuing delay,
+and thus on delay variation in network $\calN(h, \nu, J)$ has to
+be at least as large as~$J \theta$. \qed

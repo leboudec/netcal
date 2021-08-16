@@ -1,0 +1,72 @@
+Consider a packet switched network that carries bits of
+information from a source with a constant bit rate $r$ (Figure
+\ref{fig-playoutBuf}) as is the case for example, with circuit
+emulation. We take a fluid model, as illustrated in
+Figure~\ref{fig-playoutBuf}. We have a first system $\calS$, the
+network, with input function $R(t)=rt$. The network imposes some
+variable delay, because of queuing points, therefore the output
+$R^{*}$ does not have a constant rate $r$. What can be done to
+recreate a constant bit stream ?
+\begin{figure}[!htbp]
+\insfig{playBuf}{1.0}
+        \mycaption{A Simple Playout Buffer Example}
+        \mylabel{fig-playoutBuf}
+\end{figure}
+A standard mechanism is to smooth the delay variation in a playout
+buffer. It operates as follows. When the first bit of data
+arrives, at time $d_r(0)$, %, where $d_r(0)=\lim_{t \rightarrow 0,
+%t>0}d(t)$ is the limit to the right of function $d$\index{limit to
+%the right}\footnote{It is the virtual delay for a hypothetical bit
+%that would arrive just after time $0$. Other authors often use the
+%notation $d(0+)$},
+it is stored in the buffer until a fixed time
+$\Delta$ has elapsed. Then the buffer is served at a constant rate
+$r$ whenever it is not empty. This gives us a second system
+$\calS'$, with input $R^*$ and output $S$.
+
+%\index{limit to the right}
+
+Let us assume that the network delay variation is bounded by
+$\Delta$. This implies that for every time $t$, the virtual delay
+(which is the real delay in that case) satisfies
+ $$ - \Delta \leq
+d(t) - d_r(0) \leq \Delta $$
+ Thus, since we have a fluid model, we
+have
+ $$r (t - d_r(0) - \Delta)  \leq R^*(t) \leq r (t - d_r(0) + \Delta)$$
+ which is illustrated in the figure by the two lines (D1) and (D2)
+parallel to $R(t)$.
+ The figure suggests that,  for the playout
+buffer $\calS'$ the input function $R^*$ is always above the
+straight line (D2), which means that the playout buffer never
+underflows. This suggests in turn that the output function $S(t)$
+is given by $S(t)=r( t - d_r(0) - \Delta)$.
+
+Formally, the proof is as follows. We proceed by contradiction.
+Assume the buffer starves at some time, and let $t_{1}$ be the
+first time at which this happens. Clearly the playout buffer is
+empty at time $t_{1}$, thus $R^*(t_1)=S(t_1)$. There is a time
+interval $[t_{1}, t_{1}+ \epsilon]$ during which the number of
+bits arriving at the playout buffer is less than $r \epsilon$ (see
+Figure~\ref{fig-playoutBuf}). Thus, $d(t_{1}+ \epsilon) > d_r(0) +
+\Delta$ which is not possible. Secondly, the backlog in the buffer
+at time $t$ is equal to $R^*(t)-S(t)$, which is bounded by the
+vertical deviation between (D1) and (D2), namely, $2r \Delta$.
+
+We have thus shown that the playout buffer is able to remove the
+delay variation imposed by the network. We summarize this as
+follows.
+
+\begin{proposition}
+        Consider a constant bit rate stream of rate $r$, modified by a network
+        that imposes a variable delay variation and no loss. The
+        resulting flow is put into a playout buffer, which
+        operates by delaying the first bit of the flow by
+        $\Delta$, and reading the flow at rate $r$. Assume that the
+        delay variation imposed by the network is bounded by $\Delta$, then
+\begin{enumerate}
+                \item  the playout buffer never starves and produces a constant
+                output at rate $r$;
+                \item  a buffer size of $2 \Delta r$ is sufficient to avoid overflow.
+        \end{enumerate}
+\end{proposition}

@@ -1,0 +1,45 @@
+\begin{definition} [Arrival Curve]
+Given a wide-sense increasing function $\alpha$ defined for $t
+\geq 0$ we say that a flow $R$ is constrained by $\alpha$ if and
+only if for all $s \leq t$:
+$$R(t)-R(s) \leq \alpha(t-s)$$
+We say that $R$ has $\alpha$ as an arrival curve, or also that $R$
+is $\alpha$-smooth.%
+\index{arrival curve}%
+\index{smooth ($\alpha$-smooth for some function $\alpha(t)$}
+\end{definition}
+Note that the condition is over a set of overlapping intervals, as
+Figure~\ref{affArrCur} illustrates.
+\begin{figure}[!htbp]
+   \insfig{arrcurdef}{0.8}
+  \mycaption{Example of Constraint by arrival curve,
+  showing a cumulative function
+  $R(t)$ constrained by the arrival curve $\alpha(t)$.}
+   \mylabel{affArrCur}
+\end{figure}
+
+\paragraph{Affine Arrival Curves: }
+For example, if $\alpha(t)=rt$, then the constraint means that, on
+any time window of width $\tau$, the number of bits for the flow
+is limited by $r \tau$. We say in that case that the flow is peak
+rate limited. This occurs if we know that the flow is arriving on
+a link whose physical bit rate is limited by $r$ b/s. A flow where
+the only constraint is a limit on the peak rate is often
+(improperly) called a ``constant bit rate" (CBR) flow, or
+``deterministic bit rate" (DBR) flow.
+
+Having $\alpha(t)=b$, with $b$ a constant, as an arrival curve
+means that the maximum number of bits that may ever be sent on the
+flow is at most $b$.
+
+More generally, because of their relationship with leaky buckets,
+we will often use \emph{affine} arrival curves $\gamma_{r,b}$,
+defined by:
+%\index{1gamma@$\gamma_{r,b}$ (affine arrival curve)} \index{affine
+%arrival curve}
+$\gamma_{r,b}(t)=rt +b$ for $t>0$ and $0$ otherwise. Having
+$\gamma_{r,b}$ as an arrival curve allows a source to send $b$
+bits at once, but not more than $r$ b/s over the long run.
+Parameters $b$ and $r$ are called the burst tolerance (in units of
+data) and the rate (in units of data per time unit).
+Figure~\ref{affArrCur} illustrates such a constraint.
