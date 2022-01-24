@@ -274,9 +274,9 @@ x(t) & \leq & \delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \} \nonumber \\
 x(t) & \geq & (R \oslash \beta)(t-D) \vee  \calD_{\sigma}(x)(t) .
 \end{eqnarray}
 One can then apply Theorem~\ref{thm:spacemethodmax} to compute the {\em minimal} solution of (\ref{eq:ineqmaxplusbis}), which is
-$ x_{\min} = \calD_{\sigma}(b) = b \oslash \sigma $ where 
+$ x_{\min} = \calD_{\sigma}(b) = b \oslash \sigma $ where
 %%% Bug Fix JYLB April 26, 2012
-% $b(t) =\delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \}$,  
+% $b(t) =\delta_0 (t) \wedge R(t+d)  \wedge \{R(t-D) + B \}$,
 $b(t) =(R\oslash \beta)(t-D)$,
 because $\sigma$ is a `good' function. Eliminating $b$ from these expressions, we compute that the minimal solution is
 \begin{equation}
@@ -331,8 +331,8 @@ plot, for the MPEG trace $R(t)$ of the top of Figure~\ref{minarrcur} representin
 An example of VBR smoothing on the same MPEG trace is shown on Figure~\ref{fig:twotracessmoothed}, with a smoothing curve derived from the T-SPEC field, which is
 given by $\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$, where $M$ is the maximum packet size (here $M= 416$ Bytes),
 $P$ the peak rate, $r$ the sustainable rate and $b$ the burst tolerance. Here we roughly have
-$P = 560$ kBytes/sec, $r = 330$ kBytes/sec and $b = 140$ kBytes
-The service curve is a rate-latency curve $\beta_{L,C}$ with $L = 1$ second and $r = 370$ kBytes/sec.
+$P = 560$ kbits/sec, $r = 330$ kbits/sec and $b = 140$ kBytes
+The service curve is a rate-latency curve $\beta_{L,C}$ with $L = 1$ second and $C = 370$ kbits/sec.
 The two traces have the same envelope, thus the same minimum buffer requirement (here, 928kBytes).
 However the second trace has its bursts later, thus, has a smaller
    minimum playback delay ($D_2=2.05$s versus $D_1=2.81$s).
@@ -579,7 +579,7 @@ Another example is shown on Figure~\ref{fig:comparshaperreal} for the MPEG-2 vid
 \insfig{smooMid}{0.5}
 \caption{Example of optimal shaping versus optimal smoothing for the MPEG-2 video trace shown on top of Figure~\ref{minarrcur}.
   The example is for a null network and a smoothing curve $\sigma = \gamma_{P,M} \wedge \gamma_{r,b}$
-  with $M= 416$ bytes,  $P=600$ kBytes/sec, $r = 300$ kBytes/sec and $b=80$ kBytes.
+  with $M= 416$~bytes,  $P=600$~kbits/sec, $r = 300$~kbits/sec and $b=80$~kBytes.
   The figure shows the optimal shaper [resp. smoother] output and
   the original signal (video trace), shifted by the required playback delay. The
   playback delay is $2.76$ sec for optimal shaping (top) and $1.92$ sec for optimal
