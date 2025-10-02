@@ -9,15 +9,15 @@ service rate offered to flow $i$ is 0 is flow $i$ has no backlog
 (namely, if $R_i(t)=R_i^*(t)$), and otherwise is equal to
 $\frac{\phi_i}{\sum_{j \in B(t)} \phi_{j}}c$, where $B(t)$ is the
 set of backlogged flows at time $t$. Thus
- $$R^*_i(t) = \int_0^t \frac{\phi_i}{\sum_{j \in B(s)} \phi_{j}} 1_{\{i \in B(s)\}}ds
+ $$R^*_i(t) = \int_0^t \frac{\phi_i c}{\sum_{j \in B(s)} \phi_{j}} 1_{\{i \in B(s)\}}ds
  $$
  In the formula, we used the indicator function
  $1_{\{\mbox{\emph{expr}}\}}$, which is equal to $1$ if $\mbox{\emph{expr}}$ is
  true, and $0$ otherwise.
 
 It follows immediately that the GPS node offers to flow $i$ a
-service curve equal to $\lambda_{r_i c}$, with $r_i=\frac{\phi_i
-C}{\sum_{j} \phi_{j}}$. It is shown in \cite{pg94} that a better
+service curve equal to $\lambda_{r_i}$, with $r_i=\frac{\phi_i
+c}{\sum_{j} \phi_{j}}$. It is shown in \cite{pg94} that a better
 service curve can be obtained for every flow if we know some
 arrival curve properties for all flows; however the simple
 property is sufficient to understand the integrated service model.
